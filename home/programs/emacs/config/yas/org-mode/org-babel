@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: emacs-lisp babel
+# key: elisp
+# --
+#+BEGIN_SRC elisp
+    $1
+#+END_SRC

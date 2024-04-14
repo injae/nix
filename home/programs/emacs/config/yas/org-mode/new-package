@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: new package
+# key: npkg
+# --
+** $1 
+#+BEGIN_SRC elisp
+  
+#+END_SRC
