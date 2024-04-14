@@ -6,4 +6,5 @@ in
   "spotify.age".publicKeys = all;
   "discord-client-id.age".publicKeys = all;
   "chatgpt-api-key.age".publicKeys = all;
+  "home-cluster.age".publicKeys = all;
 }
