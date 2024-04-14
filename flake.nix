@@ -36,6 +36,7 @@
         ./users
         ./home
         ./share
+        ./templates
       ];
 
       flake = {
