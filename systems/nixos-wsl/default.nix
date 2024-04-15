@@ -12,6 +12,9 @@ in
   system.stateVersion = "24.05";
   wsl.enable = true;
 
+  environment.systemPackages = with pkgs; [ ];
+
+  programs.zsh.enable = true;
   users.users.${flake.config.people.myself} = {
     shell = pkgs.zsh;
   };
