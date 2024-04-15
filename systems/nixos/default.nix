@@ -8,8 +8,7 @@ in
     #inputs.disko.nixosModules.disko
     self.nixosModules.default
   ];
-
-  system.stateVersion = "23.11";
+  system.stateVersion = "24.05";
   networking.hostName = "immediacy";
   nixpkgs.hostPlatform = "x86_64-linux";
 

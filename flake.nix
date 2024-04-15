@@ -4,6 +4,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nix-darwin.url = "github:lnl7/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-wsl.url = "github:nix-community/NixOs-WSL/main";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -44,9 +45,9 @@
           self.nixos-flake.lib.mkMacosSystem
             ./systems/darwin;
 
-        nixosConfigurations.wsl =
+        nixosConfigurations.nixos =
           self.nixos-flake.lib.mkLinuxSystem
-            ./systems/nixos;
+            ./systems/nixos-wsl;
       };
 
       perSystem = { self', pkgs, lib, config, ... }: {
@@ -73,7 +74,6 @@
           inputsFrom = [ config.treefmt.build.devShell ];
           packages = with pkgs; [
             just
-            # colmena
           ];
         };
       };
