@@ -18,12 +18,12 @@
   nix = {
     nixPath = [ "nixpkgs=${flake.inputs.nixpkgs}" ]; # Enables use of `nix-shell -p ...` etc
     registry.nixpkgs.flake = flake.inputs.nixpkgs; # Make `nix shell` etc use pinned nixpkgs
-    gc = {
-      user = "root";
-      automatic = true;
-      interval = { Weekday = 0; Hour = 2; Minute = 0; };
-      options = "--delete-older-than 30d";
-    };
+    #gc = {
+    #  user = "root";
+    #  automatic = true;
+    #  interval = { Weekday = 0; Hour = 2; Minute = 0; };
+    #  options = "--delete-older-than 30d";
+    #};
     settings = {
       max-jobs = "auto";
       experimental-features = "nix-command flakes repl-flake";

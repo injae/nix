@@ -1,4 +1,4 @@
-{ pkg, flake, ... }:
+{ pkgs, flake, ... }:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
@@ -11,5 +11,9 @@ in
   nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "24.05";
   wsl.enable = true;
+
+  users.users.${flake.config.people.myself} = {
+    shell = pkgs.zsh;
+  };
 }
   
