@@ -2,6 +2,7 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
+  user = flake.config.people.myself;
 in
 {
   imports = [
@@ -11,12 +12,18 @@ in
   nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "24.05";
   wsl.enable = true;
-
-  environment.systemPackages = with pkgs; [ ];
+  wsl.defaultUser = user;
+  boot.tmp.cleanOnBoot = true;
 
   programs.zsh.enable = true;
-  users.users.${flake.config.people.myself} = {
+  environment.systemPackages = [ ];
+  users.users.${user} = {
+    isNormalUser = true;
     shell = pkgs.zsh;
+    extraGroups = [ "wheel" "networkmanager" "docker" ];
+    #password = ""
   };
+
+  security.sudo-rs.enable = true;
 }
   

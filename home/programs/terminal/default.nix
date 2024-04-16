@@ -38,7 +38,7 @@
         PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
       '';
       envExtra = ''
-        export PATH=/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin/:/usr/local/bin:$PATH
+        export PATH=$PATH:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin/:/usr/local/bin
 
         export PATH="$PATH:$HOME/.cargo/bin"
 
