@@ -12,6 +12,9 @@ in
 {
   home.packages = with pkgs; [
     # General packages for development and system management
+    neovim
+    vim
+
     act
     alacritty
 
