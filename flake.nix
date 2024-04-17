@@ -23,8 +23,14 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     emacs-lsp-booster = {
       url = "github:slotThe/emacs-lsp-booster-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixvim = {
+      url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -60,6 +66,7 @@
           "nixos-flake"
           "nix-index-database"
           "rust-overlay"
+          "emacs-overlay"
           "emacs-lsp-booster"
         ];
 

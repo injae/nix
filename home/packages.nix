@@ -12,9 +12,6 @@ in
 {
   home.packages = with pkgs; [
     # General packages for development and system management
-    neovim
-    vim
-
     act
     alacritty
 
@@ -41,14 +38,8 @@ in
     # terraform
     tflint
 
-
     # devenv
     devenv
-
-    # emacs lsp
-    emacs-lsp-booster
-    emacs-all-the-icons-fonts
-    emacsPackages.all-the-icons-nerd-fonts
 
     # Media-related packages
     dejavu_fonts
@@ -61,6 +52,7 @@ in
     nanum-gothic-coding
     fira-code-nerdfont
     nerdfonts
+
 
     # Node.js development tools
     nodePackages.nodemon
