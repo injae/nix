@@ -16,7 +16,12 @@ in
   boot.tmp.cleanOnBoot = true;
 
   programs.zsh.enable = true;
-  environment.systemPackages = [ ];
+
+  environment.systemPackages = with pkgs; [
+    emacs-pgtk
+  ];
+  services.emacs.enable = true;
+
   users.users.${user} = {
     isNormalUser = true;
     shell = pkgs.zsh;

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 945 
+personal_ws-1.1 en 949 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -192,6 +192,7 @@ agenix
 agg
 agones
 ai
+alacritty
 alg
 algo
 alist
@@ -214,6 +215,7 @@ ascii
 asdf
 aseprite
 asm
+aspell
 ast
 astype
 async
@@ -634,6 +636,7 @@ nav
 ndjson
 ne
 neotree
+neovim
 nexon
 nfs
 ng
@@ -642,6 +645,7 @@ nieel
 nixfmt
 nixos
 nixpkgs
+nixvim
 nlohmann
 noinspection
 nomessage

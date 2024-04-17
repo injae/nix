@@ -10,6 +10,7 @@
     };
     overlays = [
       flake.inputs.rust-overlay.overlays.default
+      flake.inputs.emacs-overlay.overlays.default
       flake.inputs.emacs-lsp-booster.overlays.default
       (import ../packages/overlay.nix { inherit flake; inherit (pkgs) system; })
     ];

@@ -24,6 +24,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    emacs-overlay = {
+      url = "github:nix-community/emacs-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     emacs-lsp-booster = {
       url = "github:slotThe/emacs-lsp-booster-flake";
       inputs.nixpkgs.follows = "nixpkgs";

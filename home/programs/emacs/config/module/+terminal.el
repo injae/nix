@@ -3,8 +3,6 @@
 ;;; Code:
 
 (use-package vterm :after (evil-collection exec-path-from-shell)
-;:commands (vterm)
-:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook
@@ -15,7 +13,7 @@
 )
 
 
-(use-package multi-vterm
+(use-package multi-vterm :after vterm
 :general (leader "tn" 'multi-vterm :wk "new terminal")
 )
 
