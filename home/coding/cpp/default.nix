@@ -2,6 +2,7 @@
 {
   home.packages = with pkgs; [
     # build-tool
+    libtool
     gnumake
 
     #stdenv
@@ -17,7 +18,7 @@
     ccache
     lcov
 
-    # cmake
+    cmake
     cmake-format
     cmake-language-server
   ];

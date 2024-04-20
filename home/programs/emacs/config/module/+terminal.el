@@ -3,6 +3,7 @@
 ;;; Code:
 
 (use-package vterm :after (evil-collection exec-path-from-shell)
+:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook
@@ -17,7 +18,7 @@
 :general (leader "tn" 'multi-vterm :wk "new terminal")
 )
 
-(use-package vterm-with-centaur-tab :no-require t :ensure nil
+(use-package vterm-with-centaur-tab :no-require t :ensure nil :disabled
 :after (vterm-toggle centaur-tabs)
 :preface (defun vmacs-awesome-tab-buffer-groups ()
           "`vmacs-awesome-tab-buffer-groups' control buffers' group rules. "
