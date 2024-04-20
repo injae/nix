@@ -53,7 +53,7 @@
 ;elisp double quote problem fix setting
 (use-package smartparens-config :after smartparens :ensure nil)
 
-(use-package ws-butler-mode
+(use-package ws-butler
     :config (ws-butler-global-mode)
     )
 
