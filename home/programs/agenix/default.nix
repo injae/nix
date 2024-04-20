@@ -1,5 +1,4 @@
 { flake, lib, options, pkgs, ... }:
-
 let
   user = flake.config.people.myself;
   home-dir =

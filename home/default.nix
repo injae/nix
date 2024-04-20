@@ -8,10 +8,9 @@
           inputs.nix-index-database.hmModules.nix-index
           inputs.agenix.homeManagerModules.age
           ({ pkgs, ... }: { home.packages = [ inputs.agenix.packages.${pkgs.system}.default ]; })
-          inputs.nixvim.homeManagerModules.nixvim
-          ./programs/neovim
           ./programs/agenix
           ./programs/git
+          ./programs/neovim
           ./programs/terminal
           ./programs/ssh
           ./programs/font
