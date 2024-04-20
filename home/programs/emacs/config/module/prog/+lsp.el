@@ -228,7 +228,7 @@
     (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
     )
 
-(use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
+(use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x") :disabled
     :after eglot
     :config (eglot-x-setup)
     )
