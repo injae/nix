@@ -14,9 +14,15 @@
           ./programs/git
           ./programs/terminal
           ./programs/ssh
+          ./programs/font
           ./programs/alacritty
           ./programs/aspell
           ./programs/emacs
+          ./coding/rust
+          ./coding/python
+          ./coding/golang
+          ./coding/javascript
+          ./coding/cpp
           ./packages.nix
         ];
       };

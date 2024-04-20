@@ -53,6 +53,11 @@
 ;elisp double quote problem fix setting
 (use-package smartparens-config :after smartparens :ensure nil)
 
+(use-package ws-butler-mode
+    :config (ws-butler-global-mode)
+    )
+
+
 ;(use-package aggressive-indent   :disabled
 ;; https://github.com/Malabarba/aggressive-indent-mode
 ;:config (electric-indent-mode nil)

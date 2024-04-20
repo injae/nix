@@ -1,4 +1,4 @@
-{ flake, lib, options, pkgs, config, ... }:
+{ flake, lib, options, pkgs, ... }:
 
 let
   user = flake.config.people.myself;
@@ -7,6 +7,13 @@ let
     then "/Users/${user}" else "/home/${user}";
 in
 {
+  home.packages = with pkgs; [
+    age
+    gnupg
+    ssh-to-pgp
+    ssh-to-age
+  ];
+
   age =
     {
       secrets =

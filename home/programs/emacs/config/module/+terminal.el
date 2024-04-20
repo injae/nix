@@ -40,13 +40,24 @@
         (setq vterm-toggle--vterm-buffer-p-function 'vmacs-term-mode-p)
 )
 
-(use-package shell-pop
-:custom (shell-pop-shell-type '("term" "vterm" (lambda () (vterm) )))
-        (shell-pop-term-shell "/bin/zsh")
-        (shell-pop-full-span t)
-:general (leader "ut"'shell-pop)
-:init    (global-set-key (kbd "<C-t>") 'shell-pop)
-)
+(use-package vterm-toggle :after vterm
+    :general (leader "ut" shell-pop)
+    :config
+    (setq vterm-toggle-fullscreen-p nil)
+    (add-to-list 'display-buffer-alist
+                '((lambda (buffer-or-name _)
+                    (let ((buffer (get-buffer buffer-or-name)))
+                        (with-current-buffer buffer
+                        (or (equal major-mode 'vterm-mode)
+                            (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+                    (display-buffer-reuse-window display-buffer-at-bottom)
+                    ;;(display-buffer-reuse-window display-buffer-in-direction)
+                    ;;display-buffer-in-direction/direction/dedicated is added in emacs27
+                    ;;(direction . bottom)
+                    ;;(dedicated . t) ;dedicated is supported in emacs27
+                    (reusable-frames . visible)
+                    (window-height . 0.3)))
+    )
 
 (use-package vterm-command :no-require t :ensure nil
 :after (vterm)

@@ -5,6 +5,7 @@ in
 {
   home.packages = with pkgs; [
     git-lfs
+    act # github action in local
   ];
 
   programs.git = {

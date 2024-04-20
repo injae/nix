@@ -1,4 +1,4 @@
-personal_ws-1.1 en 949 
+personal_ws-1.1 en 954 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -494,6 +494,7 @@ hotjoin
 hpa
 hpp
 href
+hscan
 hset
 html
 htop
@@ -536,6 +537,7 @@ iterable
 iterrows
 itertools
 jaeger
+javascript
 jetbrains
 joinpath
 jp
@@ -568,6 +570,7 @@ letsencrypt
 lfinal
 lhs
 libc
+libiconv
 libra
 lifecycle
 lineno
@@ -784,6 +787,7 @@ sagemaker
 sagemakerruntime
 savehist
 scaler
+sccache
 schemas
 sdk
 sdl
@@ -925,6 +929,7 @@ watchexec
 wg
 wgrep
 whl
+ws
 wsgi
 wsl
 www
