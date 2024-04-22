@@ -1,6 +1,7 @@
 { flake, system, ... }:
 
 # get url from https://lazamar.co.uk/nix-versions/?channel=nixpkgs-unstable&package=
+# or           https://history.nix-packages.com/search?search=
 self: super:
 let
   version-overlay = { rev, sha256 }:
