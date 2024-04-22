@@ -96,6 +96,7 @@
   };
 
   home.packages = with pkgs; [
+    just
     ripgrep
     fd
     coreutils
