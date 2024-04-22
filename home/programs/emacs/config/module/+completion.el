@@ -176,6 +176,7 @@
     (setq consult-project-function (lambda (_) (projectile-project-root)))
     )
 
+(use-package consult-dir)
 (use-package consult-projectile)
 (use-package consult-flycheck)
 ;(use-package consult-jq)
