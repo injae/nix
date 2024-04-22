@@ -1,4 +1,4 @@
-personal_ws-1.1 en 959 
+personal_ws-1.1 en 961 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -242,6 +242,7 @@ backtab
 balancer
 bashrc
 bazel
+bazelisk
 bifrost
 blueviolet
 bool
@@ -646,6 +647,7 @@ nexon
 nfs
 ng
 nginx
+ngrok
 nieel
 nixfmt
 nixos

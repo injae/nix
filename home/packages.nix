@@ -26,6 +26,6 @@
     protobuf
 
     # bazel
-    bazel
+    bazelisk
   ];
 }
