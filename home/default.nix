@@ -21,6 +21,7 @@
           ./coding/golang
           ./coding/javascript
           ./coding/cpp
+          ./coding/terraform
           ./packages.nix
         ];
       };

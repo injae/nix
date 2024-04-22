@@ -13,9 +13,6 @@
     #netbird
     #netbird-ui
 
-    # terraform
-    tflint
-
     # devenv
     devenv
 

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 956
+personal_ws-1.1 en 959 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -807,6 +807,7 @@ setopt
 setq
 sexp
 sgml
+sha
 shortname
 sidcar
 singledispatch
@@ -860,6 +861,7 @@ tex
 textobj
 tf
 tfenv
+tflint
 thirdparty
 threadpool
 timedelta
