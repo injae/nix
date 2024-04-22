@@ -1,4 +1,4 @@
-{ self, config, inputs, ... }:
+{ self, config, ... }:
 
 {
   # Configuration common to all Linux systems
@@ -23,7 +23,6 @@
         self.nixosModules.home-manager
         self.nixosModules.my-home
         self.nixosModules.common
-        inputs.agenix.nixosModules.default
       ];
     };
 
@@ -40,7 +39,6 @@
         self.darwinModules_.home-manager
         self.darwinModules.my-home
         self.nixosModules.common
-        inputs.agenix.darwinModules.default
       ];
     };
   };

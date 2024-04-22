@@ -6,9 +6,8 @@
         home.stateVersion = "23.11";
         imports = [
           inputs.nix-index-database.hmModules.nix-index
-          inputs.agenix.homeManagerModules.age
-          ({ pkgs, ... }: { home.packages = [ inputs.agenix.packages.${pkgs.system}.default ]; })
-          ./programs/agenix
+          inputs.sops-nix.homeManagerModules.sops
+          ./programs/sops
           ./programs/git
           ./programs/neovim
           ./programs/terminal
