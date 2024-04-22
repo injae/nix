@@ -25,7 +25,7 @@ in
     };
   };
 
-  programs.zsh.initExtra = with config.sops;
+  programs.zsh.envExtra = with config.sops;
     let
       toName = name: builtins.replaceStrings [ "/" "-" ] [ "_" "_" ] (lib.toUpper name);
       toPath = name: secrets."${name}".path;
