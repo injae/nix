@@ -2,26 +2,25 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package yasnippet :after f
-:general (leader  "hy"  '(:wk "Yasnippet")
-                  "hyl" 'consult-yasnippet)
+(use-package yasnippet
+:general (leader  "hy"  '(:wk "Yasnippet"))
 :config
-    (setq yas-snippet-dirs '("~/nixos-config/modules/shared/config/emacs/yas/"))
+    (setq yas-snippet-dirs '("~/nix/home/programs/emacs/config/yas"))
     (yas-global-mode t)
     (yas-reload-all t)
-
 )
 
 (use-package yasnippet-snippets :after yasnippet)
 
-(use-package auto-yasnippet
+(use-package auto-yasnippet :after yasnippet
 ;https://github.com/abo-abo/auto-yasnippet
-:after yasnippet
 :general (leader "hyc" 'aya-create
                  "hye" 'aya-expand)
 )
 
-(use-package consult-yasnippet)
+(use-package consult-yasnippet :after yasnippet
+    :general (leader "hyl" 'consult-yasnippet)
+    )
 
 (provide '+snippet)
 ;;; +snippet.el ends here
