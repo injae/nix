@@ -16,7 +16,7 @@ in
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
-    age.sshKeyPaths = [ "${home-dir}/.ssh/id_ed25519" ];
+    age.keyFile = "${home-dir}/.config/sops/age/keys.txt";
     secrets = {
       "spotify/id" = { };
       "spotify/secret" = { };
