@@ -19,15 +19,13 @@
     # php
     php
 
-    # nix
-    nixfmt-rfc-style
-    nixpkgs-fmt
-    nil
-
     # yaml
     yaml-language-server
 
     #protobuf
     protobuf
+
+    # bazel
+    bazel
   ];
 }

@@ -16,6 +16,7 @@
           ./programs/alacritty
           ./programs/aspell
           ./programs/emacs
+          ./coding/nix
           ./coding/rust
           ./coding/python
           ./coding/golang
