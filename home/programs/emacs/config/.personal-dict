@@ -1,4 +1,4 @@
-personal_ws-1.1 en 955 
+personal_ws-1.1 en 956
 ABCDEFGHIJ
 ARGN
 Accu
@@ -347,6 +347,7 @@ digga
 dir
 dired
 direnv
+dirs
 dirvish
 disko
 dlv
@@ -711,6 +712,7 @@ pos
 posframe
 poshandler
 posix
+powershell
 powi
 pragma
 pre

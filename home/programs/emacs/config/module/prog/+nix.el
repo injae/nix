@@ -3,8 +3,11 @@
 ;;; Code:
 
 (use-package nix-mode
-:mode "\\.nix\\'"
-)
+  :mode "\\.nix\\'")
+
+(use-package sops
+  :config (global-sops-mode)
+  )
 
 (provide '+nix)
 ;;; +nix.el ends here

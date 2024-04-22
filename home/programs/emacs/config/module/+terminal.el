@@ -94,5 +94,7 @@ shell exits, the buffer is killed."
     (vterm-send-return)))
 )
 
+(use-package powershell)
+
 (provide '+terminal)
 ;;; +terminal.el ends here

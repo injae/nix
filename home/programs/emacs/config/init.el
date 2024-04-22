@@ -131,11 +131,12 @@
              coverage copilot tools
              ;;; language support
              cpp lisp csharp
-             rust python ;; haskel
+             rust python
              flutter web ruby
              jvm  go  nix lua
              config-file docker
              formatting bazel
+             markdown json terraform
              ))
     )
 
