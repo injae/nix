@@ -22,6 +22,10 @@
     # yaml
     yaml-language-server
 
+    # toml
+    taplo
+
+
     #protobuf
     protobuf
 
