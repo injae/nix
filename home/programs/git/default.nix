@@ -8,27 +8,34 @@ in
     act # github action in local
   ];
 
-  programs.git = {
-    enable = true;
-    ignores = [ "*.swp" ];
-    userName = user.name;
-    userEmail = user.email;
-    lfs = {
+  programs = {
+    git = {
       enable = true;
-    };
-    extraConfig = {
-      init.defaultBranch = "main";
-      core = {
-        editor = "emacs";
-        autocrlf = "input";
+      ignores = [ "*.swp" ];
+      userName = user.name;
+      userEmail = user.email;
+      lfs = {
+        enable = true;
       };
-      pull.rebase = true;
-      rebase.autoStash = true;
-      github.user = user.name;
-      #commit.gpgSign = true;
-      #gpg.format = "ssh";
-      #user.signingKey = "~/.ssh/id_ed25519.pub";
+      extraConfig = {
+        init.defaultBranch = "main";
+        core = {
+          editor = "emacs";
+          autocrlf = "input";
+        };
+        pull.rebase = true;
+        rebase.autoStash = true;
+        github.user = user.name;
+      };
+    };
+
+    gh = {
+      enable = true;
+      settings.git_protocol = "ssh";
+    };
+
+    gh-dash = {
+      enable = true;
     };
   };
 }
-
