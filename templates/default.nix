@@ -14,6 +14,10 @@
         path = ./python;
         description = "Python Flake";
       };
+      poetry = {
+        path = ./python-poetry;
+        description = "Python Poetry Flake";
+      };
     };
   };
 }
