@@ -1,4 +1,4 @@
-{ pkgs, flake, ... }:
+{ pkgs, flake, config, ... }:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
@@ -6,6 +6,7 @@ let
 in
 {
   imports = [
+    # https://nix-community.github.io/NixOS-WSL/options.html
     inputs.nixos-wsl.nixosModules.default
     self.nixosModules.default
   ];
@@ -13,12 +14,15 @@ in
   system.stateVersion = "24.05";
   wsl.enable = true;
   wsl.defaultUser = user;
+  wsl.startMenuLaunchers = true;
+
   boot.tmp.cleanOnBoot = true;
 
   programs.zsh.enable = true;
 
   environment.systemPackages = with pkgs; [
     emacs-pgtk
+    wslu
   ];
   services.emacs.enable = true;
 
@@ -26,9 +30,7 @@ in
     isNormalUser = true;
     shell = pkgs.zsh;
     extraGroups = [ "wheel" "networkmanager" "docker" ];
-    #password = ""
   };
 
   security.sudo.enable = true;
 }
-  
