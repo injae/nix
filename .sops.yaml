@@ -8,3 +8,4 @@ creation_rules:
     - age:
       - *wsl_home
       - *m3-mac
+      - *wsl_nexon
