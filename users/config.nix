@@ -11,6 +11,7 @@ in
       sshKeys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZek4oGRvG6SH4hW+hGF1lFz3czkh9PUExFVMaDU/IK 8687lee@gmail.com" # m3
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKADaIM7+Kr262hzuv55OhzHXCwKfp0RcVHMOCXKJ0JW 8687lee@gmail.com" # desktop
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB1dYXyg79pPDlbDCzAdl7aZ911N/lAq43LHZVkXDOaw nieel@nixos" # desktop-nexon
       ];
     };
   };

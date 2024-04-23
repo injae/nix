@@ -1,6 +1,7 @@
 keys:
   - &wsl_home age15txwy99qmrjx0xrwgv9cv95audh2fdhshygqs2542x539cpztdmq7sdsmt
   - &m3-mac age1rglmnmz8arqxg497khnaarqapskhmuxuu7kxrqatn4e3kgdlduasemk8dv
+  - &wsl_nexon age14erj4fq4g8maar6928xgp6qalz5pndgqen370hzzfuezqpl2wqvqg9g2qn
 creation_rules:
   - path_regex: home/programs/sops/secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
