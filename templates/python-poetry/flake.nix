@@ -35,8 +35,8 @@
         };
 
         packages = {
-          app = p2nix.mkPoetryApplication { python = python; projectDir = self; };
-          venv = p2nix.mkPoetryEnv { python = python; projectDir = self; };
+          app = p2nix.mkPoetryApplication { python = python; projectDir = self; preferWheels = true; };
+          venv = p2nix.mkPoetryEnv { python = python; projectDir = self; preferWheels = true; };
           default = spkgs.app;
         };
 
