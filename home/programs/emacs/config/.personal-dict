@@ -1,4 +1,4 @@
-personal_ws-1.1 en 962 
+personal_ws-1.1 en 966 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -232,6 +232,7 @@ autoloads
 autopep
 autoremove
 aws
+awscli
 awslogs
 awsvpc
 axhline
@@ -697,10 +698,12 @@ peotry
 perl
 persistentvolumes
 persp
+pgtk
 pid
 pipx
 pixelsize
 pkgs
+pki
 plackettLuceModel
 plantuml
 playerIDs
@@ -940,6 +943,7 @@ whl
 ws
 wsgi
 wsl
+wslu
 www
 xdg
 xgroup
