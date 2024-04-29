@@ -8,6 +8,7 @@
           inputs.nix-index-database.hmModules.nix-index
           inputs.sops-nix.homeManagerModules.sops
           ./programs/sops
+          ./programs/aws
           ./programs/git
           ./programs/neovim
           ./programs/terminal
