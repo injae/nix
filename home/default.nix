@@ -9,6 +9,7 @@
           inputs.sops-nix.homeManagerModules.sops
           ./programs/sops
           ./programs/aws
+          ./programs/gcp
           ./programs/git
           ./programs/neovim
           ./programs/terminal
