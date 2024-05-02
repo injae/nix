@@ -5,8 +5,8 @@
     casks = pkgs.callPackage ./casks.nix { };
     onActivation = {
       # autoUpdate = true;
-      cleanup = "zap";
-      # upgrade = true;
+      # cleanup = "zap";
+      upgrade = true;
     };
 
     taps = [
