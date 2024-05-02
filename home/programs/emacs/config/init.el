@@ -130,7 +130,7 @@
              prog-search doc ssh
              coverage copilot tools
              ;;; language support
-             cpp lisp csharp
+             just cpp lisp csharp
              rust python
              flutter web ruby
              jvm  go  nix lua
