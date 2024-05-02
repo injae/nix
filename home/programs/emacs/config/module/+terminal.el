@@ -42,7 +42,7 @@
 )
 
 (use-package vterm-toggle :after vterm
-    :general (leader "ut" 'vterm-toggle :wk "toggle terminal")
+    :general (leader "ut" 'vterm-toggle-cd :wk "toggle terminal")
     :config
     (setq vterm-toggle-fullscreen-p nil)
     (add-to-list 'display-buffer-alist

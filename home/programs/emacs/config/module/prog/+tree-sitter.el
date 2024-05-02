@@ -62,10 +62,10 @@
           (toml "https://github.com/tree-sitter/tree-sitter-toml")
           (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
           (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+          (nix "https://github.com/nix-community/tree-sitter-nix")
           (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
     (setq treesit-font-lock-level 4)
 )
-
 
 ;; (use-package treesit-langs :ensure (:host github :repo "kiennq/treesit-langs");:files (:defaults "*")); "queries"))
 ;;     :after treesit

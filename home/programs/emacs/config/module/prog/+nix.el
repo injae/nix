@@ -3,7 +3,13 @@
 ;;; Code:
 
 (use-package nix-mode
-  :mode "\\.nix\\'")
+    :mode "\\.nix\\'"
+    )
+
+(use-package nix-ts-mode :disabled
+    :mode "\\.nix\\'"
+    )
+
 
 (use-package sops
   :config (global-sops-mode)

@@ -29,7 +29,7 @@
        (lsp-mode            . lsp-enable-which-key-integration)
        (rust-mode           . lsp-deferred)
        (go-mode             . lsp-deferred)
-       (nix-mode            . lsp-deferred))
+       (nix-ts-mode         . lsp-deferred))
 
 :config
     ;(lsp-mode)
