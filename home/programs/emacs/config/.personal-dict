@@ -1,4 +1,4 @@
-personal_ws-1.1 en 974 
+personal_ws-1.1 en 979 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -193,6 +193,7 @@ agg
 agones
 ai
 alacritty
+alfred
 alg
 algo
 alist
@@ -403,6 +404,7 @@ environ
 envrc
 envs
 envvar
+epkgs
 eq
 erdtree
 errcheck
@@ -495,6 +497,7 @@ hexists
 hfs
 hl
 hm
+homebrew
 hostname
 hotfix
 hotjoin
@@ -650,6 +653,7 @@ ndjson
 ne
 neotree
 neovim
+netbird
 nexon
 nfs
 ng
@@ -937,6 +941,7 @@ virtualenv
 virtualenvs
 virtualisation
 visualstar
+vlc
 vmacs
 vpc
 vpn

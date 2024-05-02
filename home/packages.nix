@@ -34,5 +34,8 @@
 
     # mise
     mise
+
+    # home-cluster
+    netbird-ui
   ];
 }
