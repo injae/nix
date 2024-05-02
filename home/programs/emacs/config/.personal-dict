@@ -1,4 +1,4 @@
-personal_ws-1.1 en 979 
+personal_ws-1.1 en 983 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -511,6 +511,7 @@ htop
 http
 https
 httpx
+hunspell
 iam
 ibm
 ibuffer
@@ -520,6 +521,7 @@ ifelse
 ifndef
 ignorecase
 iinjaeui
+imagemagick
 impl
 importpath
 indexs
@@ -599,6 +601,7 @@ lstrip
 lua
 macos
 magit
+mailutil
 maplestory
 marshaller
 matchable
@@ -963,6 +966,7 @@ xgroup
 xoxb
 xrange
 xread
+xwidgets
 yabai
 yaml
 yapf
