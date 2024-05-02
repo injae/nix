@@ -5,10 +5,6 @@
 (use-package python-mode :after exec-path-from-shell
     :mode (("\\.py\\'" . python-ts-mode)
            ("\\.wsgi$" . python-ts-mode))
-    :preface
-    (defun python-formatting-hook ()
-        (setq format-all-formatters '(("Python" ruff))))
-    :hook (python-base-mode . python-formatting-hook)
     ;:ensure-system-package ((pylint . "pip install pylint pylint-strict-informational")
     ;                        (mypy   . "pip install mypy")
     ;                        (flake8 . "pip install flake8")

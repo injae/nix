@@ -1,4 +1,4 @@
-personal_ws-1.1 en 971 
+personal_ws-1.1 en 974 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -324,6 +324,7 @@ dataplane
 datetime
 deadpool
 debian
+debugpy
 decls
 decltype
 declval
@@ -602,6 +603,7 @@ matcher
 matchmob
 matchtime
 matplotlib
+maturin
 maxdev
 mb
 mccabe
@@ -931,6 +933,7 @@ venv
 vertico
 viewpage
 vip
+virtualenv
 virtualenvs
 virtualisation
 visualstar

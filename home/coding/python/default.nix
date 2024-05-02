@@ -19,7 +19,6 @@
         # ---------------
       ])
     )
-    pipx
     poetry
     nodePackages.pyright
     ruff
