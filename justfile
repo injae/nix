@@ -1,7 +1,7 @@
 hostname:
     uname -n
 
-rebuild:
+switch:
     nix run .#activate
 
 update:
