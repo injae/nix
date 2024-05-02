@@ -3,11 +3,15 @@
   homebrew = {
     enable = true;
     casks = pkgs.callPackage ./casks.nix { };
+    onActivation = {
+      # autoUpdate = true;
+      cleanup = "zap";
+      # upgrade = true;
+    };
 
     taps = [
       "d12frosted/emacs-plus"
     ];
-
     brews = [
       {
         name = "emacs-plus@30";
