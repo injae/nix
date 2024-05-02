@@ -3,6 +3,7 @@
   home.packages = with pkgs; [
     # build-tool
     libtool
+    pkg-config
     gnumake
 
     #stdenv
