@@ -1,4 +1,4 @@
-personal_ws-1.1 en 966 
+personal_ws-1.1 en 966
 ABCDEFGHIJ
 ARGN
 Accu
@@ -331,6 +331,7 @@ defalias
 defaultdict
 defclass
 defconst
+defcustom
 defun
 defvar
 dejavu
@@ -650,6 +651,7 @@ ng
 nginx
 ngrok
 nieel
+nixd
 nixfmt
 nixos
 nixpkgs
