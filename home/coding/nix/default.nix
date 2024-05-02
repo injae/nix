@@ -4,6 +4,5 @@
     nixfmt-rfc-style
     nixpkgs-fmt
     nil
-    #nixd
   ];
 }

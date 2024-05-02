@@ -2,14 +2,14 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package nix-mode
+(use-package nix-mode :disabled
     :mode "\\.nix\\'"
     )
 
-(use-package nix-ts-mode :disabled
+(use-package nix-ts-mode :after exec-path-from-shell
     :mode "\\.nix\\'"
+    :hook (nix-ts-mode . lsp-deferred)
     )
-
 
 (use-package sops
   :config (global-sops-mode)

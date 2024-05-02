@@ -28,8 +28,7 @@
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
        (lsp-mode            . lsp-enable-which-key-integration)
        (rust-mode           . lsp-deferred)
-       (go-mode             . lsp-deferred)
-       (nix-ts-mode         . lsp-deferred))
+       (go-mode             . lsp-deferred))
 
 :config
     ;(lsp-mode)
