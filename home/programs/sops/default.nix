@@ -22,6 +22,7 @@ in
       "spotify/secret" = { };
       "discord/token" = { };
       "chatgpt/api-key" = { };
+      "secrets/embark-git" = { };
     };
   };
 

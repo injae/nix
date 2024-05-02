@@ -27,11 +27,13 @@ in
         rebase.autoStash = true;
         github.user = user.name;
       };
+      includes = [
+        { path = config.sops.secrets."secrets/embark-git".path; }
+      ];
     };
 
     gh = {
       enable = true;
-      settings.git_protocol = "ssh";
     };
 
     gh-dash = {
