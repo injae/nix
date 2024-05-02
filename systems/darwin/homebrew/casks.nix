@@ -3,9 +3,7 @@ _:
 [
   # Development Tools
   "homebrew/cask/docker"
-  "insomnia"
   "ngrok"
-  "postico"
   "visual-studio-code"
 
   # Communication Tools
@@ -14,10 +12,6 @@ _:
   "notion"
   "notion-calendar"
   "slack"
-
-  # Utility Tools
-  "appcleaner"
-  "syncthing"
 
   # Entertainment Tools
   "steam"
@@ -31,6 +25,5 @@ _:
 
   "alfred"
 
-  "netbirdio/tap/netbird-ui"
   "openlens"
 ]
