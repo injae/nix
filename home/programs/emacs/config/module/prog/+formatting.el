@@ -4,7 +4,7 @@
 
 (use-package format-all :after exec-path-from-shell
     :hook ((prog-mode . format-all-mode)
-              (format-all-mode . format-all-ensure-formatter))
+           (format-all-mode . format-all-ensure-formatter))
                                         ;:custom (format-all-formatters
                                         ;            '(("Python"
                                         ;                  ("ruff" "check" ".")
