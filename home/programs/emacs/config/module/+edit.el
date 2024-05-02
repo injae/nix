@@ -57,17 +57,10 @@
     :config (ws-butler-global-mode)
     )
 
-
-;(use-package aggressive-indent   :disabled
-;; https://github.com/Malabarba/aggressive-indent-mode
-;:config (electric-indent-mode nil)
-;;exclud mode
-;;(add-to-list 'aggresive-indent-excluded-modes 'html-mode)
-;)
-;
-;(use-package highlight-indentation  :disabled
-;:hook (prog-mode . highlight-indentation-mode)
-;)
+(use-package goggles
+    :hook ((prog-mode text-mode) . goggles-mode)
+    :config (setq-default goggles-pulse t)
+    )
 
 (provide '+edit)
 ;;; +edit.el ends here
