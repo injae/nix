@@ -26,6 +26,7 @@
         (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
             '(orderless)))
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
+       (before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
        (rust-mode           . lsp-deferred)
        (go-mode             . lsp-deferred))

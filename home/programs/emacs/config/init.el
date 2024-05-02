@@ -140,11 +140,4 @@
              ))
     )
 
-;; 개인 설정
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/private/"))
-;; (defvar private-config-file "~/.emacs.d/private/token.el")
-;; (when
-;;     (file-exists-p private-config-file)
-;;     (load-file private-config-file))
-
 ;;; init.el ends here

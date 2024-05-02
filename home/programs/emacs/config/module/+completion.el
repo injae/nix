@@ -250,7 +250,8 @@
     :defines corfu-margin-formatters
     :functions kind-icon-margin-formatter
     :custom (kind-icon-default-face 'corfu-default)
-    :config (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+    :config (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
+    )
 
 ;; Completion
 (use-package orderless
