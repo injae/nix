@@ -15,5 +15,6 @@ in
   #  sha256 = "sha256-mYJwTy2TNTOXbxVtmhXDv98F2ORhxRzL1S6yw1+1G20=";
   #}).terraform;
 
+  mise = flake.inputs.mise.packages.${system}.mise;
   # fuckport = self.callPackage ./fuckport.nix { };
 }

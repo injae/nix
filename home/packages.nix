@@ -31,5 +31,8 @@
 
     # bazel
     bazelisk
+
+    # mise
+    mise
   ];
 }
