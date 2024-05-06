@@ -4,14 +4,6 @@
     # General packages for development and system management
     sqlite
 
-    # container
-    docker
-    docker-compose
-    kubectl
-    k9s
-    ngrok
-    #netbird
-    #netbird-ui
 
     # devenv
     devenv

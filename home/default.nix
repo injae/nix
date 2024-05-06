@@ -17,6 +17,7 @@
           ./programs/font
           ./programs/alacritty
           ./programs/aspell
+          ./programs/container
           ./programs/emacs
           ./coding/nix
           ./coding/rust
