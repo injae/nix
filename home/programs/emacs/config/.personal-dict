@@ -1,4 +1,4 @@
-personal_ws-1.1 en 983 
+personal_ws-1.1 en 992 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -141,8 +141,10 @@ Qn
 Qv
 RPATH
 RW
+Redsync
 Relabelings
 RwLock
+SIGTERM
 SPC
 STORAGECLASS
 STREQUAL
@@ -479,6 +481,7 @@ golangci
 gomock
 gomodifytags
 gonum
+gopls
 gotest
 grafana
 groupby
@@ -572,6 +575,7 @@ korean
 kr
 kub
 kube
+kubectl
 kubernetes
 kustomize
 kwargs
@@ -620,6 +624,7 @@ middleware
 middlewares
 minibuffer
 mise
+mit
 mk
 mkdir
 mkstream
@@ -722,6 +727,7 @@ plackettLuceModel
 plantuml
 playerIDs
 plt
+pname
 polars
 polymode
 poolConfigs
@@ -774,10 +780,12 @@ qq
 qstore
 quantile
 randint
+raon
 readme
 recentf
 recv
 redis
+redsync
 remapper
 removeprefix
 repo
@@ -871,6 +879,7 @@ sv
 svc
 svr
 sys
+syscall
 sz
 taf
 teardown

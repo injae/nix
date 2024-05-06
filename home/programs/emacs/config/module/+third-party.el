@@ -8,7 +8,7 @@
              :main "simple-httpd.el")
     )
 
-(use-package smudge :after (exec-path-from-shell simple-httpd) :disabled
+(use-package smudge :after (exec-path-from-shell) :disabled
 :commands (smudge-controller-next-track smudge-controller-previous-track)
 :general (leader "sn" 'smudge-controller-next-track
                  "sp" 'smudge-controller-previous-track
