@@ -3,20 +3,28 @@
     templates = rec {
       default = basic;
       basic = {
-        path = ./basic;
         description = "Basic Flake";
+        path = ./basic;
       };
       rust = {
-        path = ./rust;
         description = "Rust Flake";
+        path = ./rust;
       };
       python = {
-        path = ./python;
         description = "Python Flake";
+        path = ./python;
       };
       poetry = {
-        path = ./python-poetry;
         description = "Python Poetry Flake";
+        path = ./python-poetry;
+      };
+      gomod2nix = {
+        description = "Go Mod to Nix Flake";
+        path = ./gomod2nix;
+      };
+      go = {
+        description = "Go Flake";
+        path = ./go;
       };
     };
   };
