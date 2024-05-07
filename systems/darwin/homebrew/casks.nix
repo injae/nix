@@ -3,7 +3,6 @@ _:
 [
   # Development Tools
   "homebrew/cask/docker"
-  "ngrok"
   "visual-studio-code"
 
   # Communication Tools
