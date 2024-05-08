@@ -2,8 +2,10 @@
 
 # get url from https://lazamar.co.uk/nix-versions/?channel=nixpkgs-unstable&package=
 # or           https://history.nix-packages.com/search?search=
+# get sha256 nix-prefetch-url
 self: super:
 let
+
   version-overlay = { rev, sha256 }:
     import (super.fetchFromGitHub { owner = "NixOS"; repo = "nixpkgs"; inherit rev sha256; })
       { inherit system; config.allowUnfree = true; };
@@ -15,6 +17,6 @@ in
   #  sha256 = "sha256-mYJwTy2TNTOXbxVtmhXDv98F2ORhxRzL1S6yw1+1G20=";
   #}).terraform;
 
-  mise = flake.inputs.mise.packages.${system}.mise;
+  #mise = flake.inputs.mise.packages.${system}.mise;
   # fuckport = self.callPackage ./fuckport.nix { };
 }

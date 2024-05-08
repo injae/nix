@@ -1,5 +1,4 @@
-;;; +search.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +search.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
@@ -9,13 +8,13 @@
 :config  (google-this-mode 1)
 )
 
-;; google translation
+;; google translation # need to migration
 (use-package go-translate
-:general (leader "ft" 'gts-do-translate)
+:general (leader "ft" 'gt-do-translate)
 :config
-    (setq gts-translate-list '(("en" "ko") ("jp" "ko")))
-    (setq gts-default-translator
-        (gts-translator
+    (setq gt-translate-list '(("en" "ko") ("jp" "ko")))
+    (setq gt-default-translator
+        (gt-translator
             :picker (gts-prompt-picker)
             :engines (list (gts-bing-engine) (gts-google-engine))
             :render (gts-posframe-pop-render)

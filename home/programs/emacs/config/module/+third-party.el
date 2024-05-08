@@ -20,7 +20,7 @@
     (setq smudge-transport 'connect)
 )
 
-(use-package elcord :after exec-path-from-shell
+(use-package elcord :after exec-path-from-shell :disabled
     :custom (elcord-display-buffer-details nil)
             (elcord-quiet t)
     :config

@@ -1,5 +1,4 @@
-;;; +bazel.el --- Bazel Configuration
-;; -*- lexical-binding: t -*-
+;;; +bazel.el --- Bazel Configuration -*- lexical-binding: t -*-
 ;;; Commentary:
 ;; This config start here
 ;;; Code:

@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package vterm :after (evil-collection exec-path-from-shell)
+(use-package vterm :after (evil-collection exec-path-from-shell projectile)
 :custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
@@ -43,6 +43,7 @@
 
 (use-package vterm-toggle :after vterm
     :general (leader "ut" 'vterm-toggle-cd :wk "toggle terminal")
+    :custom (vterm-toggle-projectile-root t)
     :config
     (setq vterm-toggle-fullscreen-p nil)
     (add-to-list 'display-buffer-alist
@@ -61,7 +62,7 @@
     )
 
 (use-package vterm-command :no-require t :ensure nil
-:after (vterm)
+:after (vterm projectile)
 :preface
 (defun run-in-vterm-kill (process event)
   "A process sentinel. Kill PROCESS's buffer if it is live."

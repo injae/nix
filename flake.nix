@@ -60,7 +60,6 @@
         ./share
         ./templates
       ];
-
       flake = {
         darwinConfigurations.iinjaeui-MacBookPro =
           self.nixos-flake.lib.mkMacosSystem
@@ -82,6 +81,7 @@
           "nix-index-database"
           "rust-overlay"
           "emacs-overlay"
+          "mise"
           "emacs-lsp-booster"
         ];
 

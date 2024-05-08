@@ -21,11 +21,11 @@
     #protobuf
     protobuf
 
-    # bazel
-    bazelisk
+    #bazel_7
+    #bazelisk
 
     # mise
-    mise
+    # rtx
 
     # home-cluster
     netbird-ui

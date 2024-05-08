@@ -14,9 +14,7 @@ in
       ignores = [ "*.swp" ];
       userName = user.name;
       userEmail = user.email;
-      lfs = {
-        enable = true;
-      };
+      lfs.enable = true;
       extraConfig = {
         init.defaultBranch = "main";
         core = {
@@ -27,17 +25,19 @@ in
         rebase.autoStash = true;
         github.user = user.name;
       };
-      includes = [
-        { path = config.sops.secrets."secrets/embark-git".path; }
-      ];
+      #includes = [
+      #  { path = config.sops.secrets."secrets/embark-git".path; }
+      #];
     };
-
     gh = {
       enable = true;
+      gitCredentialHelper = {
+        enable = true;
+        hosts = [
+          "https://github.com/EmbarkStudios"
+        ];
+      };
     };
-
-    gh-dash = {
-      enable = true;
-    };
+    gh-dash.enable = true;
   };
 }
