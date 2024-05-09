@@ -8,18 +8,24 @@ in
     self.darwinModules.default
     ./homebrew
     ./system.nix
-    ./dock
-    ./dock.nix
+    #./dock
+    #./dock.nix
   ];
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
 
+  environment.systemPackages = with pkgs; [ ];
+
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
     home = "/Users/${flake.config.people.myself}";
   };
+
+  # for dockerTools
+  nix.linux-builder.enable = true;
+
 
   # Enable fonts dir
   fonts.fontDir.enable = true;
@@ -27,4 +33,3 @@ in
   # Enable touch id for sudo
   security.pam.enableSudoTouchIdAuth = true;
 }
-  

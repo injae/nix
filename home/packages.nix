@@ -18,14 +18,9 @@
     taplo
 
 
-    #protobuf
     protobuf
 
-    #bazel_7
-    #bazelisk
-
-    # mise
-    # rtx
+    bazel_7
 
     # home-cluster
     netbird-ui

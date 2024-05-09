@@ -35,11 +35,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    mise = {
-      url = "github:jdx/mise";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -81,7 +76,6 @@
           "nix-index-database"
           "rust-overlay"
           "emacs-overlay"
-          "mise"
           "emacs-lsp-booster"
         ];
 

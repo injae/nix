@@ -20,7 +20,8 @@
 
 (use-package vterm-with-centaur-tab :no-require t :ensure nil :disabled
 :after (vterm-toggle centaur-tabs)
-:preface (defun vmacs-awesome-tab-buffer-groups ()
+:preface
+    (defun vmacs-awesome-tab-buffer-groups ()
           "`vmacs-awesome-tab-buffer-groups' control buffers' group rules. "
           (list
            (cond
@@ -35,14 +36,19 @@
                                      (buffer-name))
              "Emacs")
             (t "Common"))))
-        (defun vmacs-term-mode-p(&optional args)
-            (derived-mode-p 'eshell-mode 'term-mode 'shell-mode 'vterm-mode))
+    (defun vmacs-term-mode-p(&optional args)
+        (derived-mode-p 'eshell-mode 'term-mode 'shell-mode 'vterm-mode))
 :config (setq centaur-tabs-buffer-groups-function   'vmacs-awesome-tab-buffer-groups)
         (setq vterm-toggle--vterm-buffer-p-function 'vmacs-term-mode-p)
 )
 
 (use-package vterm-toggle :after vterm
-    :general (leader "ut" 'vterm-toggle-cd :wk "toggle terminal")
+    :preface
+    (defun custom-vterm-toggle-cd-show ()
+        (interactive)
+        (vterm-toggle-cd)
+        (vterm-toggle-insert-cd))
+    :general (leader "ut" 'custom-vterm-toggle-cd-show :wk "toggle terminal")
     :custom (vterm-toggle-projectile-root t)
     :config
     (setq vterm-toggle-fullscreen-p nil)

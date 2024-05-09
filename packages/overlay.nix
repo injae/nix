@@ -5,7 +5,6 @@
 # get sha256 nix-prefetch-url
 self: super:
 let
-
   version-overlay = { rev, sha256 }:
     import (super.fetchFromGitHub { owner = "NixOS"; repo = "nixpkgs"; inherit rev sha256; })
       { inherit system; config.allowUnfree = true; };

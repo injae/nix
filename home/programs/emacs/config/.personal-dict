@@ -1,4 +1,4 @@
-personal_ws-1.1 en 992 
+personal_ws-1.1 en 996 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -297,6 +297,7 @@ conf
 config
 const
 constexpr
+coreutils
 corfu
 cors
 cp
@@ -693,6 +694,7 @@ ok
 omitempty
 oneof
 openbsd
+openlens
 opensearch
 openshift
 openskill
@@ -728,6 +730,7 @@ plantuml
 playerIDs
 plt
 pname
+podman
 polars
 polymode
 poolConfigs
@@ -781,6 +784,7 @@ qstore
 quantile
 randint
 raon
+raycast
 readme
 recentf
 recv

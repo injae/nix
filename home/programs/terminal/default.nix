@@ -6,6 +6,9 @@
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
       initExtra = ''
+         # exclude direnv timeout warning
+         DIRENV_WARN_TIMEOUT=0
+
          export LANG="en_US.UTF-8" 
          export LANGUAGE="ko_KR.UTF-8"
 

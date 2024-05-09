@@ -15,7 +15,7 @@
       with pkgs;
       {
         devShells.default = mkShell {
-          packages = [ nixfmt ];
+          packages = [ nixfmt-rfc-style ];
           shellHook = ''
             echo "Hello, world!"
           '';

@@ -5,7 +5,9 @@
 
 ;;get number (string-to-number (nth 1 (elpaca-process-call "git" "log" "-n" "1" "--format=%cd" "--date=format:%Y%m%d")))
 ;; https://github.com/progfolio/elpaca/issues/222
-(setq elpaca-core-date 20240508)
+(if (not (eq system-type 'darwin))
+    (setq elpaca-core-date 20240508)
+    )
 
 (defvar elpaca-installer-version 0.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
