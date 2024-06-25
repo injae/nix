@@ -17,6 +17,7 @@
            (text-mode . copilot-mode)
            (copilot-mode . copilot-disable-warning))
     ;; :custom (copilot--indent-warning-printed-p t)
+    :custom (copilot-max-char -1) ;; disable the max char limit
     :bind (:map copilot-mode-map
                 ;; ("<tab>" . my/copilot-tab)
                 ;; ("C-<return>" . my/copilot-tab)

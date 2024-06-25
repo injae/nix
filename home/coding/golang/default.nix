@@ -6,6 +6,7 @@
     delve
     godef
     gotools
+    gotests
     golangci-lint
     golangci-lint-langserver
   ];

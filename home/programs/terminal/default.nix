@@ -47,7 +47,7 @@
 
         export SCOUT_DISABLE=1
 
-        export KUBECONFIG="$HOME/.kube/config"
+        export KUBECONFIG="$HOME/.kube/config:$HOME/.kube/embark"
 
         # emacs lsp-mode 
         export LSP_USE_PLISTS=true
@@ -57,6 +57,8 @@
 
         # cppm binary path
         export PATH="$PATH:$HOME/.cppm/bin"
+
+        export JAVA_HOME=${pkgs.jdk11.home}
       '';
     };
 

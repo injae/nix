@@ -16,7 +16,7 @@
     (setq debug-on-error nil) ; debug option
     ;; emacs gc setting
     (setq gc-cons-threshold (* 100 1000000)) ;; emacs speed up setting in 16GB RAM
-    (setq read-process-output-max (* 1024 1024)) ;; 1mb
+    (setq read-process-output-max (* 1024 1024 3)) ;; 1mb * 3
     ;(run-with-idle-timer 5 t 'garbage-collect)
 
     ;; scroll bar
@@ -125,9 +125,9 @@
 ;(use-package esup)
 ;(use-package bug-hunter)
 
-(use-package explain-pause-mode :disabled
+(use-package explain-pause-mode
     :ensure (:type git :host github :repo "lastquestion/explain-pause-mode")
-    :config (explain-pause-mode)
+    ;:config (explain-pause-mode)
 )
 ;; (setq warning-minimum-level :error)
 

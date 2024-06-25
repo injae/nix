@@ -20,10 +20,10 @@
         ControlPath ~/.ssh/master-%r@%n:%p
         ControlPersist no
   
-      #Host github.com
-      #    Hostname github.com
-      #    IdentitiesOnly yes
-      #    IdentityFile /Users/nieel/.ssh/id_github
+      Host github.com/injae
+          Hostname github.com
+          IdentitiesOnly yes
+          IdentityFile /Users/nieel/.ssh/id_github
 
       #HOST home-cluster-gateway
       #    HostName 172.30.1.53

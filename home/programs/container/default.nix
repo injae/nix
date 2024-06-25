@@ -9,6 +9,7 @@
     # k8s
     kubectl
     k9s
+    kustomize
 
     ngrok
   ];

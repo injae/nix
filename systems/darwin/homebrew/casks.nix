@@ -11,6 +11,8 @@ _:
   "notion"
   "notion-calendar"
   "slack"
+  "microsoft-teams"
+  "app-cleaner"
 
   # Entertainment Tools
   "steam"
@@ -25,4 +27,7 @@ _:
   "alfred"
 
   "openlens"
+
+  # Wine - Proton - Metal
+  "whisky"
 ]

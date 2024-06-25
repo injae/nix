@@ -14,13 +14,12 @@
         ppkg.sexpdata
         ppkg.six
         ppkg.setuptools
-        ppkg.paramiko
         ppkg.rapidfuzz
         # ---------------
       ])
     )
     poetry
-    nodePackages.pyright
+    pyright
     ruff
     ruff-lsp
     mypy

@@ -26,10 +26,6 @@ in
   # for dockerTools
   nix.linux-builder.enable = true;
 
-
-  # Enable fonts dir
-  fonts.fontDir.enable = true;
-
   # Enable touch id for sudo
   security.pam.enableSudoTouchIdAuth = true;
 }

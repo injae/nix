@@ -4,6 +4,7 @@
     # General packages for development and system management
     sqlite
 
+    openssl
 
     # devenv
     devenv
@@ -17,10 +18,13 @@
     # toml
     taplo
 
-
     protobuf
+    protoc-gen-rust
+    protoc-gen-go
 
-    bazel_7
+    bazel_7_1_2
+    bazel-buildtools
+    cargo-bazel
 
     # home-cluster
     netbird-ui

@@ -140,17 +140,21 @@
            (toml-mode . indent-bars-mode)
            (json-mode . indent-bars-mode)
            (jsonian-mode . indent-bars-mode))
-    :custom
-    ;; tree-sitter support
-    ;; (indent-bars-treesit-support t)
+  :custom
+  (indent-bars-treesit-support t)
+  (indent-bars-treesit-ignore-blank-lines-types '("module"))
+  ;; Add other languages as needed
+  (indent-bars-treesit-scope '((python function_definition class_definition for_statement
+	  if_statement with_statement while_statement)))
+  ;; wrap may not be needed if no-descend-list is enough
+  ;;(indent-bars-treesit-wrap '((python argument_list parameters ; for python, as an example
+  ;;				      list list_comprehension
+  ;;				      dictionary dictionary_comprehension
+  ;;				      parenthesized_expression subscript)))
     (indent-bars-no-descend-string t)
-    (indent-bars-treesit-ignore-blank-lines-types '("module"))
-    (indent-bars-treesit-wrap '((python argument_list parameters ; for python, as an example
-                        list list_comprehension
-                        dictionary dictionary_comprehension
-                        parenthesized_expression subscript)))
     
     :config
+    (require 'indent-bars-ts)
     (setq
         indent-bars-color '(highlight :face-bg t :blend 0.15)
         indent-bars-pattern "."
@@ -249,15 +253,15 @@
                     )))
 )
 
-(use-package spacious-padding
-    ;:custom
-    ;(spacious-padding-widths
-    ;    '( :internal-border-width 15
-    ;        :header-line-width 4
-    ;        :mode-line-width 6
-    ;        :tab-width 4
-    ;        :right-divider-width 30
-    ;        :scroll-bar-width 8))
+(use-package spacious-padding :disabled
+    :custom
+    (spacious-padding-widths
+        '( :internal-border-width 15
+            :header-line-width 4
+            :mode-line-width 6
+            :tab-width 4
+            :right-divider-width 30
+            :scroll-bar-width 8))
     :config (spacious-padding-mode)
     )
 

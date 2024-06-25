@@ -7,7 +7,7 @@
 :custom (lsp-inhibit-message t)
         (lsp-message-project-root-warning t)
         (lsp-enable-file-watchers nil)
-        (lsp-file-watch-threshold 10000)
+        (lsp-file-watch-threshold 1000)
         (lsp-enable-completion-at-point t)
         (lsp-prefer-flymake nil)
         (lsp-auto-guess-root t)
@@ -25,6 +25,8 @@
     (defun my/lsp-mode-setup-completion ()
         (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
             '(orderless)))
+
+
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
        (before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
@@ -53,6 +55,7 @@
                     "[/\\\\]build\\'"
                     ))
         (push dir lsp-file-watch-ignored-directories))
+
     (setq lsp-pyright-multi-root nil)
     (setq lsp-go-use-gofumpt t)
     (setq lsp-gopls-hover-kind "NoDocumentation")
@@ -74,6 +77,13 @@
           (fieldalignment . t)
           (useany . t)))
     (setq lsp-go-gopls-placeholders nil)
+    (defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")
+    (defun lsp-format-on-save-not-apheleia ()
+    "Format on save using LSP server, not `apheleia'."
+        (progn
+            (add-hook 'before-save-hook #'lsp-format-buffer nil 'local)
+            (setq-local apheleia-mode nil)))
+    (add-hook 'lsp-configure-hook #'lsp-format-on-save-not-apheleia)
 )
 
 (use-package lsp-ui :after lsp-mode

@@ -24,6 +24,7 @@
           ./coding/python
           ./coding/golang
           ./coding/javascript
+          ./coding/java
           ./coding/cpp
           ./coding/terraform
           ./packages.nix

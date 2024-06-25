@@ -32,6 +32,9 @@
       KakaoTalk = 869223134;
       MicrosoftRemoteDesktop = 1295203466;
       Yoink = 457622435;
+      MicrosoftOutlook = 985367838;
+      MicrosoftPowerPoint = 462062816;
+      MicrosoftWord = 462054704;
     };
   };
 }

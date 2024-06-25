@@ -34,8 +34,9 @@ in
       gitCredentialHelper = {
         enable = true;
         hosts = [
-          "https://github.com/EmbarkStudios"
-          "https://github.com/injae"
+          "https://github.com/injae/"
+          "https://github.com/EmbarkStudios/"
+          "https://github.com/nexon-public"
         ];
       };
     };

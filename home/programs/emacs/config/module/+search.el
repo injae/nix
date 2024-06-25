@@ -4,7 +4,7 @@
 
 (use-package google-this
 :commands google-this
-:general (leader "fw" '(google-this :wk "Search Word"))
+:general (leader "fw" '(google-this-symbol :wk "Search Word"))
 :config  (google-this-mode 1)
 )
 
@@ -12,12 +12,12 @@
 (use-package go-translate
 :general (leader "ft" 'gt-do-translate)
 :config
-    (setq gt-translate-list '(("en" "ko") ("jp" "ko")))
+    (setq gt-langs '(en ko jp))
     (setq gt-default-translator
         (gt-translator
-            :picker (gts-prompt-picker)
-            :engines (list (gts-bing-engine) (gts-google-engine))
-            :render (gts-posframe-pop-render)
+            :taker (gt-taker :text t)
+            :engines (list (gt-google-engine))
+            :render (gt-posframe-pop-render)
             ))
 )
 
