@@ -11,16 +11,27 @@ let
       { inherit system; config.allowUnfree = true; };
 in
 {
-  #bazel_7_1_2 = (super.bazel_7.override { version = "7.1.2"; }).overrideAttrs
+  bazel_7_1_2 = super.callPackage ./bazel_7.nix {
+    version = "7.1.2";
+    dist_sha = "sha256-nPbtIxnIFpGdlwFe720MWULNGu1I4DxzuggV2VPtYas=";
+    lock_sha = "sha256:0xjxszkgxab2gp9pqy6r7bpf3abqvmrv4gkcdlnwdi0w7j6w986f";
+  };
+
+  bazel_7_2_0 = super.callPackage ./bazel_7.nix {
+    version = "7.2.0";
+    dist_sha = "sha256-IHDgPZfE9e4tJFgy140XoY+KTbBmn3KjYv8PhPsJHuE=";
+    lock_sha = "sha256-dJEP9ej08KpNVpMPmndjOXRkO/vXYa0m0WqdjCsoFPU=";
+  };
+  #bazel_7_2_0 = (super.bazel_7.override { version = "7.2.0"; }).overrideAttrs
   #  (rec {
-  #    version = "7.1.2";
+  #    version = "7.2.0";
   #    src = super.fetchurl {
   #      url = "https://github.com/bazelbuild/bazel/releases/download/${version}/bazel-${version}-dist.zip";
-  #      hash = "sha256-nPbtIxnIFpGdlwFe720MWULNGu1I4DxzuggV2VPtYas=";
+  #      hash = "sha256-IHDgPZfE9e4tJFgy140XoY+KTbBmn3KjYv8PhPsJHuE=";
   #    };
   #    lockfile = super.fetchurl {
   #      url = "https://raw.githubusercontent.com/bazelbuild/bazel/release-${version}/MODULE.bazel.lock";
-  #      sha256 = "sha256:0xjxszkgxab2gp9pqy6r7bpf3abqvmrv4gkcdlnwdi0w7j6w986f";
+  #      sha256 = "sha256-dJEP9ej08KpNVpMPmndjOXRkO/vXYa0m0WqdjCsoFPU=";
   #    };
   #  });
   # example
