@@ -22,7 +22,7 @@
     protoc-gen-rust
     protoc-gen-go
 
-    bazel_7_1_2
+    bazel_7
     bazel-buildtools
     cargo-bazel
 
