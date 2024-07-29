@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1022 
+personal_ws-1.1 en 1027 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -96,6 +96,7 @@ KANIKO
 KRPC
 KST
 KakaoTalk
+Kustomization
 LBD
 LDFLAGS
 Laptime
@@ -135,6 +136,8 @@ Params
 PartyMemberIDs
 PartyMemberInternalIDs
 Pdf
+Pipelined
+Pipeliner
 PlackettLuce
 PlackettLuceModel
 PlackettLuceModelKey
@@ -300,6 +303,7 @@ cnt
 codec
 codecov
 coef
+colima
 commenter
 compat
 compatibilities
@@ -658,6 +662,7 @@ mmmetrics
 mmmiddleware
 mmob
 mmobdump
+mmobtype
 mmplugin
 mmpoolconfig
 mmr

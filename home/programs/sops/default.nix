@@ -22,7 +22,9 @@ in
       "spotify/secret" = { };
       "discord/token" = { };
       "chatgpt/api-key" = { };
-      "secrets/embark-git" = { };
+      "secrets/aws-credentials" = {
+        path = "${home-dir}/.aws/credentials";
+      };
     };
   };
 

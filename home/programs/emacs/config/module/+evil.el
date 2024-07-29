@@ -15,7 +15,7 @@
     (setq-default evil-kill-on-visual-paste nil)
     ;; visual mode 'p' command update clipboard problem fix
     (evil-mode)
-    (evil-ex-define-cmd "k" 'kill-this-buffer)
+    (evil-ex-define-cmd "k" 'kill-current-buffer)
     (fset 'evil-visual-update-x-selection 'ignore)
 )
 

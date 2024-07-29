@@ -13,7 +13,7 @@
     php
 
     # yaml
-    yaml-language-server
+    #yaml-language-server
 
     # toml
     taplo
@@ -22,11 +22,12 @@
     protoc-gen-rust
     protoc-gen-go
 
-    bazel_7
-    bazel-buildtools
+    #bazel_7
     cargo-bazel
 
     # home-cluster
     netbird-ui
+
+    awscli2
   ];
 }

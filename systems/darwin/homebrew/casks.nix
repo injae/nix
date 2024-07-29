@@ -28,6 +28,10 @@ _:
 
   "openlens"
 
+  "deepl"
+
   # Wine - Proton - Metal
   "whisky"
+
+  "logitech-g-hub"
 ]

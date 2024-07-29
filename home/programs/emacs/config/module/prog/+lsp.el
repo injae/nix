@@ -314,7 +314,7 @@
                  "pp" '(xref-go-back                    :wk "lsp pop")
                  "fd" '(lsp-key-map-find-definition     :wk "lsp define")
                  "fT" '(lsp-key-map-find-typeDefinition :wk "lsp type")
-
+                 "fi" '(lsp-key-map-find-implementation :wk "lsp implementation")
                  "fr" '(lsp-key-map-find-references     :wk "lsp ref")
                  "lr" '(lsp-key-map-rename              :wk "lsp rename"))
     )

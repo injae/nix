@@ -25,7 +25,6 @@
   (define-key evil-outer-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj ("conditional.outer" "loop.outer")))
   )
 
-
 ;; (use-package ts-fold :disabled
 ;;     :ensure (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold")
 ;;     :general (leader "<tab>" #'ts-fold-toggle)

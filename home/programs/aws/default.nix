@@ -1,6 +1,6 @@
 { pkgs, config, ... }:
 {
-  programs.awscli = {
-    enable = true;
-  };
+  #programs.awscli = {
+  #  enable = true;
+  #};
 }

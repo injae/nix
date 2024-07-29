@@ -15,8 +15,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    lix-module = {
+      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url = "github:srid/nixos-flake";
+    nixos-flake.url = "github:srid/nixos-flake?rev=6335b2f05f007b95ac2438b0a55498f9f20e73f7";
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
 
@@ -56,13 +61,16 @@
         ./templates
       ];
       flake = {
-        darwinConfigurations.iinjaeui-MacBookPro =
-          self.nixos-flake.lib.mkMacosSystem
-            ./systems/darwin;
-
-        nixosConfigurations.nixos =
-          self.nixos-flake.lib.mkLinuxSystem
-            ./systems/nixos-wsl;
+        darwinConfigurations = {
+          nieel-m3 =
+            self.nixos-flake.lib.mkMacosSystem
+              ./systems/darwin;
+        };
+        nixosConfigurations = {
+          nixos =
+            self.nixos-flake.lib.mkLinuxSystem
+              ./systems/nixos-wsl;
+        };
       };
 
       perSystem = { self', pkgs, lib, config, ... }: {
@@ -72,7 +80,7 @@
           "nixpkgs"
           "home-manager"
           "nix-darwin"
-          "nixos-flake"
+          #"nixos-flake"
           "nix-index-database"
           "rust-overlay"
           "emacs-overlay"

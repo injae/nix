@@ -6,6 +6,7 @@
         home.stateVersion = "23.11";
         imports = [
           inputs.nix-index-database.hmModules.nix-index
+          inputs.lix-module.nixosModules.default
           inputs.sops-nix.homeManagerModules.sops
           ./programs/sops
           ./programs/aws
@@ -26,6 +27,7 @@
           ./coding/javascript
           ./coding/java
           ./coding/cpp
+          ./coding/lua
           ./coding/terraform
           ./packages.nix
         ];

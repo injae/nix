@@ -29,7 +29,7 @@
             src = ./.;
             hooks = {
               nixpkgs-fmt.enable = true;
-              ruff.enable = true;
+              ruff.check = true;
             };
           };
         };

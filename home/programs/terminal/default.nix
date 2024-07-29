@@ -1,6 +1,12 @@
 { pkgs, ... }:
 {
   programs = {
+    nix-index = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+    nix-index-database.comma.enable = true;
+    command-not-found.enable = false;
     zsh = {
       enable = true;
       autosuggestion.enable = true;
@@ -33,12 +39,14 @@
         if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
             alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
         fi
-
         vterm_prompt_end() {
             vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
         }
         setopt PROMPT_SUBST
         PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+
+        # nix-index
+        source ${pkgs.nix-index}/etc/profile.d/command-not-found.sh
       '';
       envExtra = ''
         export PATH=$PATH:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin/:/usr/local/bin
@@ -58,7 +66,7 @@
         # cppm binary path
         export PATH="$PATH:$HOME/.cppm/bin"
 
-        export JAVA_HOME=${pkgs.jdk11.home}
+        export JAVA_HOME=${pkgs.jdk.home}
       '';
     };
 
@@ -72,12 +80,6 @@
       enable = true;
       #settings = { };
     };
-    nix-index = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-    nix-index-database.comma.enable = true;
-
     zoxide = {
       enable = true;
       enableZshIntegration = true;

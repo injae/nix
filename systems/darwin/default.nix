@@ -24,7 +24,24 @@ in
   };
 
   # for dockerTools
-  nix.linux-builder.enable = true;
+  nix.linux-builder = {
+    #enable = false;
+    enable = true;
+    ephemeral = true;
+    maxJobs = 4;
+    #config = {
+    #  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+    #  virtualisation = {
+    #    #darwin-builder = {
+    #    #  diskSize = 40 * 1024;
+    #    #  memorySize = 8 * 1024;
+    #    #};
+    #    cores = 6;
+    #  };
+    #};
+    #systems = [ "aarch64-linux" ];
+    #supportedFeatures = ["benchmark" "big-parallel" "kvm"];
+  };
 
   # Enable touch id for sudo
   security.pam.enableSudoTouchIdAuth = true;

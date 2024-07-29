@@ -1,9 +1,8 @@
-;;; +lua.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +lua.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
-(use-package lua-mode :after lsp-mode :disabled
+(use-package lua-mode :after lsp-mode
     ;:ensure-system-package (luafmt . "npm install --global lua-fmt")
     :mode ("\\.lua\\'" . lua-mode)
     :hook (lua-mode . lsp-deferred)

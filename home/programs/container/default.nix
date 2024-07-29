@@ -3,6 +3,7 @@
   home.packages = with pkgs; [
     # docker
     docker
+    docker-buildx
     docker-compose
     dive
 

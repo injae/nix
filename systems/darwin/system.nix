@@ -6,6 +6,8 @@
     # checks.verifyNixPath = false;
 
     defaults = {
+      screensaver.askForPasswordDelay = 10;
+
       NSGlobalDomain = {
         AppleShowAllExtensions = true;
         ApplePressAndHoldEnabled = false;
