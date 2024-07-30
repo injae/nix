@@ -32,7 +32,7 @@ in
     let
       toName = name: builtins.replaceStrings [ "/" "-" ] [ "_" "_" ] (lib.toUpper name);
       toPath = name: secrets."${name}".path;
-      convertSecretEnv = name: "export ${toName name}=$(cat ${toPath name})";
+      convertSecretEnv = name: "export ${toName name}=$(cat ${ toPath name})";
       filterSecrets = name: !(lib.hasPrefix "secrets" name);
     in
     builtins.foldl' (acc: elm: acc + elm + "\n") ""
