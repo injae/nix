@@ -13,7 +13,7 @@
     php
 
     # yaml
-    #yaml-language-server
+    yaml-language-server
 
     # toml
     taplo
