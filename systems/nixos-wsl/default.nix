@@ -1,9 +1,8 @@
-{ pkgs, flake, config, lib, ... }:
+{ pkgs, flake, config, ... }:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
   user = flake.config.people.myself;
-  home-dir = "/home/${user}";
 in
 {
   imports = [
@@ -20,7 +19,6 @@ in
     startMenuLaunchers = true;
     wslConf.interop.appendWindowsPath = false;
   };
-
   boot.tmp.cleanOnBoot = true;
 
   # docker setting
@@ -29,6 +27,13 @@ in
     enable = true;
     setSocketVariable = true;
   };
+
+  virtualisation.incus = {
+    enable = true;
+    preseed = { };
+  };
+  networking.nftables.enable = true;
+
 
   programs.zsh.enable = true;
   programs.nix-ld = {
@@ -43,6 +48,7 @@ in
     wslu
     xdg-utils
   ];
+
   environment.variables.JAVAX_NET_SSL_TRUSTSTORE =
     let
       caBundle = config.environment.etc."ssl/certs/ca-bundle.crt".source;
@@ -64,18 +70,15 @@ in
       system = pkgs.system;
     };
   environment.variables.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-  #services.emacs.enable = true;
 
   users.users.${user} = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" "networkmanager" "docker" ];
+    extraGroups = [ "wheel" "networkmanager" "docker" "incus-admin" ];
   };
 
   security = {
     sudo.enable = true;
-    pki.certificateFiles = [
-    ];
+    pki.certificateFiles = [ ];
   };
-
 }
