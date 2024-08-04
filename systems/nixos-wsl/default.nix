@@ -31,10 +31,11 @@ in
   };
 
   programs.zsh.enable = true;
-  #programs.nix-ld.enable = true;
-  #programs.nix-ld.libraries = with pkgs; [
-  #  bazelisk
-  #];
+  programs.nix-ld = {
+    enable = true;
+    package = pkgs.nix-ld-rs;
+    #libraries = with pkgs; [ bazelisk ];
+  };
 
   environment.systemPackages = with pkgs; [
     gccStdenv
