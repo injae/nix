@@ -3,11 +3,12 @@
   flake = {
     homeModules = {
       common = {
-        home.stateVersion = "23.11";
+        home.stateVersion = "24.11";
         imports = [
           inputs.nix-index-database.hmModules.nix-index
           inputs.lix-module.nixosModules.default
           inputs.sops-nix.homeManagerModules.sops
+          inputs.vscode-server.homeModules.default
           ./programs/sops
           ./programs/aws
           ./programs/gcp
