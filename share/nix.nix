@@ -26,7 +26,6 @@
     in
     {
       nixPath = [ "nixpkgs=${nixpkgs}" ]; # Enables use of `nix-shell -p ...` etc
-      channel.enable = false; # remove nix-channel related tools & configs, we use flakes instead.
       registry.nixpkgs.flake = nixpkgs; # Make `nix shell` etc use pinned nixpkgs
 
       settings = {

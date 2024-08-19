@@ -14,7 +14,7 @@
     ];
     brews = [
       "bazelisk"
-      #"bash"
+      "bash"
       {
         name = "emacs-plus@31";
         args = [

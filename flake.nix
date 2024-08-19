@@ -21,7 +21,7 @@
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url = "github:srid/nixos-flake?rev=6335b2f05f007b95ac2438b0a55498f9f20e73f7";
+    nixos-flake.url = "github:srid/nixos-flake";
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
 

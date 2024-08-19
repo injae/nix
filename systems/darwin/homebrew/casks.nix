@@ -34,4 +34,7 @@ _:
   "whisky"
 
   "logitech-g-hub"
+
+  # VPN
+  "tailscale"
 ]

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1028 
+personal_ws-1.1 en 1031 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -680,6 +680,7 @@ mut
 mutex
 mypy
 nameof
+nameservers
 namespace
 namespaces
 nano
@@ -725,6 +726,7 @@ openmatch
 opensearch
 openshift
 openskill
+openssh
 ord
 orderless
 orm
@@ -917,6 +919,7 @@ sys
 syscall
 sz
 taf
+tailscale
 teardown
 terraform
 testutil

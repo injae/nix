@@ -29,5 +29,8 @@
     netbird-ui
 
     awscli2
+
+    # monitor Internet traffic
+    sniffnet
   ];
 }

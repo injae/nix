@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   programs = {
+
     nix-index = {
       enable = true;
       enableZshIntegration = true;
@@ -15,7 +16,7 @@
          # exclude direnv timeout warning
          DIRENV_WARN_TIMEOUT=0
 
-         export LANG="en_US.UTF-8" 
+         export LANG="en_US.UTF-8"
          export LANGUAGE="ko_KR.UTF-8"
 
          export EDITOR=emacsclient
@@ -23,7 +24,7 @@
          # emacs vterm
          autoload -U add-zsh-hook
          add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
-         
+
          vterm_printf(){
              if [ -n "$TMUX" ] && ([ "$\{TERM%%-*}" = "tmux" ] || [ "$\{TERM%%-*}" = "screen" ] ); then
                  # Tell tmux to pass the escape sequences through
@@ -55,9 +56,9 @@
 
         export SCOUT_DISABLE=1
 
-        export KUBECONFIG="$HOME/.kube/config:$HOME/.kube/embark"
+        export KUBECONFIG="$HOME/.kube/config:$HOME/.kube/embark:$HOME/.kube/home"
 
-        # emacs lsp-mode 
+        # emacs lsp-mode
         export LSP_USE_PLISTS=true
 
         # rust sccache setting
@@ -65,6 +66,9 @@
 
         # cppm binary path
         export PATH="$PATH:$HOME/.cppm/bin"
+
+        # krew
+        export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
         export JAVA_HOME=${pkgs.jdk.home}
       '';

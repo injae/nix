@@ -9,8 +9,10 @@
 
     # k8s
     kubectl
+    krew
     k9s
     kustomize
+    kubernetes-helm
 
     ngrok
   ];

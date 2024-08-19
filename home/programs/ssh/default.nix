@@ -65,7 +65,11 @@
           HostName 192.168.0.6
           User ansible
           ProxyJump home-cluster-gateway
-          IdentityFile ~/.ssh/ansible-ssh-key  
+          IdentityFile ~/.ssh/ansible-ssh-key
+
+      HOST rpi5-01.home
+          HostName rpi5-01.local
+          ProxyJump home-cluster-master
     '';
   };
 }

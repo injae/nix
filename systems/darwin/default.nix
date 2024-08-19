@@ -15,7 +15,6 @@ in
 
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
-
   environment.systemPackages = with pkgs; [ ];
 
   users.users.${flake.config.people.myself} = {
@@ -29,18 +28,6 @@ in
     enable = true;
     ephemeral = true;
     maxJobs = 4;
-    #config = {
-    #  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-    #  virtualisation = {
-    #    #darwin-builder = {
-    #    #  diskSize = 40 * 1024;
-    #    #  memorySize = 8 * 1024;
-    #    #};
-    #    cores = 6;
-    #  };
-    #};
-    #systems = [ "aarch64-linux" ];
-    #supportedFeatures = ["benchmark" "big-parallel" "kvm"];
   };
 
   # Enable touch id for sudo
