@@ -1,11 +1,11 @@
 hostname:
     uname -n
 
-switch:
-    nix run .#activate
+switch +ARGS="":
+    nix run .#activate {{ARGS}}
 
 update:
-    nix run .#update
+    nix flake update
 
 make-key:
     ssh-keygen
