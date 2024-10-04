@@ -6,7 +6,6 @@
 ;;get number (string-to-number (nth 1 (elpaca-process-call "git" "log" "-n" "1" "--format=%cd" "--date=format:%Y%m%d")))
 ;; https://github.com/progfolio/elpaca/issues/222
 (if (not (eq system-type 'darwin))
-    (setq elpaca-core-date 20240508)
     )
 
 (defvar elpaca-installer-version 0.7)
@@ -80,7 +79,6 @@
     :config (direnv-mode)
     )
 
-
 (use-package agenix :after exec-path-from-shell)
 
 (use-package envrc
@@ -95,7 +93,6 @@
     (add-to-list 'recentf-exclude no-littering-etc-directory)
     (setq auto-save-file-name-transforms `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
     )
-
 
 ;; custom lisp library
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/"))

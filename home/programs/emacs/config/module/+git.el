@@ -48,15 +48,26 @@
 ;:hook (emacs-startup . global-blamer-mode)
 )
 
-(use-package difftastic
-    :config
-    (eval-after-load 'magit-diff
-        '(transient-append-suffix 'magit-diff '(-1 -1)
-        [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-            ("S" "Difftastic show" difftastic-magit-show)]))
+(use-package difftastic :after magit
+  :bind (:map magit-blame-read-only-mode-map
+         ("D" . difftastic-magit-show)
+         ("S" . difftastic-magit-show))
+  :config
+  (eval-after-load 'magit-diff
+    '(transient-append-suffix 'magit-diff '(-1 -1)
+       [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+           ("S" "Difftastic show" difftastic-magit-show)]))
     )
 
 (use-package git-timemachine)
+
+(use-package consult-gh :after consult
+    :ensure (consult-gh :files (:defaults "*.el"))
+    :config
+        (consult-gh-embark-mode +1)
+        (consult-gh-forge-mode +1)
+    )
+
 
 (provide '+git)
 ;;; +git.el ends here

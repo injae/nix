@@ -9,6 +9,11 @@
 (defvar *is-wsl*     (eq (string-match "Linux.*microsoft.*WSL2.*Linux" (shell-command-to-string "uname -a")) 0))
 (defvar *is-unix*    (or *is-linux* (eq system-type 'usg-unix-v) (eq system-type 'berkeley-unix)))
 
+(use-package tool-bar-mode :ensure nil :no-require t
+    :config
+    (tool-bar-mode -1)
+)
+
 (use-package emacs :ensure nil
     :config
     (setq ad-redefinition-action 'accept)

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1031 
+personal_ws-1.1 en 1037 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -12,6 +12,7 @@ Asc
 Asm
 Async
 Attr
+Authentik
 Avgs
 Awaitable
 BAZEL
@@ -447,6 +448,7 @@ fargate
 fastapi
 fc
 fd
+fetchpatch
 fetchurl
 ffa
 fi
@@ -536,6 +538,7 @@ htop
 http
 https
 httpx
+hubble
 hunspell
 iam
 ibm
@@ -568,6 +571,7 @@ isinstance
 iso
 isort
 ispell
+issubclass
 istio
 iter
 iterable
@@ -901,6 +905,7 @@ stdout
 storageclass
 str
 strconv
+streamlit
 stretchr
 strftime
 stringp
@@ -931,6 +936,7 @@ tflint
 thirdparty
 threadpool
 timedelta
+timemachine
 titlebar
 tl
 tls

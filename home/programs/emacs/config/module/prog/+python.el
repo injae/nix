@@ -36,7 +36,7 @@
     (add-hook 'python-base-mode-hook 'pet-flycheck-setup)
     )
 
-(use-package flymake-ruff :after (python eglot)
+(use-package flymake-ruff :after (python eglot) :disabled
     :hook (python-base-mode . flymake-ruff-load))
 
 (use-package poetry :after python :disabled
@@ -49,7 +49,7 @@
     :hook (python-base-mode .
               (lambda ()
                   (require 'lsp-pyright)
-                  (require 'lsp-ruff-lsp)
+                  (require 'lsp-ruff)
                   (lsp-deferred)))
     )
 
