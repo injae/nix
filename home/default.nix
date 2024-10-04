@@ -1,42 +1,27 @@
 { self, inputs, ... }:
+let
+  excludes = [
+    "default.nix"
+    "mac-app-util.nix"
+    "darwin-packages.nix"
+  ];
+in
 {
   flake = {
     homeModules = {
       common = {
         home.stateVersion = "24.11";
-        imports = [
-          inputs.nix-index-database.hmModules.nix-index
-          inputs.lix-module.nixosModules.default
-          inputs.sops-nix.homeManagerModules.sops
-          inputs.vscode-server.homeModules.default
-          ./programs/sops
-          ./programs/aws
-          ./programs/gcp
-          ./programs/git
-          ./programs/neovim
-          ./programs/terminal
-          ./programs/ssh
-          ./programs/font
-          ./programs/alacritty
-          ./programs/aspell
-          ./programs/container
-          ./programs/emacs
-          ./coding/nix
-          ./coding/rust
-          ./coding/python
-          ./coding/golang
-          ./coding/javascript
-          ./coding/java
-          ./coding/cpp
-          ./coding/lua
-          ./coding/terraform
-          ./packages.nix
-        ];
+        imports = 
+          with builtins;
+                map
+                  (fn: ./${fn})
+                  (filter (fn: !(elem fn excludes)) (attrNames (readDir ./.)));
       };
 
       # home-manager config specific to NixOS
       common-linux = {
         imports = [
+          inputs.lix-module.nixosModules.default
           self.homeModules.common
         ];
       };
@@ -44,6 +29,7 @@
       # home-manager config specifi to Darwin
       common-darwin = {
         imports = [
+          inputs.lix-module.nixosModules.default
           self.homeModules.common
           ./mac-app-util.nix
           ./darwin-packages.nix

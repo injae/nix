@@ -16,19 +16,22 @@
     };
 
     lix-module = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.91.0.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url = "github:srid/nixos-flake";
+    nixos-flake.url = "github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
 
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
 
-    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix = {
+      url ="github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -48,11 +51,17 @@
       url = "github:slotThe/emacs-lsp-booster-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    vscode-server.url = "github:nix-community/nixos-vscode-server";
+    #vscode-server.url = "github:nix-community/nixos-vscode-server";
   };
-  outputs = inputs@{ self, ... }:
+  outputs =
+    inputs@{ self, ... }:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
       imports = [
         inputs.treefmt-nix.flakeModule
         inputs.nixos-flake.flakeModule
@@ -63,44 +72,41 @@
       ];
       flake = {
         darwinConfigurations = {
-          nieel-m3 =
-            self.nixos-flake.lib.mkMacosSystem
-              ./systems/darwin;
+          nieel-m3 = self.nixos-flake.lib.mkMacosSystem ./systems/darwin;
         };
         nixosConfigurations = {
-          nixos =
-            self.nixos-flake.lib.mkLinuxSystem
-              ./systems/nixos-wsl;
+          nixos = self.nixos-flake.lib.mkLinuxSystem ./systems/nixos-wsl;
         };
       };
 
       perSystem = { self', pkgs, lib, config, ... }: {
-        # Flake inputs we want to update periodically
-        # Run: `nix run .#update`.
-        nixos-flake.primary-inputs = [
-          "nixpkgs"
-          "home-manager"
-          "nix-darwin"
-          #"nixos-flake"
-          "nix-index-database"
-          "rust-overlay"
-          "emacs-overlay"
-          "emacs-lsp-booster"
-        ];
-
-        treefmt.config = {
-          projectRootFile = "flake.nix";
-          programs.nixpkgs-fmt.enable = true;
-        };
-        formatter = config.treefmt.build.wrapper;
-
-        packages.default = self'.packages.activate;
-        devShells.default = pkgs.mkShell {
-          inputsFrom = [ config.treefmt.build.devShell ];
-          packages = with pkgs; [
-            just
+          # Flake inputs we want to update periodically
+          # Run: `nix run .#update`.
+          nixos-flake.primary-inputs = [
+            "nixpkgs"
+            "home-manager"
+            "nix-darwin"
+            "nixos-flake"
+            "nix-index-database"
+            "rust-overlay"
+            "emacs-overlay"
+            "emacs-lsp-booster"
           ];
+
+          treefmt = {
+            projectRootFile = "flake.nix";
+            programs = {
+              nixfmt.enable = true;
+            };
+          };
+          formatter = config.treefmt.build.wrapper;
+          packages.default = self'.packages.activate;
+          devShells.default = pkgs.mkShell {
+            inputsFrom = [ config.treefmt.build.devShell ];
+            packages = with pkgs; [
+              just
+            ];
+          };
         };
-      };
     };
 }

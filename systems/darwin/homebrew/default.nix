@@ -4,9 +4,9 @@
     enable = true;
     casks = pkgs.callPackage ./casks.nix { };
     onActivation = {
-      #autoUpdate = true;
-      #cleanup = "zap";
-      #upgrade = true;
+      autoUpdate = true;
+      cleanup = "zap";
+      upgrade = true;
     };
 
     taps = [
@@ -15,16 +15,16 @@
     brews = [
       "bazelisk"
       "bash"
-      {
-        name = "emacs-plus@31";
-        args = [
-          "with-mailutil"
-          "with-xwidgets"
-          "with-imagemagick"
-          "with-native-comp"
-          "with-poll"
-        ];
-      }
+      #{
+      #  name = "emacs-plus@31";
+      #  args = [
+      #    "with-mailutil"
+      #    "with-xwidgets"
+      #    "with-imagemagick"
+      #    "with-native-comp"
+      #    "with-poll"
+      #  ];
+      #}
     ];
 
     # $ nix shell nixpkgs#mas

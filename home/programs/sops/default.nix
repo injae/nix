@@ -6,6 +6,10 @@ let
     then "/Users/${user}" else "/home/${user}";
 in
 {
+  imports = with flake.inputs; [
+    sops-nix.homeManagerModules.sops
+  ];
+
   home.packages = with pkgs; [
     sops
     age

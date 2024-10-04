@@ -15,7 +15,7 @@ in
 
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
-  environment.systemPackages = with pkgs; [ ];
+  environment.systemPackages = [];
 
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
@@ -24,7 +24,6 @@ in
 
   # for dockerTools
   nix.linux-builder = {
-    #enable = false;
     enable = true;
     ephemeral = true;
     maxJobs = 4;

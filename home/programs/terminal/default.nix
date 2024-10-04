@@ -1,7 +1,10 @@
-{ pkgs, ... }:
+{ flake, pkgs, ... }:
 {
-  programs = {
+  imports = with flake.inputs; [
+     nix-index-database.hmModules.nix-index
+  ];
 
+  programs = {
     nix-index = {
       enable = true;
       enableZshIntegration = true;
@@ -109,6 +112,7 @@
   home.packages = with pkgs; [
     just
     ripgrep
+    ripgrep-all
     fd
     coreutils
     killall
@@ -136,5 +140,6 @@
     ps = "procs";
     top = "htop";
     tree = "erd -I";
+    kube = "kubectl";
   };
 }

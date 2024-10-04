@@ -9,9 +9,6 @@
     # devenv
     devenv
 
-    # php
-    php
-
     # yaml
     yaml-language-server
 

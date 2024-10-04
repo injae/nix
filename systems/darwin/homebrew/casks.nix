@@ -28,8 +28,6 @@ _:
 
   "openlens"
 
-  "deepl"
-
   # Wine - Proton - Metal
   "whisky"
 
