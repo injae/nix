@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: k8s-namespace
+# key: ns
+# --
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $1
+
