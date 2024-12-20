@@ -7,9 +7,15 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    mac-app-util.url = "github:hraban/mac-app-util";
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    nixos-wsl.url = "github:nix-community/NixOs-WSL/main";
+    nixos-wsl = {
+      url="github:nix-community/NixOs-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,12 +27,17 @@
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url = "github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
+    nixos-flake.url="github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
 
-    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix = {
+      url="github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    nix-index-database.url = "github:nix-community/nix-index-database";
-    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     sops-nix = {
       url ="github:Mic92/sops-nix";

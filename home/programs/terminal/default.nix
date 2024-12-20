@@ -130,6 +130,7 @@
     du-dust
     erdtree
     bottom
+    bash-language-server
   ];
 
   home.shellAliases = {

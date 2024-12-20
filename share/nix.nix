@@ -37,7 +37,7 @@
           "nixos-test"
         ] else [ "kvm" ]);
 
-        experimental-features = [ "nix-command" "flakes" "repl-flake" ];
+        experimental-features = [ "nix-command" "flakes" ];
         # I don't have an Intel mac.
         extra-platforms = lib.mkIf pkgs.stdenv.isDarwin "aarch64-darwin x86_64-darwin";
         # Nullify the registry for purity.

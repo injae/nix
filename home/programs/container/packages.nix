@@ -5,7 +5,10 @@
     docker
     docker-buildx
     docker-compose
+    docker-credential-helpers
     dive
+
+    regctl
 
     # k8s
     kubectl

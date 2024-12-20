@@ -1,5 +1,4 @@
-;;; +docker.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +docker.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
@@ -30,7 +29,9 @@
     )
 (use-package kubel-evil :after (kubel evil))
 
-
+(use-package k8s-mode :after yasnippet
+    :hook (k8s-mode . yas-minor-mode)
+    )
 
 (use-package kubedoc)
 

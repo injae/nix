@@ -3,10 +3,17 @@
 ;; This config start here
 ;;; Code:
 
+;; Waring: Unable to determine elpaca-core-date
 ;;get number (string-to-number (nth 1 (elpaca-process-call "git" "log" "-n" "1" "--format=%cd" "--date=format:%Y%m%d")))
 ;; https://github.com/progfolio/elpaca/issues/222
-(if (not (eq system-type 'darwin))
-    )
+
+(defun my/nixos/get-emacs-build-date ()
+  "Return NixOS Emacs build date."
+  (string-match "--prefix.*emacs.*\\([[:digit:]]\\{8\\}\\)" system-configuration-options)
+  (string-to-number (match-string 1 system-configuration-options)))
+
+;; https://github.com/progfolio/elpaca/issues/222
+(when (not (boundp 'elpaca-core-date)) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
 
 (defvar elpaca-installer-version 0.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -125,6 +132,7 @@
              multi-mode util
              run-command
              third-party
+             ai
              ))
     ;; programming 설정
     (load-modules-with-list "~/.emacs.d/module/prog/"
@@ -134,7 +142,7 @@
              coverage copilot tools
              ;;; language support
              just cpp lisp csharp
-             rust python
+             rust python gleam
              flutter web ruby
              jvm  go  nix lua
              config-file docker

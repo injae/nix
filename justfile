@@ -2,7 +2,7 @@ hostname:
     uname -n
 
 switch +ARGS="":
-    nix run .#activate {{ARGS}}
+    nix run .#activate {{ARGS}} 
 
 update:
     nix flake update

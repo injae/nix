@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1037 
+personal_ws-1.1 en 1079 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -46,12 +46,14 @@ Dto
 ECK
 ENTRYPOINT
 EOF
+EOL
 Elo
 Enums
 Eq
 Equalf
 Errf
 Errorf
+Evals
 Expr
 FFA
 FO
@@ -76,6 +78,7 @@ Goroutine
 Gosched
 GrandPrix
 HPP
+HorizontalPodAutoscaler
 Hotjoin
 HotjoinFound
 INFOPATH
@@ -87,12 +90,16 @@ InJae
 Inferrer
 Infof
 Infos
+Initializer
 Intn
 Invoker
 Isearch
 Iso
 Iteratorable
 JSON
+JUPYTER
+Jitter
+Juypter
 KANIKO
 KRPC
 KST
@@ -154,6 +161,7 @@ Quilkin
 Qv
 RPATH
 RW
+Readonly
 Redsync
 Relabelings
 Rtn
@@ -179,6 +187,7 @@ Und
 Unfree
 Unmarshal
 Unmarshaller
+Uploader
 Utc
 VIRTUALENVS
 Validator
@@ -248,6 +257,8 @@ autoload
 autoloads
 autopep
 autoremove
+autoscaling
+awk
 aws
 awscli
 awslogs
@@ -265,6 +276,7 @@ bazelisk
 bifrost
 blueviolet
 bool
+botkube
 boto
 bradleyTerryFullModel
 breakpoint
@@ -288,6 +300,7 @@ cfg
 chan
 chatgpt
 chdir
+chmod
 chrono
 ci
 cidrs
@@ -371,9 +384,11 @@ digga
 dir
 dired
 direnv
+dirname
 dirs
 dirvish
 disko
+django
 dlv
 dns
 dockerfile
@@ -434,6 +449,7 @@ esup
 et
 etags
 etl
+euo
 eval
 eventmanager
 exa
@@ -443,6 +459,7 @@ exprpb
 extern
 f'https
 facadev
+factorio
 fallthrough
 fargate
 fastapi
@@ -452,6 +469,7 @@ fetchpatch
 fetchurl
 ffa
 fi
+fifa
 filenotify
 filesystem
 filesystems
@@ -490,6 +508,7 @@ githubusercontent
 gitignore
 gitlab
 gjallarhorn
+globstar
 gmail
 gnupg
 goconst
@@ -520,6 +539,7 @@ haskell
 hc
 hcl
 healthcheck
+heimdal
 hexists
 hfs
 hl
@@ -557,6 +577,7 @@ ineffassign
 inferrer
 ingressgateway
 init
+initializers
 injae
 injaeui
 innermode
@@ -569,6 +590,7 @@ ipam
 isearch
 isinstance
 iso
+isoformat
 isort
 ispell
 issubclass
@@ -580,11 +602,14 @@ itertools
 jaeger
 javascript
 jetbrains
+jitter
 joinpath
 jp
+js
 json
 jsonencode
 jsonian
+jupyter
 justl
 jvm
 jwt
@@ -603,11 +628,14 @@ kub
 kube
 kubectl
 kubernetes
+kustomization
 kustomize
 kwargs
+lang
 langs
 laptime
 latencies
+launchd
 len
 letsencrypt
 lfinal
@@ -615,6 +643,7 @@ lhs
 libc
 libiconv
 libra
+libvterm
 lifecycle
 lineno
 linter
@@ -671,11 +700,13 @@ mmplugin
 mmpoolconfig
 mmr
 mmstd
+mmstore
 mockCtrl
 modeline
 modf
 mongo
 mongodb
+monorepo
 mooreung
 mpmath
 mrkdwn
@@ -709,6 +740,8 @@ nlohmann
 noinspection
 nomessage
 noninteractive
+nop
+noqa
 norefresh
 np
 npm
@@ -722,6 +755,7 @@ nurpkgs
 nyan
 oauth
 ok
+ollama
 omitempty
 oneof
 openbsd
@@ -754,6 +788,7 @@ persistentvolumes
 persp
 pgtk
 pid
+pipefail
 pipx
 pixelsize
 pkgs
@@ -798,6 +833,7 @@ provisioner
 ptr
 pvalue
 pvc
+pwd
 py
 pyarrow
 pycodestyle
@@ -814,6 +850,7 @@ pyright
 pytest
 pytz
 qq
+qs
 qstore
 quantile
 quilkin
@@ -830,6 +867,7 @@ removeprefix
 repo
 repr
 req
+reqdist
 reqhandler
 reqloader
 reqmodifier
@@ -876,6 +914,7 @@ setq
 sexp
 sgml
 sha
+shopt
 shortname
 sidcar
 singledispatch
@@ -968,7 +1007,9 @@ ulimits
 umask
 uname
 unary
+unencrypted
 unicode
+uniq
 unmarshal
 unparam
 unsetopt
@@ -1007,6 +1048,7 @@ vundo
 vx
 warhaven
 watchexec
+webapi
 wg
 wgrep
 whl

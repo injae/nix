@@ -3,7 +3,7 @@
 ;;; Code:
 
 (use-package vterm :after (evil-collection exec-path-from-shell projectile)
-:custom (vterm-always-compile-module t)
+;:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook

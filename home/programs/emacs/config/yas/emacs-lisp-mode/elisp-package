@@ -3,8 +3,7 @@
 # key: pkg
 # --
 
-;;; $1.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; $1.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

@@ -1,5 +1,4 @@
-;;; +ssh.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +ssh.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

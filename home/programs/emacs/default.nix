@@ -42,6 +42,7 @@ in
     ] ++ (with pkgs; [
       emacs-lsp-booster
       emacs-all-the-icons-fonts
+      glibtool
     ]) ++ (with pkgs.emacsPackages; [
       vterm
       all-the-icons-nerd-fonts

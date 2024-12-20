@@ -22,12 +22,9 @@
     #bazel_7
     cargo-bazel
 
-    # home-cluster
-    netbird-ui
-
-    awscli2
-
     # monitor Internet traffic
-    sniffnet
+    # sniffnet
+
+    yt-dlp
   ];
 }

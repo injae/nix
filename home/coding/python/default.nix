@@ -1,7 +1,6 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    rye
     maturin
     (python311.withPackages (ppkg: [
       ppkg.pip
@@ -17,8 +16,9 @@
       # ---------------
     ]))
     poetry
-    pyright
+    basedpyright
     ruff
     mypy
+    uv
   ];
 }

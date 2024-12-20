@@ -46,6 +46,7 @@
     )
 
 (use-package lsp-pyright :after (python)
+    :custom (lsp-pyright-langserver-command "basedpyright")
     :hook (python-base-mode .
               (lambda ()
                   (require 'lsp-pyright)

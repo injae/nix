@@ -3,8 +3,7 @@
 ;; This config start here
 ;;; Code:
 
-(use-package simple-httpd :disabled
-    :ensure (:host github :repo "skeeto/emacs-web-server"
+(use-package simple-httpd :disabled :ensure (:host github :repo "skeeto/emacs-web-server"
              :main "simple-httpd.el")
     )
 
@@ -27,15 +26,6 @@
     (exec-path-from-shell-copy-envs '("DISCORD_TOKEN"))
     (setq elcord-client-id (getenv "DISCORD_TOKEN"))
     (elcord-mode)
-    )
-;; 
-(use-package gptai :after exec-path-from-shell
-    :custom
-    (gptai-model "text-davinci-003")
-    (gptai-username "이인재")
-    :config
-    (exec-path-from-shell-copy-envs '("CHATGPT_API_KEY"))
-    (setq gptai-api-key (getenv "CHATGPT_API_KEY"))
     )
 
 (provide '+third-party)

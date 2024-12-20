@@ -1,10 +1,8 @@
-;;; +web.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +web.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
 (use-package web-mode
-;:ensure-system-package (nvm . "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash")
 ;:commands (web-mode)
     :mode (("\\.html?\\'"  . web-mode)
            ("\\.xhtml$\\'" . web-mode)
@@ -15,8 +13,7 @@
            ("\\.as[cp]x\\'" . web-mode)
            ("\\.mustache\\'" . web-mode)
            ("\\.djhtml\\'" . web-mode)
-           ("\\.vue\\'" . web-mode)
-           ("\\.tsx\\'" . web-mode))
+           ("\\.vue\\'" . web-mode))
     :custom
     (web-mode-enable-engine-detection t)
         ;(web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
@@ -32,38 +29,51 @@
     (setq web-mode-enable-auto-pairing t)
     (setq web-mode-enable-css-colorization t)
     (add-hook 'web-mode-hook #'lsp)
+    (add-hook 'web-mode-hook (lambda () (my-set-indent 2)))
 )
 
 (use-package js2-mode
-:mode (("\\.js\\'"  . js2-mode)
-       ("\\.mjs\\'" . js2-mode))
-:hook (js2-mode . (lambda () (lsp)))
+    :mode (("\\.js\\'"  . js2-mode)
+           ("\\.mjs\\'" . js2-mode))
+    :hook (js2-mode . (lambda () (my-set-indent 2) (lsp)))
 )
 
 (use-package xref-js2
-:after (js2-mode xref)
-:config (add-hook 'js2-mode-hook (lambda () (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
+    :after (js2-mode xref)
+    :config
+    (add-hook 'js2-mode-hook (lambda () (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
 )
 
-(use-package skewer-mode :disabled
-:after js2-mode
-:hook  ((js2-mode  . skewer-mode)
-        (css-mode  . skewer-css-mode)
-        (html-mode . skewer-html-mode))
-)
+(use-package lsp-tailwindcss :ensure (:type git :host github :repo "merrickluo/lsp-tailwindcss")
+    :init (setq lsp-tailwindcss-add-on-mode t)
+    :config
+      (dolist (tw-major-mode
+               '(css-mode
+                 css-ts-mode
+                 typescript-mode
+                 typescript-ts-mode
+                 tsx-ts-mode
+                 js2-mode
+                 js-ts-mode
+                 clojure-mode))
+        (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode))
+    )
 
-(use-package typescript-mode
-    :after tree-sitter
-    :mode  ("\\.ts\\'"  . typescript-mode)
-    :hook (typescript-mode . (lambda () (lsp)))
-)
-
-;(use-package tsx-mode :ensure (:type git :host github :repo "orzechowskid/tsx-mode.el") :disabled)
+(use-package typescript-ts-mode :ensure nil :no-require t
+    :hook (typescript-ts-base-mode .
+              (lambda ()
+                  (require 'lsp-eslint)
+                  (require 'lsp-tailwindcss)
+                  (my-set-indent 2)
+                  (lsp-deferred)))
+    :mode (("\\.ts\\'"  . typescript-ts-mode)
+           ("\\.tsx\\'" . tsx-ts-mode))
+    )
 
 (use-package tide
-:after (typescript-mode company flycheck)
-:hook  ((typescript-mode . tide-setup)
-        (typescript-mode . tide-hl-identifier-mode)
+:after (typescript-ts-mode flycheck)
+:hook  ((typescript-ts-base-mode . tide-setup)
+        (typescript-ts-base-mode . tide-hl-identifier-mode)
         (before-save . tide-format-before-save))
 )
 
@@ -77,6 +87,7 @@
 
 (use-package prettier-js
 :hook (js2-mode . prettier-js-mode)
+      (typescript-ts-base-mode . prettier-js-mode)
       (web-mode . prettier-js-mode)
 )
 

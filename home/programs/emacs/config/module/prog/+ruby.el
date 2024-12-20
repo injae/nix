@@ -1,5 +1,4 @@
-;;; +ruby.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +ruby.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
@@ -16,7 +15,6 @@
 
 (use-package rvm
 :after ruby-mode
-;:ensure-system-package (rvm . "curl -sSL https://get.rvm.io | bash -s stable")
 :config (rvm-use-default)
 )
 

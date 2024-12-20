@@ -10,11 +10,12 @@
     };
 
     taps = [
-      "d12frosted/emacs-plus"
+      #"d12frosted/emacs-plus"
     ];
     brews = [
       "bazelisk"
       "bash"
+      "ksops"
       #{
       #  name = "emacs-plus@31";
       #  args = [
@@ -32,7 +33,7 @@
     masApps = {
       Xcode = 497799835;
       KakaoTalk = 869223134;
-      MicrosoftRemoteDesktop = 1295203466;
+      WindowsApp = 1295203466; # Microsoft Remote Desktop
       Yoink = 457622435;
       MicrosoftOutlook = 985367838;
       MicrosoftPowerPoint = 462062816;

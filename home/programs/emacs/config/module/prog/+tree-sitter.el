@@ -25,17 +25,6 @@
   (define-key evil-outer-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj ("conditional.outer" "loop.outer")))
   )
 
-;; (use-package ts-fold :disabled
-;;     :ensure (ts-fold :type git :host github :repo "emacs-tree-sitter/ts-fold")
-;;     :general (leader "<tab>" #'ts-fold-toggle)
-;;     :custom ((ts-fold-indicators-fringe 'left-fringe)
-;;              (ts-fold-summary-show t)
-;;              (ts-fold-indicators-priority 100))
-;;     :config
-;;     (add-hook 'tree-sitter-after-on-hook 'ts-fold-mode)
-;;     (add-hook 'tree-sitter-after-on-hook 'ts-fold-indicators-mode)
-;; )
-
 (use-package treesit-auto :disabled
     ;:custom (treesit-auto-install 'prompt)
     :config
@@ -66,15 +55,23 @@
     (setq treesit-font-lock-level 4)
 )
 
-;; (use-package treesit-langs :ensure (:host github :repo "kiennq/treesit-langs");:files (:defaults "*")); "queries"))
-;;     :after treesit
-;;     :hook (prog-mode .
-;;               (lambda () (ignore-errors (treesit-hl-toggle))))
-;;     :custom
-;;     (treesit-langs-grammar-dir (expand-file-name ".cache/tree-sitter/" user-emacs-directory))
-;;     (treesit-langs-git-dir nil)
-;;     :config (treesit-lang--setup)
-;; )
+(use-package combobulate :ensure (:type git :host github :repo "mickeynp/combobulate")
+    :custom (combobulate-key-prefix "C-c C-o")
+    :hook ((prog-mode . combobulate-mode))
+    )
+
+
+(use-package treesit-langs :disabled
+    :ensure (treesit-langs :repo "kiennq/treesit-langs"
+                           :host github
+                           :files (:defaults "treesit-*.el" "queries"))
+    :hook (prog-mode .
+              (lambda () (ignore-errors (treesit-hl-toggle))))
+    :custom
+        (treesit-langs-git-dir nil)
+        (treesit-langs-grammar-dir (expand-file-name "tree-sitter" user-emacs-directory))
+    :config (add-to-list 'treesit-extra-load-path treesit-langs-grammar-dir)
+)
 
 (provide '+tree-sitter)
 ;;; +tree-sitter.el ends here

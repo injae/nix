@@ -19,9 +19,9 @@
             (apply orig-fn args))))
     :config
     (advice-add 'apheleia-format-buffer :around #'ij/fix-apheleia-project-dir)
-    ;; (setf (alist-get 'isort apheleia-formatter)
-    ;;     '("isort" "--stdout" "-"))
-    (setf (alist-get 'python-mode apheleia-mode-alist) '(ruff))
+    (setf
+        (alist-get 'python-mode apheleia-mode-alist) '(ruff)
+        )
 
     (apheleia-global-mode +1)
     )

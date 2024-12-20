@@ -1,5 +1,4 @@
-;;; +terraform.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +terraform.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
