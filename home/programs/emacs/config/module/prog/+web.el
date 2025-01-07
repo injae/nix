@@ -38,12 +38,6 @@
     :hook (js2-mode . (lambda () (my-set-indent 2) (lsp)))
 )
 
-(use-package xref-js2
-    :after (js2-mode xref)
-    :config
-    (add-hook 'js2-mode-hook (lambda () (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
-)
-
 (use-package lsp-tailwindcss :ensure (:type git :host github :repo "merrickluo/lsp-tailwindcss")
     :init (setq lsp-tailwindcss-add-on-mode t)
     :config
@@ -64,18 +58,13 @@
               (lambda ()
                   (require 'lsp-eslint)
                   (require 'lsp-tailwindcss)
+                  (require 'lsp-tailwindcss)
                   (my-set-indent 2)
                   (lsp-deferred)))
     :mode (("\\.ts\\'"  . typescript-ts-mode)
            ("\\.tsx\\'" . tsx-ts-mode))
     )
 
-(use-package tide
-:after (typescript-ts-mode flycheck)
-:hook  ((typescript-ts-base-mode . tide-setup)
-        (typescript-ts-base-mode . tide-hl-identifier-mode)
-        (before-save . tide-format-before-save))
-)
 
 ;(use-package vue-mode
 ;    ;; install lsp-volar-* and typescript (npm install -g typescript)
@@ -85,7 +74,7 @@
 ;            (setq prettier-js-mode '("--parser vue"))
 ;)
 
-(use-package prettier-js
+(use-package prettier-js :disabled
 :hook (js2-mode . prettier-js-mode)
       (typescript-ts-base-mode . prettier-js-mode)
       (web-mode . prettier-js-mode)

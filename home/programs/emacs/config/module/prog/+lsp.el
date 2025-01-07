@@ -13,6 +13,10 @@
         (lsp-auto-guess-root t)
         (lsp-response-timeout 25)
         (lsp-eldoc-render-all nil)
+        (lsp-enable-indentation nil) ; use apheleia
+        (lsp-enable-on-type-formatting nil) ; use apheleia
+        (lsp-enable-dap-auto-configure t)
+        (lsp-completion-show-kind t)
         (lsp-lens-enable t)
         (lsp-enable-snippet t)
         (lsp-idle-delay 0.500)
@@ -20,7 +24,10 @@
         (lsp-rust-analyzer-server-display-inlay-hints nil)
         (lsp-headerline-breadcrumb-enable-diagnostics nil)
         (lsp-completion-provider :none) ; with corfu
+        (lsp-diagnostics-provider :flycheck)
         (lsp-enable-suggest-server-download nil)
+        (lsp-javascript-format-enable nil)
+        (lsp-typescript-format-enable nil)
         ;(lsp-rust-analyzer-cargo-watch-command "clipy")
 :init
     (defun my/lsp-mode-setup-completion ()
@@ -29,7 +36,7 @@
 
 
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
-       (before-save         . lsp-format-buffer)
+       ;(before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
        (rust-mode           . lsp-deferred)
        (go-mode             . lsp-deferred))
@@ -78,13 +85,13 @@
           (fieldalignment . t)
           (useany . t)))
     (setq lsp-go-gopls-placeholders nil)
-    (defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")
-    (defun lsp-format-on-save-not-apheleia ()
-    "Format on save using LSP server, not `apheleia'."
-        (progn
-            (add-hook 'before-save-hook #'lsp-format-buffer nil 'local)
-            (setq-local apheleia-mode nil)))
-    (add-hook 'lsp-configure-hook #'lsp-format-on-save-not-apheleia)
+    ;(defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")
+    ;(defun lsp-format-on-save-not-apheleia ()
+    ;"Format on save using LSP server, not `apheleia'."
+    ;    (progn
+    ;        (add-hook 'before-save-hook #'lsp-format-buffer nil 'local)
+    ;        (setq-local apheleia-mode nil)))
+    ;(add-hook 'lsp-configure-hook #'lsp-format-on-save-not-apheleia)
 )
 
 (use-package lsp-ui :after lsp-mode

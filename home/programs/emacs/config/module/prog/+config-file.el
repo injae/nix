@@ -3,7 +3,6 @@
 ;;; Code:
 
 (use-package yaml-mode
-;:ensure-system-package (yaml-language-server . "npm install -g yaml-language-server")
 :hook (yaml-mode . (lambda () (lsp)))
 :mode (("\\.yaml\\'" . yaml-mode)
        ("\\.yml\\'"  . yaml-mode))

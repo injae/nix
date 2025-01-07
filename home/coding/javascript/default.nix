@@ -8,6 +8,7 @@
 
     typescript-language-server
     tailwindcss-language-server
+    rustywind # tailwindcss-lsp pulgins
     pnpm
     eslint
     turbo
