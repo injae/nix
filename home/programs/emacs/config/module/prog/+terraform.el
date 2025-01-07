@@ -3,7 +3,6 @@
 ;;; Code:
 
 (use-package terraform-mode :after exec-path-from-shell
-    ;:ensure-system-package (terraform-ls . "go install github.com/hashicorp/terraform-ls@latest")
     :mode   ("\\.tf\\'" . terraform-mode)
     :hook (terraform-mode . (lambda () (lsp)))
     :custom

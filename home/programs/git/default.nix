@@ -7,6 +7,7 @@ in
     git-lfs
     act # github action in local
     difftastic
+    gitu # git tui like magit
   ];
 
   programs = {

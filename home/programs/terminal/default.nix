@@ -1,4 +1,4 @@
-{ flake, pkgs, ... }:
+{ flake, pkgs, config, ... }:
 {
   imports = with flake.inputs; [
      nix-index-database.hmModules.nix-index
@@ -142,5 +142,12 @@
     top = "htop";
     tree = "erd -I";
     kube = "kubectl";
+  };
+
+  xdg.configFile = {
+    "ghostty" = {
+        source = config.lib.file.mkOutOfStoreSymlink ./ghostty;
+        recursive = true;
+    };
   };
 }

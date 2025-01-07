@@ -1,0 +1,30 @@
+# -*- mode: snippet -*-
+# name: go_mock
+# key: go_mock
+# --
+load("@golink//:golink.bzl", "golink")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "gomock")
+
+gomock(
+    name = "mock_$1",
+    out = "mock_$1.go",
+    interfaces = ["Service"],
+    library = "//services/matchmaker/pkg/services/$1",
+    package = "mocks",
+)
+
+golink(
+    name = "mock_$1_link",
+    dep = ":mock_$1",
+)
+
+#keep
+go_library(
+    name = "mocks",
+    srcs = ["mock_$1.go"],
+    importpath = "github.com/EmbarkStudios/src/services/matchmaker/pkg/services/$1/mocks",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_mock//gomock",
+    ],
+)

@@ -27,7 +27,10 @@
     {
       nixPath = [ "nixpkgs=${nixpkgs}" ]; # Enables use of `nix-shell -p ...` etc
       registry.nixpkgs.flake = nixpkgs; # Make `nix shell` etc use pinned nixpkgs
-
+      gc = {
+          automatic = true;
+          options = "--delete-older-than 1w";
+      };
       settings = {
         # https://github.com/NixOS/nix/issues/9574
         nix-path = lib.mkForce "nixpkgs=/etc/nix/inputs/nixpkgs";
@@ -36,7 +39,6 @@
           "apple-virt"
           "nixos-test"
         ] else [ "kvm" ]);
-
         experimental-features = [ "nix-command" "flakes" ];
         # I don't have an Intel mac.
         extra-platforms = lib.mkIf pkgs.stdenv.isDarwin "aarch64-darwin x86_64-darwin";

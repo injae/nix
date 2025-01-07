@@ -29,6 +29,7 @@ in
       "secrets/aws-credentials" = {
         path = "${home-dir}/.aws/credentials";
       };
+      "secrets/wireless.env" = {};
     };
   };
 

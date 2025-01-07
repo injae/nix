@@ -20,6 +20,7 @@
         (lsp-rust-analyzer-server-display-inlay-hints nil)
         (lsp-headerline-breadcrumb-enable-diagnostics nil)
         (lsp-completion-provider :none) ; with corfu
+        (lsp-enable-suggest-server-download nil)
         ;(lsp-rust-analyzer-cargo-watch-command "clipy")
 :init
     (defun my/lsp-mode-setup-completion ()

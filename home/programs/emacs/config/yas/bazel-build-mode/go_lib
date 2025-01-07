@@ -1,0 +1,24 @@
+# -*- mode: snippet -*-
+# name: go_lib
+# key: go_lib
+# --
+
+
+load("@//bazel/go:go.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "$1",
+    srcs = [
+        "interface.go",
+    ],
+    importpath = "github.com/EmbarkStudios/src/services/matchmaker/pkg/services/$1",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+go_test(
+    name = "$1_test",
+    srcs = ["$1_test.go"],
+    embed = [":$1"],
+)

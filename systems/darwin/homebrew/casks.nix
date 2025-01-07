@@ -3,6 +3,8 @@ _:
 [
   # Development Tools
   #"homebrew/cask/docker"
+
+  "ghostty"
   "visual-studio-code"
 
   # Communication Tools
@@ -36,4 +38,7 @@ _:
 
   # VPN
   "tailscale"
+
+  #VM
+  "utm"
 ]

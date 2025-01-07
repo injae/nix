@@ -2,10 +2,18 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package lua-mode :after lsp-mode
-    ;:ensure-system-package (luafmt . "npm install --global lua-fmt")
+(use-package lua-mode
     :mode ("\\.lua\\'" . lua-mode)
-    :hook (lua-mode . lsp-deferred)
+    ;;:hook (lua-mode . (lambda ()
+    ;;                       nix can not use, because of the lua-language-server cache path is nix store path
+    ;;                      (setq lsp-clients-lua-language-server-install-dir
+    ;;                          (f-join 
+    ;;                                (s-trim-right (shell-command-to-string "nix eval nixpkgs#lua-language-server.outPath | tr -d '\"'"))
+    ;;                                "share/lua-language-server"
+    ;;                            )
+    ;;                          )
+    ;;                      (lsp-deferred)
+    ;;                      ))
     )
 
 (provide '+lua)
