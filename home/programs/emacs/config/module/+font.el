@@ -1,5 +1,4 @@
-;;; +font.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +font.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

@@ -1,5 +1,4 @@
-;;; +window.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +window.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

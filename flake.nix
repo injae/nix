@@ -13,7 +13,7 @@
     };
 
     nixos-wsl = {
-      url="github:nix-community/NixOs-WSL/main";
+      url = "github:nix-community/NixOs-WSL/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -27,10 +27,10 @@
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url="github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
+    nixos-flake.url = "github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
 
     treefmt-nix = {
-      url="github:numtide/treefmt-nix";
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -40,7 +40,7 @@
     };
 
     sops-nix = {
-      url ="github:Mic92/sops-nix";
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -90,7 +90,15 @@
         };
       };
 
-      perSystem = { self', pkgs, lib, config, ... }: {
+      perSystem =
+        {
+          self',
+          pkgs,
+          lib,
+          config,
+          ...
+        }:
+        {
           # Flake inputs we want to update periodically
           # Run: `nix run .#update`.
           nixos-flake.primary-inputs = [
