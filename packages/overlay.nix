@@ -6,9 +6,18 @@
 self: super:
 let
   lib = super.lib;
-  version-overlay = { rev, sha256 }:
-    import (super.fetchFromGitHub { owner = "NixOS"; repo = "nixpkgs"; inherit rev sha256; })
-      { inherit system; config.allowUnfree = true; };
+  version-overlay =
+    { rev, sha256 }:
+    import
+      (super.fetchFromGitHub {
+        owner = "NixOS";
+        repo = "nixpkgs";
+        inherit rev sha256;
+      })
+      {
+        inherit system;
+        config.allowUnfree = true;
+      };
   bazel-overlay = super.callPackage ./bazel.nix { inherit super; };
 in
 {
@@ -26,7 +35,6 @@ in
       runJdk = super.jdk22;
     };
   };
-
 
   # example
   #terraform_1_7_5 = (version-overlay {

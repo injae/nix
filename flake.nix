@@ -89,7 +89,6 @@
           nixos = self.nixos-flake.lib.mkLinuxSystem ./systems/nixos-wsl;
         };
       };
-
       perSystem =
         {
           self',
@@ -124,6 +123,7 @@
             inputsFrom = [ config.treefmt.build.devShell ];
             packages = with pkgs; [
               just
+              nixfmt-rfc-style
             ];
           };
         };
