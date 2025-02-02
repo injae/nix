@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1088 
+personal_ws-1.1 en 1110 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -60,6 +60,7 @@ FO
 Failable
 Fatalf
 Fifa
+Figma
 Fprint
 Fprintf
 Frontend
@@ -234,6 +235,7 @@ apiserver
 arange
 arg
 argc
+argocd
 argparse
 args
 argv
@@ -252,6 +254,7 @@ asyncio
 attr
 attrs
 auth
+authentik
 authinfo
 authlib
 authtypes
@@ -277,6 +280,7 @@ bashrc
 bazel
 bazelisk
 bifrost
+bitnami
 blueviolet
 bool
 botkube
@@ -328,6 +332,7 @@ compatibilities
 concat
 conf
 config
+configs
 const
 constexpr
 coreutils
@@ -478,6 +483,8 @@ fifa
 filenotify
 filesystem
 filesystems
+finalizer
+finalizers
 flycheck
 flymake
 flyspell
@@ -577,10 +584,13 @@ iinjaeui
 imagemagick
 impl
 importpath
+includeCRDs
 indexs
 ineffassign
 inferrer
+ingester
 ingressgateway
+ini
 init
 initializers
 injae
@@ -610,6 +620,7 @@ jetbrains
 jitter
 joinpath
 jp
+jq
 js
 json
 jsonencode
@@ -631,6 +642,7 @@ korean
 kr
 kub
 kube
+kubebuilder
 kubectl
 kubernetes
 kustomization
@@ -686,7 +698,9 @@ metallb
 microsoft
 middleware
 middlewares
+mimir
 minibuffer
+minio
 mise
 mit
 mk
@@ -759,6 +773,8 @@ nur
 nurpkgs
 nyan
 oauth
+observability
+oci
 ok
 ollama
 omitempty
@@ -864,6 +880,7 @@ quilkin
 randint
 raon
 raycast
+rbac
 readme
 recentf
 recv
@@ -921,6 +938,7 @@ setq
 sexp
 sgml
 sha
+sharding
 shopt
 shortname
 sidcar
@@ -942,6 +960,7 @@ ss
 ssl
 starlette
 startswith
+statefulset
 staticcheck
 staticmethod
 statrs
@@ -988,6 +1007,7 @@ tl
 tls
 todo
 tokio
+tolerations
 tolist
 toml
 tonumber
@@ -997,6 +1017,7 @@ trackpad
 traefik
 transcompile
 treesit
+trivy
 trueskill
 tsx
 tt
@@ -1057,6 +1078,7 @@ vx
 warhaven
 watchexec
 webapi
+webhook
 wg
 wgrep
 whl

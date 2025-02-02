@@ -16,24 +16,24 @@
     ;; (setq python-ts-mode-hook python-mode-hook)
     )
 
-(use-package pyenv :after exec-path-from-shell :disabled
-    :preface
-    (defun projectile-pyenv-mode-set ()
-    "Set pyenv version matching project name."
-        (let ((project (projectile-project-name)))
-            (if (member project (pyenv-mode-versions))
-                (pyenv-mode-set project)
-            (pyenv-mode-unset))))
-    :config
-    (add-hook 'projectile-after-switch-project-hook 'projectile-pyenv-mode-set)
-    )
-
 (use-package python-pytest)
 
-(use-package pet :after python :disabled
+(use-package pet :after python
     :config
     (add-hook 'python-base-mode-hook 'pet-mode -10)
-    (add-hook 'python-base-mode-hook 'pet-flycheck-setup)
+    (add-hook 'python-base-mode-hook (lambda ()
+        (setq-local python-shell-interpreter (pet-executable-find "python")
+                    python-shell-virtualenv-root (pet-virtualenv-root))
+        (pet-flycheck-setup)
+        (setq-local lsp-pyright-python-executable-cmd python-shell-interpreter
+                    lsp-pyright-venv-path python-shell-virtualenv-root)
+
+        (require 'lsp-pyright)
+        (require 'lsp-ruff)
+        (lsp-deferred)
+        (setq-local dap-python-executable python-shell-interpreter)
+        ))
+
     )
 
 (use-package flymake-ruff :after (python eglot) :disabled
@@ -47,11 +47,11 @@
 
 (use-package lsp-pyright :after (python)
     :custom (lsp-pyright-langserver-command "basedpyright")
-    :hook (python-base-mode .
-              (lambda ()
-                  (require 'lsp-pyright)
-                  (require 'lsp-ruff)
-                  (lsp-deferred)))
+    ;:hook (python-base-mode .
+    ;          (lambda ()
+    ;              (require 'lsp-pyright)
+    ;              (require 'lsp-ruff)
+    ;              (lsp-deferred)))
     )
 
 (use-package jinja2-mode)
