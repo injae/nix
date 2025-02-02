@@ -16,6 +16,9 @@
     k9s
     kustomize
     kubernetes-helm
+    kustomize-sops
+    kubebuilder
+    argocd
 
     ngrok
 

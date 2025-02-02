@@ -19,12 +19,10 @@
     protoc-gen-rust
     protoc-gen-go
 
-    #bazel_7
-    cargo-bazel
-
     # monitor Internet traffic
     # sniffnet
 
     yt-dlp
+    dependabot-cli
   ];
 }
