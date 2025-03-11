@@ -1,17 +1,7 @@
 keys:
-  - &wsl_home age15txwy99qmrjx0xrwgv9cv95audh2fdhshygqs2542x539cpztdmq7sdsmt
-  - &m3-mac age1rglmnmz8arqxg497khnaarqapskhmuxuu7kxrqatn4e3kgdlduasemk8dv
-  - &wsl_nexon age14erj4fq4g8maar6928xgp6qalz5pndgqen370hzzfuezqpl2wqvqg9g2qn
-  - &pi5-01 age1j0mc0xqgtsgrlqnclt50jzchnsnput8dzcy5srkk5pj206625fjsp45fqw
-  - &pi5-02 age17wss50mp7waleqc5yvq2h2zk5w9yfwvqvcefzlfvu38688rrgqhqa7ey9w
-  - &argo-cd age1px9pnq98ms9l8t4cn4ap7gvl3q7fycsuy436kenauc59z3wwuczqzatuse
+  #- &m3-mac age1rglmnmz8arqxg497khnaarqapskhmuxuu7kxrqatn4e3kgdlduasemk8dv
 creation_rules:
   - path_regex: home/programs/sops/secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
-          - *wsl_home
-          - *m3-mac
-          - *wsl_nexon
-          - *pi5-01
-          - *pi5-02
-          - *argo-cd
+          #- *m3-mac
