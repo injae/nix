@@ -83,7 +83,7 @@
       ];
       flake = {
         darwinConfigurations = {
-          nieel-m3 = self.nixos-flake.lib.mkMacosSystem ./systems/darwin;
+          "???" = self.nixos-flake.lib.mkMacosSystem ./systems/darwin;
         };
         nixosConfigurations = {
           nixos = self.nixos-flake.lib.mkLinuxSystem ./systems/nixos-wsl;
