@@ -6,9 +6,6 @@
 
     openssl
 
-    # devenv
-    devenv
-
     # yaml
     yaml-language-server
 

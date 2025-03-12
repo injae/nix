@@ -30,7 +30,7 @@ in
   home.packages =
     with pkgs;
     [
-      (emacs-pgtk.overrideAttrs (old: {
+      (emacs-git-pgtk.overrideAttrs (old: {
         patches =
           (old.patches or [ ])
           ++ (

@@ -1,4 +1,9 @@
-{ pkgs, flake, config, ... }:
+{
+  pkgs,
+  flake,
+  config,
+  ...
+}:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
@@ -10,6 +15,7 @@ in
     inputs.nixos-wsl.nixosModules.default
     self.nixosModules.default
     inputs.sops-nix.nixosModules.sops
+    #inputs.lix-module.nixosModules.default
   ];
   nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "24.05";
@@ -33,7 +39,6 @@ in
     preseed = { };
   };
   networking.nftables.enable = true;
-
 
   programs.zsh.enable = true;
   programs.nix-ld = {
@@ -73,7 +78,12 @@ in
   users.users.${user} = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" "networkmanager" "docker" "incus-admin" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "docker"
+      "incus-admin"
+    ];
   };
 
   security = {

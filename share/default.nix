@@ -12,6 +12,7 @@
 
       my-home = {
         users.users.${config.people.myself}.isNormalUser = true;
+        home-manager.useGlobalPkgs = true;
         home-manager.users.${config.people.myself} = {
           imports = [
             self.homeModules.common-linux
@@ -28,6 +29,7 @@
 
     darwinModules = {
       my-home = {
+        home-manager.useGlobalPkgs = true;
         home-manager.users.${config.people.myself} = {
           imports = [
             self.homeModules.common-darwin

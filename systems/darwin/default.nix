@@ -1,10 +1,16 @@
-{ pkgs, flake, config, ... }:
+{
+  pkgs,
+  flake,
+  config,
+  ...
+}:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
 in
 {
   imports = [
+    #inputs.lix-module.nixosModules.default
     self.darwinModules.default
     ./homebrew
     ./system.nix
@@ -14,7 +20,7 @@ in
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
+  nix.enable = true;
 
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
@@ -36,7 +42,10 @@ in
     serviceConfig = {
       KeepAlive = true;
       RunAtLoad = true;
-      ProgramArguments = [ "${pkgs.ollama}/bin/ollama" "serve" ];
+      ProgramArguments = [
+        "${pkgs.ollama}/bin/ollama"
+        "serve"
+      ];
       EnvironmentVariables = {
         OLLAMA_HOST = "127.0.0.1:11434";
       };
@@ -44,5 +53,5 @@ in
   };
 
   # Enable touch id for sudo
-  security.pam.enableSudoTouchIdAuth = true;
+  security.pam.services.sudo_local.touchIdAuth = true;
 }
