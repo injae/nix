@@ -14,7 +14,7 @@ _:
   "notion-calendar"
   "slack"
   "microsoft-teams"
-  "app-cleaner"
+  "appcleaner"
 
   # Entertainment Tools
   "steam"
