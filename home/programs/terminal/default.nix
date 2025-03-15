@@ -1,7 +1,12 @@
-{ flake, pkgs, config, ... }:
+{
+  flake,
+  pkgs,
+  config,
+  ...
+}:
 {
   imports = with flake.inputs; [
-     nix-index-database.hmModules.nix-index
+    nix-index-database.hmModules.nix-index
   ];
 
   programs = {
@@ -81,6 +86,7 @@
       enable = true;
       enableZshIntegration = true;
       nix-direnv.enable = true;
+      mise.enable = true;
     };
 
     starship = {
@@ -146,8 +152,12 @@
 
   xdg.configFile = {
     "ghostty" = {
-        source = config.lib.file.mkOutOfStoreSymlink ./ghostty;
-        recursive = true;
+      source = config.lib.file.mkOutOfStoreSymlink ./ghostty;
+      recursive = true;
+    };
+    "direnv" = {
+      source = config.lib.file.mkOutOfStoreSymlink ./direnv;
+      recursive = true;
     };
   };
 }
