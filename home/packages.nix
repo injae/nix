@@ -21,5 +21,7 @@
 
     yt-dlp
     dependabot-cli
+
+    zstd
   ];
 }
