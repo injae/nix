@@ -1,4 +1,9 @@
-{ pkgs, flake, config, ... }:
+{
+  pkgs,
+  flake,
+  config,
+  ...
+}:
 let
   user = flake.config.people.users.${config.home.username};
 in
@@ -18,14 +23,39 @@ in
       userEmail = user.email;
       lfs.enable = true;
       extraConfig = {
-        init.defaultBranch = "main";
+        github.user = user.name;
         core = {
           editor = "emacs";
           autocrlf = "input";
         };
+        init.defaultBranch = "main";
+        column.ui = "auto";
+        tag.sort = "version:refname";
+        branch.sort = "-committerdate";
         pull.rebase = true;
-        rebase.autoStash = true;
-        github.user = user.name;
+        commit.verbose = true;
+        help.autocorrect = "prompt";
+        diff = {
+          algorithm = "histogram";
+          colorMoved = "plain";
+          mnemonicPrefix = true;
+          renames = true;
+        };
+        push = {
+          default = "simple";
+          autoSetupRemote = true;
+          followTags = true;
+        };
+        fetch = {
+          prune = true;
+          pruneTags = true;
+          all = true;
+        };
+        rebase = {
+          autoSquash = true;
+          autoStash = true;
+          updateRefs = true;
+        };
       };
       #includes = [
       #  { path = config.sops.secrets."secrets/embark-git".path; }
