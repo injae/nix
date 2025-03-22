@@ -21,11 +21,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    lix-module = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.91.0.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixos-flake.url = "github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
 

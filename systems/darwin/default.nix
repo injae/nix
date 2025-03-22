@@ -10,7 +10,6 @@ let
 in
 {
   imports = [
-    #inputs.lix-module.nixosModules.default
     self.darwinModules.default
     ./homebrew
     ./system.nix

@@ -1,4 +1,4 @@
-{ self, inputs, ... }:
+{ self, ... }:
 let
   excludes = [
     "default.nix"
@@ -11,17 +11,14 @@ in
     homeModules = {
       common = {
         home.stateVersion = "24.11";
-        imports = 
+        imports =
           with builtins;
-                map
-                  (fn: ./${fn})
-                  (filter (fn: !(elem fn excludes)) (attrNames (readDir ./.)));
+          map (fn: ./${fn}) (filter (fn: !(elem fn excludes)) (attrNames (readDir ./.)));
       };
 
       # home-manager config specific to NixOS
       common-linux = {
         imports = [
-          inputs.lix-module.nixosModules.default
           self.homeModules.common
         ];
       };
@@ -29,7 +26,6 @@ in
       # home-manager config specifi to Darwin
       common-darwin = {
         imports = [
-          inputs.lix-module.nixosModules.default
           self.homeModules.common
           ./mac-app-util.nix
           ./darwin-packages.nix
