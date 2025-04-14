@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1111 
+personal_ws-1.1 en 1116 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -280,6 +280,7 @@ bashrc
 bazel
 bazelisk
 bifrost
+bitmask
 bitnami
 blueviolet
 bool
@@ -343,6 +344,7 @@ cpp
 cppkg
 cppm
 cpu
+creds
 credsStore
 crm
 cron
@@ -791,6 +793,7 @@ orderless
 orm
 os
 ostream
+otel
 otype
 paginator
 param
@@ -876,6 +879,7 @@ qq
 qs
 qstore
 quantile
+querier
 quilkin
 randint
 raon
@@ -1031,6 +1035,7 @@ tz
 uber
 ug
 ui
+uid
 uint
 uintptr
 ulimits

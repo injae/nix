@@ -30,6 +30,7 @@ _:
   "alfred"
 
   "openlens"
+  "freelens"
 
   # Wine - Proton - Metal
   "whisky"

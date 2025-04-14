@@ -7,6 +7,8 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
+  system = pkgs.stdenv.system;
+  stable = inputs.nixpkgs-stable.legacyPackages.${system};
 in
 {
   imports = [
@@ -29,8 +31,21 @@ in
   # for dockerTools
   nix.linux-builder = {
     enable = true;
+    package = stable.darwin.linux-builder;
     ephemeral = true;
     maxJobs = 4;
+    systems = [
+      "aarch64-linux"
+    ];
+    config = {
+      virtualisation = {
+        darwin-builder = {
+          diskSize = 40 * 1024;
+          memorySize = 8 * 1024;
+        };
+        cores = 6;
+      };
+    };
   };
 
   # enable ollama service

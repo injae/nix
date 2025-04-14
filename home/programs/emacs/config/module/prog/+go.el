@@ -8,8 +8,8 @@
     ;                        (goimports . "go install golang.org/x/tools/cmd/goimports@latest")
     ;                        (gofumpt . "go install mvdan.cc/gofumpt@latest")
     ;                        (go-coverage . "go install github.com/gojekfarm/go-coverage@latest"))
-    :mode (("\\.go\\''"    . go-mode)
-           ("\\go.mod\\''" . go-mod-mode))
+    :mode (("\\.go\\''"    . go-ts-mode)
+           ("\\go.mod\\''" . go-mod-ts-mode))
     :preface
     ;;(defun go-formatting-hook () (setq format-all-formatters '(("Go" gofmt goimports))))
     (defun lsp-go-install-save-hooks ()
@@ -87,7 +87,7 @@
 
 (use-package go-errcheck :after go-mode
     ;:ensure-system-package (errcheck . "go install github.com/kisielk/errcheck@latest")
-    )
+   )
 
 (provide '+go)
 ;;; +go.el ends here

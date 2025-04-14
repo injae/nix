@@ -23,5 +23,7 @@
     dependabot-cli
 
     zstd
+
+    mdbook
   ];
 }

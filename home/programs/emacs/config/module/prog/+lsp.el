@@ -39,6 +39,7 @@
        ;(before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
        (rust-mode           . lsp-deferred)
+       (go-ts-mode          . lsp-deferred)
        (go-mode             . lsp-deferred))
 
 :config
@@ -82,7 +83,6 @@
         '((unusedparams . t)
           (unreachable . t)
           (unusedwrite . t)
-          (fieldalignment . t)
           (useany . t)))
     (setq lsp-go-gopls-placeholders nil)
     ;(defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")

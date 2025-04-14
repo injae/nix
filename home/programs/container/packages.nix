@@ -7,6 +7,7 @@
     docker-compose
     docker-credential-helpers
     dive
+    istioctl
 
     regctl
 

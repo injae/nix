@@ -1,14 +1,14 @@
 { pkgs, ... }:
 let
-  # Fix OS window role (needed for window managers like yabai)
-  fix-window-role = pkgs.fetchpatch {
-    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-28/fix-window-role.patch";
-    sha256 = "sha256-+z/KfsBm1lvZTZNiMbxzXQGRTjkCFO4QPlEK35upjsE=";
-  };
   # Use poll instead of select to get file descriptors
   poll-patch = pkgs.fetchpatch {
     url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/poll.patch";
     sha256 = "sha256-jN9MlD8/ZrnLuP2/HUXXEVVd6A+aRZNYFdZF8ReJGfY=";
+  };
+  # Fix OS window role (needed for window managers like yabai)
+  fix-window-role = pkgs.fetchpatch {
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-28/fix-window-role.patch";
+    sha256 = "sha256-+z/KfsBm1lvZTZNiMbxzXQGRTjkCFO4QPlEK35upjsE=";
   };
   # Enable rounded window with no decoration
   round-undecorated-frame-patch = pkgs.fetchpatch {
@@ -37,9 +37,10 @@ in
             if pkgs.stdenv.isDarwin then
               [
                 fix-window-role
-                #poll-patch
-                round-undecorated-frame-patch
-                system-appearance-patch
+                ./patches/system-appearance.patch
+                ./patches/round-undecorated-frame.patch
+                #round-undecorated-frame-patch
+                #system-appearance-patch
               ]
             else
               [ ]
