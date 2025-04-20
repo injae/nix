@@ -1,5 +1,4 @@
-;;; +run-command.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +run-command.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

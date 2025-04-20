@@ -1,5 +1,4 @@
-;;; +jvm.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +jvm.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

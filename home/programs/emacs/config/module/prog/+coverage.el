@@ -1,5 +1,4 @@
-;;; +coverage.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +coverage.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

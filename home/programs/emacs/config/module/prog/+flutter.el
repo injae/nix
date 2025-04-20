@@ -1,5 +1,4 @@
-;;; +flutter.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +flutter.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

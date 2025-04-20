@@ -1,5 +1,4 @@
-;;; +multi-mode.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +multi-mode.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

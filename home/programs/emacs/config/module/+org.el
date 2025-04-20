@@ -1,5 +1,4 @@
-;;; +org.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +org.el --- Summery  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

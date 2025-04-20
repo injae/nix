@@ -1,5 +1,4 @@
-;;; +git.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +git.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

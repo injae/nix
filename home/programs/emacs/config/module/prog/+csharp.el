@@ -1,5 +1,4 @@
-;;; +csharp.el --- Summery
-;;; -*- lexical-binding: t; -*-
+;;; +csharp.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 

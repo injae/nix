@@ -30,30 +30,35 @@ in
   home.packages =
     with pkgs;
     [
-      (emacs-git-pgtk.overrideAttrs (old: {
-        patches =
-          (old.patches or [ ])
-          ++ (
-            if pkgs.stdenv.isDarwin then
-              [
-                fix-window-role
-                ./patches/system-appearance.patch
-                ./patches/round-undecorated-frame.patch
-                #round-undecorated-frame-patch
-                #system-appearance-patch
-              ]
-            else
-              [ ]
-          );
-      }))
+      (
+        (emacs-git-pgtk.overrideAttrs (old: {
+          patches =
+            (old.patches or [ ])
+            ++ (
+              if pkgs.stdenv.isDarwin then
+                [
+                  fix-window-role
+                  ./patches/system-appearance.patch
+                  ./patches/round-undecorated-frame.patch
+                  #round-undecorated-frame-patch
+                  #system-appearance-patch
+                ]
+              else
+                [ ]
+            );
+        })).override
+        # https://github.com/NixOS/nixpkgs/issues/395169
+        (if pkgs.stdenv.isDarwin then (old: { withNativeCompilation = false; }) else (old: { }))
+      )
     ]
     ++ (with pkgs; [
-      emacs-lsp-booster
+      # https://github.com/NixOS/nixpkgs/issues/395169
+      (emacs-lsp-booster.overrideAttrs (old: {
+        doCheck = false;
+        nativeCheckInputs = [ ];
+      }))
       emacs-all-the-icons-fonts
+      copilot-language-server
       glibtool
-    ])
-    ++ (with pkgs.emacsPackages; [
-      vterm
-      all-the-icons-nerd-fonts
     ]);
 }
