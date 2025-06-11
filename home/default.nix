@@ -10,7 +10,7 @@ in
   flake = {
     homeModules = {
       common = {
-        home.stateVersion = "24.11";
+        home.stateVersion = "25.05";
         imports =
           with builtins;
           map (fn: ./${fn}) (filter (fn: !(elem fn excludes)) (attrNames (readDir ./.)));

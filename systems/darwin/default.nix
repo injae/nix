@@ -27,6 +27,7 @@ in
     name = flake.config.people.myself;
     home = "/Users/${flake.config.people.myself}";
   };
+  system.primaryUser = flake.config.people.myself;
 
   # for dockerTools
   nix.linux-builder = {

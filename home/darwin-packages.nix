@@ -7,9 +7,5 @@
     #yabai
     #skhd
     #spacebar
-  ] ++ (with darwin.apple_sdk.frameworks; [
-    Foundation
-    Security
-    SystemConfiguration
-  ]);
+  ];
 }
