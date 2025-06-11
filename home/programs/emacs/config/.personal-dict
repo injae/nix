@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1117 
+personal_ws-1.1 en 1119 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -366,6 +366,8 @@ darwin
 dataclass
 dataclasses
 dataplane
+datasource
+datasources
 datetime
 deadpool
 debian
