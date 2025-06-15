@@ -1,7 +1,7 @@
 { ... }:
 {
   system = {
-    stateVersion = 4;
+    stateVersion = 6;
     # Turn off NIX_PATH warnings now that we're using flakes
     # checks.verifyNixPath = false;
 

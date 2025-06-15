@@ -23,6 +23,7 @@ in
 
   # Auto upgrade nix package and the daemon service.
   nix.enable = true;
+  ids.gids.nixbld = 30000;
 
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
