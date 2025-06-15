@@ -5,7 +5,6 @@
       enable = true;
       enableZshIntegration = true;
       nix-direnv.enable = true;
-      mise.enable = true;
       config = {
         warn_timeout = 0;
       };
