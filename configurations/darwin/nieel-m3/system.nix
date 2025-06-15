@@ -1,13 +1,17 @@
 { ... }:
 {
+  # show current system settings
+  # defaults read
   system = {
     stateVersion = 6;
-    # Turn off NIX_PATH warnings now that we're using flakes
-    # checks.verifyNixPath = false;
 
     defaults = {
-      screensaver.askForPasswordDelay = 10;
+      # defaults read com.apple.screensaver
+      screensaver = {
+        askForPasswordDelay = 10;
+      };
 
+      # defaults read NSGlobalDomain
       NSGlobalDomain = {
         AppleShowAllExtensions = true;
         ApplePressAndHoldEnabled = false;
@@ -21,8 +25,11 @@
         "com.apple.mouse.tapBehavior" = 1;
         "com.apple.sound.beep.volume" = 0.0;
         "com.apple.sound.beep.feedback" = 0;
+        "com.apple.springing.enabled" = true;
+        "com.apple.springing.delay" = 0.5;
       };
 
+      # defaults read com.apple.dock
       dock = {
         autohide = true;
         show-recents = false;
@@ -31,16 +38,19 @@
         tilesize = 48;
       };
 
+      # defaults read com.apple.finder
       finder = {
         _FXShowPosixPathInTitle = false;
       };
 
+      # defaults read com.apple.AppleMultitouchTrackpad
       trackpad = {
         Clicking = true;
         TrackpadThreeFingerDrag = true;
       };
     };
 
+    # https://github.com/nix-darwin/nix-darwin/blob/master/modules/system/keyboard.nix
     keyboard = {
       enableKeyMapping = true;
       remapCapsLockToControl = true;

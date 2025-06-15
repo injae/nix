@@ -10,23 +10,11 @@
       upgrade = true;
     };
 
-    taps = [
-      #"d12frosted/emacs-plus"
-    ];
+    taps = [ ];
     brews = [
       "bazelisk"
       "bash"
       "ksops"
-      #{
-      #  name = "emacs-plus@31";
-      #  args = [
-      #    "with-mailutil"
-      #    "with-xwidgets"
-      #    "with-imagemagick"
-      #    "with-native-comp"
-      #    "with-poll"
-      #  ];
-      #}
     ];
 
     # $ nix shell nixpkgs#mas
