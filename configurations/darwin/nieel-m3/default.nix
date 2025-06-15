@@ -8,21 +8,19 @@ let
   inherit (inputs) self;
   system = pkgs.stdenv.system;
   stable = inputs.nixpkgs-stable.legacyPackages.${system};
+  exclude = [
+    "default.nix"
+    "dock.nix"
+  ];
 in
 {
-  #nixos-unified.sshTarget = "${user}@nieel-m3";
   imports = [
     self.darwinModules.default
-    ./homebrew
-    ./system.nix
-    #./olimma.nix
-    #./dock
-    #./dock.nix
-  ];
+  ] ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
+
   nixpkgs.hostPlatform = "aarch64-darwin";
 
-  # Auto upgrade nix package and the daemon service.
-  nix.enable = true;
+  nix.enable = true; # Auto upgrade nix package and the daemon service.
   ids.gids.nixbld = 30000;
 
   users.users.${flake.config.people.myself} = {
@@ -48,6 +46,8 @@ in
       };
     };
   };
+
+  local.ollama.enable = true;
 
   # Enable touch id for sudo
   security.pam.services.sudo_local.touchIdAuth = true;

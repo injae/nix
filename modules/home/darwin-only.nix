@@ -9,7 +9,6 @@ let
 in
 {
   home.packages = with pkgs; [
-    dockutil
     mas
     colima
     #yabai
