@@ -1,7 +1,8 @@
 { pkgs, flake, ... }:
-let 
+let
   home-dir = "/Users/${flake.config.people.myself}";
-in {
+in
+{
   local.dock.enable = true;
   local.dock.entries = [
     { path = "/Applications/Slack.app/"; }

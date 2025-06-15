@@ -37,9 +37,7 @@ in
     package = stable.darwin.linux-builder;
     ephemeral = true;
     maxJobs = 4;
-    systems = [
-      "aarch64-linux"
-    ];
+    systems = [ "aarch64-linux" ];
     config = {
       virtualisation = {
         darwin-builder = {
