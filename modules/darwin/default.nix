@@ -2,11 +2,13 @@
 let
   inherit (flake) config inputs;
   inherit (inputs) self;
+  exclude = [
+    "default.nix"
+  ];
 in
 {
   imports = [
     {
-      # For home-manager to work.
       users.users.${flake.config.people.myself} = {
         home = "/Users/${flake.config.people.myself}";
       };
@@ -18,5 +20,5 @@ in
       ];
     }
     self.nixosModules.common
-  ];
+  ] ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
 }
