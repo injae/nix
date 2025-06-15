@@ -113,15 +113,18 @@
 
 (setq user-full-name "injae lee")
 (setq user-mail-address "8687lee@gmail.com")
-(setq user-nix-directory (expand-file-name "~/nix"))
-(setq user-mutable-emacs-directory (expand-file-name (f-join user-nix-directory "home/programs/emacs")))
 
 (elpaca-wait)
 
 (use-package module-util :ensure nil :after (dash f s)
+    :init
+    (setq-default user-nix-directory (expand-file-name "~/nix"))
+    (setq-default user-mutable-emacs-directory (f-join user-nix-directory "modules/home/shared/programs/emacs"))
+    (setq-default user-emacs-module-directory (f-join user-emacs-directory "module"))
+    (setq-default user-emacs-prog-module-directory (f-join user-emacs-module-directory "prog"))
     :config
     ;; Emacs 기본설정
-    (load-modules-with-list "~/.emacs.d/module/"
+    (load-modules-with-list user-emacs-module-directory
         '( ;; emacs modules
              emacs font evil
              git grep-util extension
@@ -135,7 +138,7 @@
              ai
              ))
     ;; programming 설정
-    (load-modules-with-list "~/.emacs.d/module/prog/"
+    (load-modules-with-list user-emacs-prog-module-directory
         '( ;; programming modules
              tree-sitter lsp debug snippet
              prog-search doc ssh

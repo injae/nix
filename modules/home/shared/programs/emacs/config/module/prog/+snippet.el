@@ -5,7 +5,8 @@
 (use-package yasnippet
 :general (leader  "hy"  '(:wk "Yasnippet"))
 :config
-    (setq yas-snippet-dirs '("~/nix/home/programs/emacs/config/yas"))
+    (setq yas-snippet-dirs
+        (list (f-join user-mutable-emacs-directory "config/yas")))
     (yas-global-mode t)
     (yas-reload-all t)
 )
