@@ -47,7 +47,7 @@ in
     };
   };
 
-  local.ollama.enable = true;
+  local.ollama.enable = false;
 
   # Enable touch id for sudo
   security.pam.services.sudo_local.touchIdAuth = true;
