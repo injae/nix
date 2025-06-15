@@ -23,7 +23,7 @@
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixos-flake.url = "github:srid/nixos-flake?rev=495b03271a03df5bcd12a572612fe6953db4424f";
+    nixos-unified.url = "github:srid/nixos-unified";
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -69,58 +69,19 @@
         "aarch64-darwin"
         "x86_64-darwin"
       ];
-      imports = [
-        inputs.treefmt-nix.flakeModule
-        inputs.nixos-flake.flakeModule
-        ./users
-        ./home
-        ./share
-        ./templates
-      ];
-      flake = {
-        darwinConfigurations = {
-          nieel-m3 = self.nixos-flake.lib.mkMacosSystem ./systems/darwin;
-        };
-        nixosConfigurations = {
-          nixos = self.nixos-flake.lib.mkLinuxSystem ./systems/nixos-wsl;
-        };
-      };
+      imports =
+        with builtins;
+        map (fn: ./modules/flake-parts/${fn}) (attrNames (readDir ./modules/flake-parts));
       perSystem =
+        { lib, system, ... }:
         {
-          self',
-          pkgs,
-          lib,
-          config,
-          ...
-        }:
-        {
-          # Flake inputs we want to update periodically
-          # Run: `nix run .#update`.
-          nixos-flake.primary-inputs = [
-            "nixpkgs"
-            "home-manager"
-            "nix-darwin"
-            "nixos-flake"
-            "nix-index-database"
-            "rust-overlay"
-            "emacs-overlay"
-            "emacs-lsp-booster"
-          ];
-
-          treefmt = {
-            projectRootFile = "flake.nix";
-            programs = {
-              nixfmt.enable = true;
-            };
-          };
-          formatter = config.treefmt.build.wrapper;
-          packages.default = self'.packages.activate;
-          devShells.default = pkgs.mkShell {
-            inputsFrom = [ config.treefmt.build.devShell ];
-            packages = with pkgs; [
-              just
-              nixfmt-rfc-style
-            ];
+          # Make our overlay available to the devShell
+          # "Flake parts does not yet come with an endorsed module that initializes the pkgs argument.""
+          # So we must do this manually; https://flake.parts/overlays#consuming-an-overlay
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = lib.attrValues self.overlays;
+            config.allowUnfree = true;
           };
         };
     };

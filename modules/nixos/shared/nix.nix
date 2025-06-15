@@ -4,6 +4,10 @@
   lib,
   ...
 }:
+let
+  inherit (flake) inputs;
+  inherit (inputs) self;
+in
 {
   nixpkgs = {
     config = {
@@ -13,20 +17,19 @@
       #allowInsecure = false;
     };
     overlays = [
-      flake.inputs.rust-overlay.overlays.default
-      flake.inputs.emacs-overlay.overlays.default
-      flake.inputs.emacs-lsp-booster.overlays.default
-      (import ../packages { inherit flake pkgs; })
-    ];
+      inputs.rust-overlay.overlays.default
+      inputs.emacs-overlay.overlays.default
+      inputs.emacs-lsp-booster.overlays.default
+    ] ++ lib.attrValues self.overlays;
   };
 
   # but NIX_PATH is still used by many useful tools, so we set it to the same value as the one used by this flake.
   # Make `nix repl '<nixpkgs>'` use the same nixpkgs as the one used by this flake.
-  environment.etc."nix/inputs/nixpkgs".source = "${flake.inputs.nixpkgs}";
+  environment.etc."nix/inputs/nixpkgs".source = "${inputs.nixpkgs}";
 
   nix =
     let
-      nixpkgs = flake.inputs.nixpkgs;
+      nixpkgs = inputs.nixpkgs;
     in
     {
       nixPath = [ "nixpkgs=${nixpkgs}" ]; # Enables use of `nix-shell -p ...` etc
