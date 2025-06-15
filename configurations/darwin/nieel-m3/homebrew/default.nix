@@ -1,5 +1,6 @@
 { pkgs, flake, ... }:
 {
+  environment.systemPackages = with pkgs; [ mas ];
   homebrew = {
     enable = true;
     user = flake.config.people.myself;
