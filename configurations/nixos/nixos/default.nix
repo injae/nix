@@ -1,15 +1,15 @@
 {
   pkgs,
   flake,
-  config,
   ...
 }:
 let
-  inherit (flake) inputs;
+  inherit (flake) config inputs;
   inherit (inputs) self;
-  user = flake.config.people.myself;
+  user = config.people.myself;
 in
 {
+  #nixos-unified.sshTarget = "${user}@nixos-wsl";
   imports = [
     # https://nix-community.github.io/NixOS-WSL/options.html
     inputs.nixos-wsl.nixosModules.default
@@ -73,17 +73,6 @@ in
       system = pkgs.system;
     };
   environment.variables.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-  users.users.${user} = {
-    isNormalUser = true;
-    shell = pkgs.zsh;
-    extraGroups = [
-      "wheel"
-      "networkmanager"
-      "docker"
-      "incus-admin"
-    ];
-  };
 
   security = {
     sudo.enable = true;

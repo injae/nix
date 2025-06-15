@@ -251,19 +251,18 @@
         "type": "github"
       }
     },
-    "nixos-flake": {
+    "nixos-unified": {
       "locked": {
-        "lastModified": 1727227179,
-        "narHash": "sha256-ySnSVxchL0jTHEQpcnGMuYpd0IpGE+S/Sc4kF4ZRJ7s=",
+        "lastModified": 1747972413,
+        "narHash": "sha256-1EGZATVzllVLDqajfyHOwBB3t/hNj0xv7MVbGfKQ788=",
         "owner": "srid",
-        "repo": "nixos-flake",
-        "rev": "495b03271a03df5bcd12a572612fe6953db4424f",
+        "repo": "nixos-unified",
+        "rev": "a1d1cd9ae1ca9866f47afc5e12f30acded261fcb",
         "type": "github"
       },
       "original": {
         "owner": "srid",
-        "repo": "nixos-flake",
-        "rev": "495b03271a03df5bcd12a572612fe6953db4424f",
+        "repo": "nixos-unified",
         "type": "github"
       }
     },
@@ -385,7 +384,7 @@
         "mac-app-util": "mac-app-util",
         "nix-darwin": "nix-darwin",
         "nix-index-database": "nix-index-database",
-        "nixos-flake": "nixos-flake",
+        "nixos-unified": "nixos-unified",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nixpkgs-stable": "nixpkgs-stable_2",

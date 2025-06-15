@@ -1,4 +1,8 @@
-{ lib, inputs, ... }:
+{
+  lib,
+  inputs,
+  ...
+}:
 let
   pkgs = inputs.nixpkgs;
   userSubmodule = lib.types.submodule {
@@ -34,12 +38,13 @@ let
   };
 in
 {
+  imports = [ ];
   options = {
     people = lib.mkOption {
       type = peopleSubmodule;
     };
   };
   config = {
-    people = import ./config.nix { inherit pkgs; };
+    people = import ../../config.nix { inherit pkgs; };
   };
-} 
+}
