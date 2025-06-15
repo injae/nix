@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 let
   # Fix OS window role (needed for window managers like yabai)
   fix-window-role = pkgs.fetchpatch {
@@ -47,4 +47,50 @@ in
       copilot-language-server
       glibtool
     ]);
+
+  programs.zsh = {
+    initContent =
+      let
+        normal = lib.mkOrder 1000 ''
+          export EDITOR=emacsclient
+
+          # emacs vterm
+          autoload -U add-zsh-hook
+          add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
+
+          vterm_printf() {
+              if [ -n "$TMUX" ] \
+                  && { [ "''${TERM%%-*}" = "tmux" ] \
+                      || [ "''${TERM%%-*}" = "screen" ]; }; then
+                  # Tell tmux to pass the escape sequences through
+                  printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+              elif [ "''${TERM%%-*}" = "screen" ]; then
+                  # GNU screen (screen, screen-256color, screen-256color-bce)
+                  printf "\eP\e]%s\007\e\\" "$1"
+              else
+                  printf "\e]%s\e\\" "$1"
+              fi
+          }
+
+          if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+              alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
+          fi
+        '';
+        last = lib.mkOrder 1500 ''
+          vterm_prompt_end() {
+              vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
+          }
+          setopt PROMPT_SUBST
+          PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+        '';
+      in
+      lib.mkMerge [
+        normal
+        last
+      ];
+    envExtra = ''
+      # emacs lsp-mode
+      export LSP_USE_PLISTS=true
+    '';
+  };
 }

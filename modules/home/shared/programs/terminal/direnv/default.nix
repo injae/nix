@@ -10,6 +10,10 @@
         warn_timeout = 0;
       };
     };
+    zsh.initContent = ''
+      # exclude direnv timeout warning
+      DIRENV_WARN_TIMEOUT=0
+    '';
   };
 
   xdg.configFile = {
