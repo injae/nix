@@ -6,7 +6,7 @@ keys:
   - &pi5-02 age17wss50mp7waleqc5yvq2h2zk5w9yfwvqvcefzlfvu38688rrgqhqa7ey9w
   - &argo-cd age1px9pnq98ms9l8t4cn4ap7gvl3q7fycsuy436kenauc59z3wwuczqzatuse
 creation_rules:
-  - path_regex: home/programs/sops/secrets/[^/]+\.(yaml|json|env|ini)$
+  - path_regex: modules/home/shared/programs/sops/secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
           - *wsl_home
