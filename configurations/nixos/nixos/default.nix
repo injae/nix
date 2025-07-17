@@ -1,14 +1,12 @@
 {
   pkgs,
   flake,
-  config,
   ...
 }:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
   user = flake.config.people.myself;
-  home-dir = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
 in
 {
   imports = [

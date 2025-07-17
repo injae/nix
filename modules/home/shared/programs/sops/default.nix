@@ -34,9 +34,6 @@ in
         path = "${home-dir}/.aws/credentials";
       };
       "secrets/wireless.env" = { };
-      "secrets/NEXON.crt" = {
-        path = "${home-dir}/cert/NEXON.crt";
-      };
       "secrets/nexon-injae-gitlab" = { };
     };
   };
