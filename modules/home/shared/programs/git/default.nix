@@ -57,9 +57,9 @@ in
           updateRefs = true;
         };
       };
-      #includes = [
-      #  { path = config.sops.secrets."secrets/embark-git".path; }
-      #];
+      includes = [
+        { path = config.sops.secrets."secrets/nexon-injae-gitlab".path; }
+      ];
     };
     gh = {
       enable = true;

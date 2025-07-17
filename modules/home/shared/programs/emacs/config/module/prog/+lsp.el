@@ -19,6 +19,7 @@
         (lsp-completion-show-kind t)
         (lsp-lens-enable t)
         (lsp-enable-snippet t)
+        (lsp-enable-links t)
         (lsp-idle-delay 0.500)
         (lsp-log-io t)
         (lsp-rust-analyzer-server-display-inlay-hints nil)
@@ -28,6 +29,7 @@
         (lsp-enable-suggest-server-download nil)
         (lsp-javascript-format-enable nil)
         (lsp-typescript-format-enable nil)
+        (lsp-disabled-clients '(tfls))
         ;(lsp-rust-analyzer-cargo-watch-command "clipy")
 :init
     (defun my/lsp-mode-setup-completion ()

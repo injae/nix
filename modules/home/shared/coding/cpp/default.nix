@@ -7,13 +7,13 @@
     gnumake
 
     #stdenv
-    #clangStdenv
+    clangStdenv
     #vscode-extensions.vadimcn.vscode-lldb
     #llvmPackages_17.stdenv
     #llvmPackages_17.libcxxStdenv
     #llvmPackages_17.bintools-unwrapped
     #llvmPackages_17.clangUseLLVM
-    #clang
+    clang
     #gcc13
     ccls
     ccache

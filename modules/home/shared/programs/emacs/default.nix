@@ -33,8 +33,11 @@ in
                 [ ]
             );
         })).override
-        # https://github.com/NixOS/nixpkgs/issues/395169
-        (if pkgs.stdenv.isDarwin then (old: { withNativeCompilation = false; }) else (old: { }))
+        {
+          # https://github.com/NixOS/nixpkgs/issues/395169
+          withNativeCompilation = (!pkgs.stdenv.isDarwin);
+          withPgtk = (pkgs.stdenv.isDarwin);
+        }
       )
     ]
     ++ (with pkgs; [

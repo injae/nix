@@ -7,13 +7,25 @@
 ;;get number (string-to-number (nth 1 (elpaca-process-call "git" "log" "-n" "1" "--format=%cd" "--date=format:%Y%m%d")))
 ;; https://github.com/progfolio/elpaca/issues/222
 
+;(defun my/nixos/get-emacs-build-date ()
+;  "Return NixOS Emacs build date."
+; (string-match "--prefix.*emacs.*\\([[:digit:]]\\{8\\}\\)" system-configuration-options)
+;  (string-to-number (match-string 1 system-configuration-options)))
+
+;; https://github.com/progfolio/elpaca/issues/222
+;;(when (not (boundp 'elpaca-core-date)) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
+
+(defun my/nixos-p ()
+  "Return t if operating system is NixOS, nil otherwise."
+  (string-match-p "NixOS" (shell-command-to-string "uname -v")))
+
 (defun my/nixos/get-emacs-build-date ()
   "Return NixOS Emacs build date."
   (string-match "--prefix.*emacs.*\\([[:digit:]]\\{8\\}\\)" system-configuration-options)
   (string-to-number (match-string 1 system-configuration-options)))
 
-;; https://github.com/progfolio/elpaca/issues/222
-(when (not (boundp 'elpaca-core-date)) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
+;; Run this before the elpaca.el is loaded. Before the installer in your init.el is a good spot.
+(when (my/nixos-p) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
 
 (defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -60,7 +72,6 @@
     )
 
 (elpaca-wait)
-
 
 (use-package exec-path-from-shell
     :custom (

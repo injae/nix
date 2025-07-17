@@ -7,6 +7,7 @@
     nodejs
 
     typescript-language-server
+    typescript
     tailwindcss-language-server
     rustywind # tailwindcss-lsp pulgins
     pnpm

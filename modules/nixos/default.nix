@@ -28,6 +28,7 @@ in
         self.homeModules.default
         self.homeModules.linux-only
       ];
+      home-manager.backupFileExtension = ".backup";
     }
     self.nixosModules.common
   ];

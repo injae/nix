@@ -1,15 +1,16 @@
 {
   pkgs,
   flake,
+  config,
   ...
 }:
 let
-  inherit (flake) config inputs;
+  inherit (flake) inputs;
   inherit (inputs) self;
-  user = config.people.myself;
+  user = flake.config.people.myself;
+  home-dir = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
 in
 {
-  #nixos-unified.sshTarget = "${user}@nixos-wsl";
   imports = [
     # https://nix-community.github.io/NixOS-WSL/options.html
     inputs.nixos-wsl.nixosModules.default
@@ -17,7 +18,12 @@ in
     inputs.sops-nix.nixosModules.sops
   ];
   nixpkgs.hostPlatform = "x86_64-linux";
-  system.stateVersion = "24.05";
+  nixpkgs.overlays = [
+    (self: super: {
+      docker = super.docker.override { iptables = pkgs.iptables-legacy; };
+    })
+  ];
+  system.stateVersion = "25.05";
   wsl = {
     enable = true;
     defaultUser = user;
@@ -25,6 +31,10 @@ in
     wslConf.interop.appendWindowsPath = false;
   };
   boot.tmp.cleanOnBoot = true;
+  boot.binfmt = {
+    emulatedSystems = [ "aarch64-linux" ];
+    preferStaticEmulators = true;
+  };
 
   # docker setting
   virtualisation.docker.enable = true;
@@ -33,17 +43,10 @@ in
     setSocketVariable = true;
   };
 
-  virtualisation.incus = {
-    enable = true;
-    preseed = { };
-  };
-  networking.nftables.enable = true;
-
   programs.zsh.enable = true;
   programs.nix-ld = {
     enable = true;
     package = pkgs.nix-ld-rs;
-    #libraries = with pkgs; [ bazelisk ];
   };
 
   environment.systemPackages = with pkgs; [
@@ -52,26 +55,6 @@ in
     xdg-utils
   ];
 
-  environment.variables.JAVAX_NET_SSL_TRUSTSTORE =
-    let
-      caBundle = config.environment.etc."ssl/certs/ca-bundle.crt".source;
-      p11kit = pkgs.p11-kit.overrideAttrs (oldAttrs: {
-        configureFlags = [
-          "--with-trust-paths=${caBundle}"
-        ];
-      });
-    in
-    derivation {
-      name = "java-cacerts";
-      builder = pkgs.writeShellScript "java-cacerts-builder" ''
-        ${p11kit.bin}/bin/trust \
-          extract \
-          --format=java-cacerts \
-          --purpose=server-auth \
-          $out
-      '';
-      system = pkgs.system;
-    };
   environment.variables.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
   security = {

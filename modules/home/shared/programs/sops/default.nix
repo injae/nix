@@ -1,9 +1,13 @@
-{ flake, pkgs, config, lib, ... }:
+{
+  flake,
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 let
   user = flake.config.people.myself;
-  home-dir =
-    if pkgs.stdenv.hostPlatform.isDarwin
-    then "/Users/${user}" else "/home/${user}";
+  home-dir = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
 in
 {
   imports = with flake.inputs; [
@@ -29,17 +33,23 @@ in
       "secrets/aws-credentials" = {
         path = "${home-dir}/.aws/credentials";
       };
-      "secrets/wireless.env" = {};
+      "secrets/wireless.env" = { };
+      "secrets/NEXON.crt" = {
+        path = "${home-dir}/cert/NEXON.crt";
+      };
+      "secrets/nexon-injae-gitlab" = { };
     };
   };
 
-  programs.zsh.envExtra = with config.sops;
+  programs.zsh.envExtra =
+    with config.sops;
     let
       toName = name: builtins.replaceStrings [ "/" "-" ] [ "_" "_" ] (lib.toUpper name);
       toPath = name: secrets."${name}".path;
-      convertSecretEnv = name: "export ${toName name}=$(cat ${ toPath name})";
+      convertSecretEnv = name: "export ${toName name}=$(cat ${toPath name})";
       filterSecrets = name: !(lib.hasPrefix "secrets" name);
     in
-    builtins.foldl' (acc: elm: acc + elm + "\n") ""
-      (builtins.map convertSecretEnv (builtins.filter filterSecrets (builtins.attrNames secrets)));
+    builtins.foldl' (acc: elm: acc + elm + "\n") "" (
+      builtins.map convertSecretEnv (builtins.filter filterSecrets (builtins.attrNames secrets))
+    );
 }

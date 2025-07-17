@@ -58,7 +58,6 @@
               (lambda ()
                   (require 'lsp-eslint)
                   (require 'lsp-tailwindcss)
-                  (require 'lsp-tailwindcss)
                   (my-set-indent 2)
                   (lsp-deferred)))
     :mode (("\\.ts\\'"  . typescript-ts-mode)

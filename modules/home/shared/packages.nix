@@ -25,5 +25,7 @@
     zstd
 
     mdbook
+
+    copilot-language-server
   ];
 }

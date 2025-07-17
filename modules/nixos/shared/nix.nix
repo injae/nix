@@ -14,7 +14,7 @@ in
       allowBroken = true;
       allowUnsupportedSystem = true;
       allowUnfree = true;
-      #allowInsecure = false;
+      #allowInsecure = true;
     };
     overlays = [
       inputs.rust-overlay.overlays.default
