@@ -26,7 +26,16 @@ in
     enable = true;
     defaultUser = user;
     startMenuLaunchers = true;
-    wslConf.interop.appendWindowsPath = false;
+    wslConf = {
+      interop = {
+        enabled = false;
+        appendWindowPath = false;
+      };
+      experimental = {
+        networkingMode = "mirrored";
+        dnsTunneling = true;
+      };
+    };
   };
   boot.tmp.cleanOnBoot = true;
   boot.binfmt = {
