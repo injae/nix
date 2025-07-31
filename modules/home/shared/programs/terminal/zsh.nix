@@ -30,6 +30,7 @@
           # cppm binary path
           export PATH="$PATH:$HOME/.cppm/bin"
 
+
           export JAVA_HOME=${pkgs.jdk.home}
         ''
         + (

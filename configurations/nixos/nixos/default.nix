@@ -28,8 +28,7 @@ in
     startMenuLaunchers = true;
     wslConf = {
       interop = {
-        enabled = false;
-        appendWindowPath = false;
+        appendWindowsPath = false;
       };
       experimental = {
         networkingMode = "mirrored";
@@ -38,10 +37,11 @@ in
     };
   };
   boot.tmp.cleanOnBoot = true;
-  boot.binfmt = {
-    emulatedSystems = [ "aarch64-linux" ];
-    preferStaticEmulators = true;
-  };
+  #boot.binfmt = {
+  #  emulatedSystems = [ "aarch64-linux" ];
+  #  preferStaticEmulators = true;
+  #};
+  environment.variables.XDG_RUNTIME_DIR = "~/.cache/xdgr";
 
   # docker setting
   virtualisation.docker.enable = true;
@@ -56,11 +56,14 @@ in
     package = pkgs.nix-ld-rs;
   };
 
+  services.passSecretService.enable = true;
   environment.systemPackages = with pkgs; [
+    pass-secret-service
     gccStdenv
     wslu
     xdg-utils
   ];
+  services.dbus.packages = [ pkgs.pass-secret-service ];
 
   environment.variables.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 

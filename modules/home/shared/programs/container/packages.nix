@@ -5,7 +5,7 @@
     docker
     docker-buildx
     docker-compose
-    docker-credential-helpers
+    #docker-credential-helpers
     dive
     istioctl
 
