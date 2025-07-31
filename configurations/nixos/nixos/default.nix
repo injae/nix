@@ -41,7 +41,6 @@ in
   #  emulatedSystems = [ "aarch64-linux" ];
   #  preferStaticEmulators = true;
   #};
-  environment.variables.XDG_RUNTIME_DIR = "~/.cache/xdgr";
 
   # docker setting
   virtualisation.docker.enable = true;
