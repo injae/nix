@@ -30,10 +30,6 @@ in
       interop = {
         appendWindowsPath = false;
       };
-      experimental = {
-        networkingMode = "mirrored";
-        dnsTunneling = true;
-      };
     };
   };
   boot.tmp.cleanOnBoot = true;

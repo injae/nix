@@ -9,7 +9,7 @@
 )
 
 ;; google translation # need to migration
-(use-package go-translate
+(use-package google-translate
 :general (leader "ft" 'gt-do-translate)
 :config
     (setq gt-langs '(en ko jp))
