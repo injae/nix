@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1137 
+personal_ws-1.1 en 1143 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -297,6 +297,7 @@ bson
 buf
 bufio
 bugfix
+buildx
 builtins
 cachix
 calc
@@ -338,6 +339,7 @@ compatibilities
 concat
 conf
 config
+configmap
 configs
 const
 constexpr
@@ -372,6 +374,7 @@ dataclasses
 dataplane
 datasource
 datasources
+datastore
 datetime
 deadpool
 debian
@@ -678,6 +681,7 @@ lineno
 linter
 linters
 linux
+livenessProbe
 livep
 ln
 localhost
@@ -851,6 +855,7 @@ pos
 posframe
 poshandler
 posix
+postgres
 postgresql
 powershell
 powi
@@ -1115,6 +1120,7 @@ wsgi
 wsl
 wslu
 www
+xargs
 xdg
 xgroup
 xoxb
