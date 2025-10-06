@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1143 
+personal_ws-1.1 en 1143
 ABCDEFGHIJ
 ARGN
 Accu
@@ -328,6 +328,7 @@ cmake
 cmd
 cmp
 cncf
+cnpg
 cnt
 codec
 codecov
@@ -642,6 +643,7 @@ jsonian
 jupyter
 justl
 jvm
+jwk
 jwt
 kaniko
 karpenter
@@ -683,6 +685,7 @@ linters
 linux
 livenessProbe
 livep
+lldap
 ln
 localhost
 lockfile
@@ -937,6 +940,7 @@ rnix
 routable
 rpath
 rpc
+rsa
 rss
 rtn
 rtx
