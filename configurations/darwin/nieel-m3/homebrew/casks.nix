@@ -1,6 +1,8 @@
 _:
 
 [
+  "google-drive"
+
   # Development Tools
   #"homebrew/cask/docker"
 
@@ -38,7 +40,7 @@ _:
   "logitech-g-hub"
 
   # VPN
-  "tailscale"
+  "tailscale-app"
 
   #VM
   "utm"
