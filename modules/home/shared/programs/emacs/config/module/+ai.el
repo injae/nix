@@ -27,5 +27,19 @@
     :config (setq browser-hist-default-browser 'chrome)
     )
 
+(use-package mcp :after gptel
+  :custom (mcp-hub-servers
+            `(("filesystem"
+                . (:command "npx"
+                   :args    ("-y" "@modelcontextprotocol/server-filesystem" "~/")))
+              ("fetch"
+                . (:command "uvx" :args ("mcp-server-fetch")))
+              ("nixos"
+                . (:command "uvx" :args ("mcp-nixos")))
+             ))
+  :config (require 'mcp-hub)
+  :hook (after-init . mcp-hub-start-all-server))
+
+
 (provide '+ai)
 ;;; +ai.el ends here
