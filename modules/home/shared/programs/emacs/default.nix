@@ -22,7 +22,6 @@ in
             ++ (
               if pkgs.stdenv.isDarwin then
                 [
-                  fix-window-role
                   ./patches/system-appearance.patch # Make Emacs aware of OS-level light/dark mode
                   ./patches/round-undecorated-frame.patch # Enable rounded window with no decoration
                   #./patches/dedupe-rpath-entries.patch # https://github.com/NixOS/nixpkgs/issues/395169

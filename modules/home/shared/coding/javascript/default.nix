@@ -1,9 +1,8 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    nodePackages.nodemon
-    nodePackages.prettier
-    nodePackages.npm # globally install npm
+    nodejs_latest
+    prettier
 
     typescript-language-server
     typescript

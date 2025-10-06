@@ -1,7 +1,7 @@
 { flake, ... }:
 {
   imports = with flake.inputs; [
-    nix-index-database.hmModules.nix-index
+    nix-index-database.homeModules.nix-index
   ];
 
   programs = {
