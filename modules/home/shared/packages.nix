@@ -27,5 +27,6 @@
     mdbook
 
     copilot-language-server
+    litecli
   ];
 }
