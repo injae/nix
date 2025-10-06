@@ -22,22 +22,22 @@ in
   };
   local.colima = {
     enable = true;
-    customTemplates = {
-      "public-ecr" = {
-        provision = [
-          {
-            mode = "system";
-            script = "update-ca-certificates";
-          }
-        ];
-        mounts = [
-          {
-            location = ./public-ecr.crt;
-            mountPoint = "/usr/local/share/ca-certificates/public-ecr.crt";
-            writable = false;
-          }
-        ];
-      };
-    };
+    #customTemplates = {
+    #  "public-ecr" = {
+    #    provision = [
+    #      {
+    #        mode = "system";
+    #        script = "update-ca-certificates";
+    #      }
+    #    ];
+    #    mounts = [
+    #      {
+    #        location = ./public-ecr.crt;
+    #        mountPoint = "/usr/local/share/ca-certificates/public-ecr.crt";
+    #        writable = false;
+    #      }
+    #    ];
+    #  };
+    #};
   };
 }
