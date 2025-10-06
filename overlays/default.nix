@@ -30,8 +30,8 @@ self: super: {
   img2webp = self.callPackage "${packages}/img2webp.nix" { };
   dl-yt = self.callPackage "${packages}/dl-yt.nix" { };
   dl-yt-mp3 = self.callPackage "${packages}/dl-yt-mp3.nix" { };
-  lima-additional-guestagents =
-    self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
-      { };
-  lima = self.callPackage "${packages}/lima_1_1_1.nix" { };
+  #lima-additional-guestagents =
+  #  self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
+  #    { };
+  #lima = self.callPackage "${packages}/lima_1_1_1.nix" { };
 }
