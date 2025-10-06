@@ -23,6 +23,8 @@
     ngrok
 
     stern
+
+    cloudflared
   ];
   programs.zsh.envExtra = ''
     export KUBECONFIG="$HOME/.kube/config:$HOME/.kube/embark:$HOME/.kube/home"
