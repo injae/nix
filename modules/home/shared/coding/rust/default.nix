@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
   rust-stable = pkgs.rust-bin.stable.latest.default.override {
     extensions = [
@@ -17,4 +17,8 @@ in
     sccache
     libiconv
   ];
+  home.sessionVariables.LIBRARY_PATH = ''${
+    lib.makeLibraryPath [ pkgs.libiconv ]
+  }''${LIBRARY_PATH:+:$LIBRARY_PATH}'';
+
 }
