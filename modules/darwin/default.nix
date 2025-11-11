@@ -9,8 +9,8 @@ in
 {
   imports = [
     {
-      users.users.${flake.config.people.myself} = {
-        home = "/Users/${flake.config.people.myself}";
+      users.users.${config.people.myself} = {
+        home = "/Users/${config.people.myself}";
       };
       home-manager.users.${config.people.myself} = { };
       home-manager.useGlobalPkgs = true;
@@ -19,6 +19,6 @@ in
         self.homeModules.darwin-only
       ];
     }
-    self.nixosModules.common
-  ] ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
+  ]
+  ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
 }

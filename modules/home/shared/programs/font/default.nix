@@ -11,7 +11,7 @@ in
       ffmpeg
       font-awesome
       hack-font
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       nanum-gothic-coding
       jetbrains-mono
     ]

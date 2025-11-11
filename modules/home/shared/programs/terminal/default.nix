@@ -21,7 +21,7 @@ in
     jq
     tre # agrep
     unzip
-    du-dust
+    dust
     bottom
     bash-language-server
   ];

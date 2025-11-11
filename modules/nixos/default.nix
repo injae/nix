@@ -1,19 +1,16 @@
 # Configuration common to all Linux systems
-{
-  flake,
-  pkgs,
-  ...
-}:
-
+{ flake, pkgs, ... }:
 let
   inherit (flake) config inputs;
   inherit (inputs) self;
-  user = config.people.myself;
+  exclude = [
+    "default.nix"
+  ];
 in
 {
   imports = [
     {
-      users.users.${user} = {
+      users.users.${config.people.myself} = {
         isNormalUser = true;
         shell = pkgs.zsh;
         extraGroups = [
@@ -23,13 +20,13 @@ in
           "incus-admin"
         ];
       };
-      home-manager.users.${user} = { };
+      home-manager.users.${config.people.myself} = { };
       home-manager.sharedModules = [
         self.homeModules.default
         self.homeModules.linux-only
       ];
       home-manager.backupFileExtension = ".backup";
     }
-    self.nixosModules.common
-  ];
+  ]
+  ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
 }

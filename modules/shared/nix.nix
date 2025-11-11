@@ -20,7 +20,8 @@ in
       inputs.rust-overlay.overlays.default
       inputs.emacs-overlay.overlays.default
       inputs.emacs-lsp-booster.overlays.default
-    ] ++ lib.attrValues self.overlays;
+    ]
+    ++ lib.attrValues self.overlays;
   };
 
   # but NIX_PATH is still used by many useful tools, so we set it to the same value as the one used by this flake.

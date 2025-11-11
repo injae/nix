@@ -19,10 +19,11 @@ in
     git = {
       enable = true;
       ignores = [ "*.swp" ];
-      userName = user.name;
-      userEmail = user.email;
-      lfs.enable = true;
-      extraConfig = {
+      settings = {
+        user = {
+          name = user.name;
+          email = user.email;
+        };
         github.user = user.name;
         core = {
           editor = "emacs";
@@ -57,6 +58,7 @@ in
           updateRefs = true;
         };
       };
+      lfs.enable = true;
       includes = [
         { path = config.sops.secrets."secrets/nexon-injae-gitlab".path; }
       ];

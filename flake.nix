@@ -5,12 +5,13 @@
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.11";
 
     nix-darwin = {
-      url = "github:lnl7/nix-darwin/master";
+      url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     mac-app-util = {
       url = "github:hraban/mac-app-util";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.url = "github:r4v3n6101/cl-nix-lite/url-fix";
     };
 
     nixos-wsl = {
