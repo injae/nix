@@ -27,8 +27,7 @@
     cloudflared
   ];
   programs.zsh.envExtra = ''
-    export KUBECONFIG="$HOME/.kube/config:$HOME/.kube/embark:$HOME/.kube/home"
-
+    export KUBECONFIG="$HOME/.kube/config"
     # krew
     export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
   '';
