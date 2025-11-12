@@ -28,6 +28,9 @@
 (when (my/nixos-p) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
 
 (defvar elpaca-installer-version 0.11)
+
+;; (elpaca-write-lock-file)
+(setq elpaca-lock-file (expand-file-name "elpaca-lock.el" user-emacs-directory))
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -37,6 +40,7 @@
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
+
        (order (cdr elpaca-order))
        (default-directory repo))
   (add-to-list 'load-path (if (file-exists-p build) build repo))
