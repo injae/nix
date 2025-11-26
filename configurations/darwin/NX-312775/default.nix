@@ -11,7 +11,7 @@ let
   exclude = [
     "default.nix"
     "dock.nix"
-    "NEXON.crt"
+    "credentials.crt"
   ];
 in
 {
