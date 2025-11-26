@@ -3,7 +3,7 @@ let
   rust-stable = pkgs.rust-bin.stable.latest.default.override {
     extensions = [
       "rust-analysis"
-      "rust-docs"
+      #"rust-docs"
       "rust-src"
       "rustfmt"
       "clippy"
