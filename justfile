@@ -17,3 +17,6 @@ init-key:
 
 update-key:
     sops updatekeys home/programs/sops/secrets/secrets.yaml
+
+@get-sha256 URL:
+    nix hash convert --hash-algo sha256 --to sri $(nix-prefetch-url {{URL}})
