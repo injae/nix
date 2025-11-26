@@ -61,7 +61,7 @@
 
 (use-package git-timemachine)
 
-(use-package consult-gh :after consult
+(use-package consult-gh :after consult :disabled
     :ensure (consult-gh :files (:defaults "*.el"))
     :config
         (consult-gh-embark-mode +1)

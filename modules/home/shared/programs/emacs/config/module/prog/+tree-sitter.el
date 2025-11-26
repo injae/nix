@@ -34,6 +34,15 @@
 
 (use-package treesit :ensure nil
     :if (treesit-available-p)
+    :preface
+    ;; Function to install missing grammars
+    (defun my/install-treesit-grammars ()
+        "Install missing Tree-sitter grammars."
+        (interactive)
+        (dolist (grammar treesit-language-source-alist)
+            (let ((lang (car grammar)))
+            (unless (treesit-language-available-p lang)
+                (treesit-install-language-grammar lang)))))
     :config
     (setq treesit-language-source-alist
         '((bash "https://github.com/tree-sitter/tree-sitter-bash")

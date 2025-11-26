@@ -86,7 +86,10 @@
                                                   "LSP_USE_PLISTS"
                                                   "GOPRIVATE"
                                                   "RUST_BACKTRACE"
-                                                  "MallocNanoZone"))
+                                                  "MallocNanoZone"
+                                                  "NIX_SSL_CERT_FILE"
+                                                  "SSL_CERT_FILE"
+                                                  "REQUEST_CA_BUNDLE"))
                 (exec-path-from-shell-arguments '("-l"))
                 (exec-path-from-shell-check-startup-files nil)
                 (exec-path-from-shell-debug nil)

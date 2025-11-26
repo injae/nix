@@ -44,6 +44,7 @@
     (vertico-cycle t)
     :config
     (vertico-mode)
+    ;(vertico-buffer-mode)
 )
 
 ;; Persist history over Emacs restarts. Vertico sorts by history position.

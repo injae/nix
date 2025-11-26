@@ -29,13 +29,26 @@
     (setq web-mode-enable-auto-pairing t)
     (setq web-mode-enable-css-colorization t)
     (add-hook 'web-mode-hook #'lsp)
-    (add-hook 'web-mode-hook (lambda () (my-set-indent 2)))
 )
 
 (use-package js2-mode
     :mode (("\\.js\\'"  . js2-mode)
            ("\\.mjs\\'" . js2-mode))
-    :hook (js2-mode . (lambda () (my-set-indent 2) (lsp)))
+    :hook (js2-mode . (lambda () (lsp)))
+)
+
+(use-package web-ts-mode :ensure nil
+    :mode (("\\.html?\\'"  . web-ts-mode)
+           ("\\.xhtml$\\'" . web-ts-mode)
+           ("\\.phtml\\'" . web-ts-mode)
+           ("\\.erb\\'" . web-ts-mode)
+           ("\\.tpl\\.php\\'" . web-ts-mode)
+           ("\\.[agj]sp\\'" . web-ts-mode)
+           ("\\.as[cp]x\\'" . web-ts-mode)
+           ("\\.mustache\\'" . web-ts-mode)
+           ("\\.djhtml\\'" . web-ts-mode)
+           ("\\.vue\\'" . web-ts-mode))
+    :hook (web-ts-mode . (lambda () (lsp)))
 )
 
 (use-package lsp-tailwindcss :ensure (:type git :host github :repo "merrickluo/lsp-tailwindcss")
@@ -58,7 +71,6 @@
               (lambda ()
                   (require 'lsp-eslint)
                   (require 'lsp-tailwindcss)
-                  (my-set-indent 2)
                   (lsp-deferred)))
     :mode (("\\.ts\\'"  . typescript-ts-mode)
            ("\\.tsx\\'" . tsx-ts-mode))

@@ -1,10 +1,22 @@
 { pkgs, lib, ... }:
 let
   # Fix OS window role (needed for window managers like yabai)
+
   fix-window-role = pkgs.fetchpatch {
     url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-28/fix-window-role.patch";
     sha256 = "sha256-+z/KfsBm1lvZTZNiMbxzXQGRTjkCFO4QPlEK35upjsE=";
   };
+
+  rounded-undecorated-frame-patch-30 = pkgs.fetchpatch {
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/round-undecorated-frame.patch";
+    sha256 = "sha256-dFH4D1WYQOVOagUuVdEQB3irxV+Y8dDAOKJOJXc/KHQ=";
+  };
+  # https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/system-appearance.patch
+  system-appearance-patch-30 = pkgs.fetchpatch {
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/system-appearance.patch";
+    sha256 = "sha256-nrPOgGQAJb/5brrrWJNDARY2jWNJ9OsMtO+LPVhHfbY=";
+  };
+
 in
 {
   home.file.".emacs.d" = {
@@ -16,17 +28,15 @@ in
     with pkgs;
     [
       (
-        (emacs-git-pgtk.overrideAttrs (old: {
+        (emacs-unstable-pgtk.overrideAttrs (old: {
           patches =
             (old.patches or [ ])
             ++ (
               if pkgs.stdenv.isDarwin then
                 [
-                  ./patches/system-appearance.patch # Make Emacs aware of OS-level light/dark mode
-                  ./patches/round-undecorated-frame.patch # Enable rounded window with no decoration
-                  #./patches/dedupe-rpath-entries.patch # https://github.com/NixOS/nixpkgs/issues/395169
-                  #round-undecorated-frame-patch
-                  #system-appearance-patch
+                  fix-window-role
+                  rounded-undecorated-frame-patch-30
+                  system-appearance-patch-30
                 ]
               else
                 [ ]
@@ -38,6 +48,29 @@ in
           withPgtk = (pkgs.stdenv.isDarwin);
         }
       )
+      # (
+      #   (emacs-git-pgtk.overrideAttrs (old: {
+      #     patches =
+      #       (old.patches or [ ])
+      #       ++ (
+      #         if pkgs.stdenv.isDarwin then
+      #           [
+      #             ./patches/system-appearance.patch # Make Emacs aware of OS-level light/dark mode
+      #             ./patches/round-undecorated-frame.patch # Enable rounded window with no decoration
+      #             #./patches/dedupe-rpath-entries.patch # https://github.com/NixOS/nixpkgs/issues/395169
+      #             #round-undecorated-frame-patch
+      #             #system-appearance-patch
+      #           ]
+      #         else
+      #           [ ]
+      #       );
+      #   })).override
+      #   {
+      #     # https://github.com/NixOS/nixpkgs/issues/395169
+      #     withNativeCompilation = (!pkgs.stdenv.isDarwin);
+      #     withPgtk = (pkgs.stdenv.isDarwin);
+      #   }
+      # )
     ]
     ++ (with pkgs; [
       # https://github.com/NixOS/nixpkgs/issues/395169
