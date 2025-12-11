@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1156 
+personal_ws-1.1 en 1165 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -172,6 +172,7 @@ Redsync
 Relabelings
 Rtn
 Ruleset
+Rulesets
 RwLock
 SIGINT
 SIGTERM
@@ -350,6 +351,8 @@ configmap
 configs
 const
 constexpr
+consts
+containerd
 coreutils
 corfu
 cors
@@ -672,6 +675,7 @@ kubernetes
 kustomization
 kustomize
 kwargs
+kyverno
 lang
 langs
 laptime
@@ -787,6 +791,7 @@ nixos
 nixpkgs
 nixvim
 nlohmann
+nodepool
 noinspection
 nomessage
 noninteractive
@@ -890,6 +895,7 @@ protojson
 provisioner
 ptr
 pubsub
+pullthrough
 pvalue
 pvc
 pwd
@@ -952,6 +958,7 @@ rss
 rtn
 rtx
 ruleset
+rulesets
 runtime
 rustls
 rustup
@@ -1003,6 +1010,7 @@ ss
 ssl
 starlette
 startswith
+stateful
 statefulset
 staticcheck
 staticmethod
@@ -1028,6 +1036,7 @@ sudo
 sv
 svc
 svr
+syncerGroup
 sys
 syscall
 sz
