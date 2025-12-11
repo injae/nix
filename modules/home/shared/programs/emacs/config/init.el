@@ -27,10 +27,14 @@
 ;; Run this before the elpaca.el is loaded. Before the installer in your init.el is a good spot.
 (when (my/nixos-p) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
 
+
+(setq-default user-nix-directory (expand-file-name "~/nix"))
+(setq-default user-mutable-emacs-directory (expand-file-name "modules/home/shared/programs/emacs" user-nix-directory))
+
 (defvar elpaca-installer-version 0.11)
 
 ;; (elpaca-write-lock-file)
-(setq elpaca-lock-file (expand-file-name "elpaca-lock.el" user-emacs-directory))
+(setq elpaca-lock-file (expand-file-name "elpaca-lock.el" user-mutable-emacs-directory))
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
