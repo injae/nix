@@ -8,14 +8,17 @@
     onActivation = {
       autoUpdate = true;
       cleanup = "zap";
-      upgrade = true;
+      upgrade = false;
     };
 
-    taps = [ ];
+    taps = [
+      "hcavarsan/kftray"
+    ];
     brews = [
       "bazelisk"
       "bash"
       "ksops"
+      "mas"
     ];
 
     # $ nix shell nixpkgs#mas

@@ -45,4 +45,10 @@ _:
 
   #VM
   "utm"
+
+  "tableplus"
+
+  "kftray"
+
+  "TheBoredTeam/boring-notch/boring-notch"
 ]
