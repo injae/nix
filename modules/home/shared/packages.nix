@@ -28,5 +28,7 @@
 
     copilot-language-server
     litecli
+
+    insomnia
   ];
 }
