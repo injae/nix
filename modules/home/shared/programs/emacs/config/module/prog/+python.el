@@ -28,7 +28,8 @@
         (setq-local lsp-pyright-python-executable-cmd python-shell-interpreter
                     lsp-pyright-venv-path python-shell-virtualenv-root)
 
-        (require 'lsp-pyright)
+        (require 'lsp-python-ty)
+        ;(require 'lsp-pyright)
         (require 'lsp-ruff)
         (lsp-deferred)
         (setq-local dap-python-executable python-shell-interpreter)
@@ -45,7 +46,7 @@
     :hook (python-base-mode . poetry-tracking-mode)
     )
 
-(use-package lsp-pyright :after (python)
+(use-package lsp-pyright :after (python) :disabled
     :custom (lsp-pyright-langserver-command "basedpyright")
     ;:hook (python-base-mode .
     ;          (lambda ()
