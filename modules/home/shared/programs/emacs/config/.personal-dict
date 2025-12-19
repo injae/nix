@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1165 
+personal_ws-1.1 en 1168 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -130,8 +130,10 @@ NUR
 Nanos
 NanumGothic
 NanumGothicCoding
+Newf
 Noop
 Nop
+Ns
 OSTYPE
 Ord
 PASSTHROUGH
@@ -170,6 +172,7 @@ RW
 Readonly
 Redsync
 Relabelings
+Remotable
 Rtn
 Ruleset
 Rulesets
