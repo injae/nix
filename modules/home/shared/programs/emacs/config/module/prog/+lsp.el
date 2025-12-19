@@ -82,10 +82,7 @@
           ))
 
     (setq lsp-go-analyses
-        '((unusedparams . t)
-          (unreachable . t)
-          (unusedwrite . t)
-          (useany . t)))
+        '((ST1000 . :json-false)))
     (setq lsp-go-gopls-placeholders nil)
     ;(defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")
     ;(defun lsp-format-on-save-not-apheleia ()
