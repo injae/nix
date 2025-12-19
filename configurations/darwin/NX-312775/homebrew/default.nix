@@ -13,6 +13,7 @@
 
     taps = [
       "hcavarsan/kftray"
+      "theboredteam/boring-notch"
     ];
     brews = [
       "bazelisk"
