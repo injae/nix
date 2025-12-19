@@ -24,18 +24,20 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             uv
+            ty
+            ruff
             python
           ];
-          env =
-            {
-              UV_PYTHON_DOWNLOADS = "never";
-              UV_PYTHON = python.interpreter;
-            }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
-              LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
-            };
+          env = {
+            UV_PYTHON_DOWNLOADS = "never";
+            UV_PYTHON = python.interpreter;
+          }
+          // lib.optionalAttrs pkgs.stdenv.isLinux {
+            LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
+          };
           shellHook = ''
             unset PYTHONPATH
+            uv sync --all-packages
           '';
         };
       }
