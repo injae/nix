@@ -50,6 +50,7 @@ in
               [
                 "apple-virt"
                 "nixos-test"
+                "big-parallel"
               ]
             else
               [ "kvm" ]
