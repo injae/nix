@@ -25,10 +25,9 @@
       apheleia-global-mode
     :config
     (advice-add 'apheleia-format-buffer :around #'ij/fix-apheleia-project-dir)
-    (setf
-      (alist-get 'python-mode   apheleia-mode-alist) '(ruff)
-      (alist-get 'prettier-json apheleia-formatters) '("prettier" "--stdin-filepath" filepath)
-      )
+    (setf (alist-get 'python-mode   apheleia-mode-alist) '(ruff))
+    (setf (alist-get 'go-mode       apheleia-mode-alist) '(gofmt goimports))
+    (setf (alist-get 'prettier-json apheleia-formatters) '("prettier" "--stdin-filepath" filepath))
     (apheleia-global-mode +1)
     )
 
