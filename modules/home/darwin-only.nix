@@ -7,6 +7,10 @@
 let
   mac-app-util = flake.inputs.mac-app-util.packages.${pkgs.stdenv.system}.default;
   exclude = [ "default.nix" ];
+  publicEcrCertDir = pkgs.runCommand "public-ecr-cert-dir" { } ''
+    mkdir -p $out
+    cp ${./public-ecr.crt} $out/public-ecr.crt
+  '';
 in
 {
   imports = (
@@ -22,22 +26,22 @@ in
   };
   local.colima = {
     enable = true;
-    #customTemplates = {
-    #  "public-ecr" = {
-    #    provision = [
-    #      {
-    #        mode = "system";
-    #        script = "update-ca-certificates";
-    #      }
-    #    ];
-    #    mounts = [
-    #      {
-    #        location = ./public-ecr.crt;
-    #        mountPoint = "/usr/local/share/ca-certificates/public-ecr.crt";
-    #        writable = false;
-    #      }
-    #    ];
-    #  };
-    #};
+    customTemplates = {
+      "public-ecr" = {
+        provision = [
+          {
+            mode = "system";
+            script = "update-ca-certificates";
+          }
+        ];
+        mounts = [
+          {
+            location = publicEcrCertDir;
+            mountPoint = "/usr/local/share/ca-certificates/public-ecr.crt";
+            writable = false;
+          }
+        ];
+      };
+    };
   };
 }
