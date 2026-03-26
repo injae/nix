@@ -2,10 +2,10 @@ hostname:
     uname -n
 
 switch +ARGS="":
-    nix run .#activate --impure {{ARGS}}
+    nix run .#activate --option access-tokens "github.com=$(gh auth token)" --impure {{ARGS}}
 
 update:
-    nix flake update
+    nix flake update --option access-tokens "github.com=$(gh auth token)"
 
 make-key:
     ssh-keygen
