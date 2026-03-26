@@ -5,7 +5,7 @@
   ...
 }:
 let
-  mac-app-util = flake.inputs.mac-app-util.packages.${pkgs.stdenv.system}.default;
+  #mac-app-util = flake.inputs.mac-app-util.packages.${pkgs.stdenv.system}.default;
   exclude = [ "default.nix" ];
   publicEcrCertDir = pkgs.runCommand "public-ecr-cert-dir" { } ''
     mkdir -p $out
@@ -17,13 +17,6 @@ in
     with builtins;
     map (fn: ./darwin/${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./darwin)))
   );
-  home.activation = {
-    trampolineApps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      fromDir="$HOME/Applications/Home Manager Apps"
-      toDir="$HOME/Applications/Home Manager Trampolines"
-      ${mac-app-util}/bin/mac-app-util sync-trampolines "$fromDir" "$toDir"
-    '';
-  };
   local.colima = {
     enable = true;
     customTemplates = {
