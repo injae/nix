@@ -2,8 +2,13 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package terraform-mode :after exec-path-from-shell
-    :mode   ("\\.tf\\'" . terraform-mode)
+(use-package hcl-mode
+    :mode   (("\\.hcl\\'" . hcl-mode)
+             ("\\.alloy\\'" . hcl-mode))
+    )
+
+(use-package terraform-mode
+    :mode   (("\\.tf\\'" . terraform-mode))
     :hook (terraform-mode . (lambda () (lsp)))
     :custom
     (terraform-indent-level 2)
