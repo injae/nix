@@ -14,15 +14,6 @@
 
 (use-package docker-compose-mode)
 
-(use-package kubernetes
-    :commands (kubernetes-overview)
-    :config
-    (setq kubernetes-poll-frequency 3600)
-    (setq kubernetes-redraw-frequency 3600)
-    )
-
-(use-package kubernetes-evil :after (kubernetes evil))
-
 (use-package kubel :after vterm
     :commands (kubel)
     :config (kubel-vterm-setup)
