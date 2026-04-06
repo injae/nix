@@ -2,7 +2,9 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package just-mode :after exec-path-from-shell)
+(use-package just-mode :after exec-path-from-shell
+    :mode ("\\.just\\'" . just-mode)
+    )
 
 (use-package justl :after just-mode
     :custom (justl-executable "just")
