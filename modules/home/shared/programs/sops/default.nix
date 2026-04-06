@@ -8,6 +8,7 @@
 let
   user = flake.config.people.myself;
   home-dir = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
+  age-key-file = "${home-dir}/.config/sops/age/keys.txt";
 in
 {
   imports = with flake.inputs; [
@@ -24,12 +25,13 @@ in
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
-    age.keyFile = "${home-dir}/.config/sops/age/keys.txt";
+    age.keyFile = age-key-file;
     secrets = {
       "spotify/id" = { };
       "spotify/secret" = { };
       "discord/token" = { };
       "chatgpt/api-key" = { };
+      "litellm/api-key" = { };
       "secrets/aws-credentials" = {
         path = "${home-dir}/.aws/credentials";
       };
@@ -45,8 +47,9 @@ in
       toPath = name: secrets."${name}".path;
       convertSecretEnv = name: "export ${toName name}=$(cat ${toPath name})";
       filterSecrets = name: !(lib.hasPrefix "secrets" name);
+      sops_base_env = "export SOPS_AGE_KEY_FILE=\"${age-key-file}\"\n";
     in
-    builtins.foldl' (acc: elm: acc + elm + "\n") "" (
+    builtins.foldl' (acc: elm: acc + elm + "\n") sops_base_env (
       builtins.map convertSecretEnv (builtins.filter filterSecrets (builtins.attrNames secrets))
     );
 }
