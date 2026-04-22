@@ -26,7 +26,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable ({
+  config = mkIf cfg.enable {
     # https://github.com/LnL7/nix-darwin/pull/972/files
     environment.systemPackages = [ ollama ];
     launchd.user.agents.ollama = {
@@ -43,6 +43,6 @@ in
         };
       };
     };
-  });
+  };
 
 }

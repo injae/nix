@@ -21,11 +21,19 @@ let
   #      };
   #
 in
-self: super: {
+self: super:
+let
+  masterPkg = import inputs.nixpkgs-master {
+    system = super.system;
+    config.allowUnfree = true;
+  };
+in
+{
   #imports = [
   #  ./version-overlays
   #];
   #nuenv = (inputs.nuenv.overlays.nuenv self super).nuenv;
+  nushell = masterPkg.nushell;
   mov2gif = self.callPackage "${packages}/mov2gif.nix" { };
   img2webp = self.callPackage "${packages}/img2webp.nix" { };
   dl-yt = self.callPackage "${packages}/dl-yt.nix" { };

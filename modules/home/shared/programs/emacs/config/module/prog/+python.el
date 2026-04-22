@@ -11,7 +11,9 @@
     ;                        (isort . "pip install isort")
     ;                        (black . "pip install black")
     ;                           )
-    :custom (python-indent-offset 4)
+    :hook ((python-mode . (lambda ()
+           (setq-local python-indent-offset 4
+                       python-indent-guess-indent-offset-verbose nil))))
     ;; :config
     ;; (setq python-ts-mode-hook python-mode-hook)
     )

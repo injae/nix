@@ -21,7 +21,7 @@ in
       docker = super.docker.override { iptables = pkgs.iptables-legacy; };
     })
   ];
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
   wsl = {
     enable = true;
     defaultUser = user;

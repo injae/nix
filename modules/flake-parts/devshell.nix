@@ -13,7 +13,7 @@
         inputsFrom = [ config.treefmt.build.devShell ];
         packages = with pkgs; [
           just
-          nixfmt-rfc-style
+          nixfmt
         ];
       };
     };

@@ -4,8 +4,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
-  outputs = { nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    { nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         overlays = [ ];
         pkgs = import nixpkgs {
@@ -15,10 +17,11 @@
       with pkgs;
       {
         devShells.default = mkShell {
-          packages = [ nixfmt-rfc-style ];
+          packages = [ nixfmt ];
           shellHook = ''
             echo "Hello, world!"
           '';
         };
-      });
+      }
+    );
 }

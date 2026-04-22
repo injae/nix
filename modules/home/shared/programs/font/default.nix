@@ -13,7 +13,6 @@ in
       hack-font
       noto-fonts-color-emoji
       nanum-gothic-coding
-      jetbrains-mono
     ]
     ++ nerd-fonts;
 }

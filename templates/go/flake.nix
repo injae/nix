@@ -38,8 +38,7 @@
           with pkgs;
           mkShell {
             packages = [
-              nixfmt-rfc-style
-
+              nixfmt
               go
               gopls
               golangci-lint

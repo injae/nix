@@ -14,7 +14,7 @@ in
     just
     coreutils
     killall
-    neofetch
+    fastfetch
     wget
     zip
     iftop
@@ -24,6 +24,7 @@ in
     dust
     bottom
     bash-language-server
+    nushell
   ];
 
   programs = {
