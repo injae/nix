@@ -2,6 +2,19 @@
 ;;; Commentary:
 ;;; Code:
 
+(use-package ghostel
+    :config (setq ghostel-tramp-shell-integration t)
+    :hook (ghostel-mode . (lambda () (display-line-numbers-mode -1)))
+    )
+
+(use-package evil-ghostel
+  :vc (:url "https://github.com/dakra/ghostel"
+       :lisp-dir "extensions/evil-ghostel"
+       :rev :newest)
+  :after (ghostel evil)
+  :hook (ghostel-mode . evil-ghostel-mode))
+
+
 (use-package vterm :after (evil-collection exec-path-from-shell projectile)
 ;:custom (vterm-always-compile-module t)
 :preface
