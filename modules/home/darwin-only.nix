@@ -1,11 +1,6 @@
-{
-  pkgs,
-  flake,
-  lib,
-  ...
-}:
+{ pkgs, ... }:
 let
-  #mac-app-util = flake.inputs.mac-app-util.packages.${pkgs.stdenv.system}.default;
+  #mac-app-util = flake.inputs.mac-app-util.packages.${pkgs.stdenv.hostPlatform.system}.default;
   exclude = [ "default.nix" ];
   publicEcrCertDir = pkgs.runCommand "public-ecr-cert-dir" { } ''
     mkdir -p $out

@@ -6,7 +6,7 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
-  system = pkgs.stdenv.system;
+  inherit (pkgs.stdenv.hostPlatform) system;
   stable = inputs.nixpkgs-stable.legacyPackages.${system};
   exclude = [
     "default.nix"
@@ -16,7 +16,8 @@ in
 {
   imports = [
     self.darwinModules.default
-  ] ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
+  ]
+  ++ (with builtins; map (fn: ./${fn}) (filter (fn: !(elem fn exclude)) (attrNames (readDir ./.))));
 
   nixpkgs.hostPlatform = "aarch64-darwin";
 
