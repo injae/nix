@@ -81,6 +81,7 @@ in
       emacs-all-the-icons-fonts
       copilot-language-server
       glibtool
+      rassumfrassum
     ]);
 
   programs.zsh = {

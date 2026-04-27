@@ -51,7 +51,7 @@
     :hook (web-ts-mode . (lambda () (lsp)))
 )
 
-(use-package lsp-tailwindcss :ensure (:type git :host github :repo "merrickluo/lsp-tailwindcss")
+(use-package lsp-tailwindcss :ensure (:type git :host github :repo "merrickluo/lsp-tailwindcss") :disabled
     :init (setq lsp-tailwindcss-add-on-mode t)
     :config
       (dolist (tw-major-mode
@@ -67,11 +67,11 @@
     )
 
 (use-package typescript-ts-mode :ensure nil :no-require t
-    :hook (typescript-ts-base-mode .
-              (lambda ()
-                  (require 'lsp-eslint)
-                  (require 'lsp-tailwindcss)
-                  (lsp-deferred)))
+    ;:hook (typescript-ts-base-mode .
+    ;          (lambda ()
+    ;              (require 'lsp-eslint)
+    ;              (require 'lsp-tailwindcss)
+    ;              (lsp-deferred)))
     :mode (("\\.ts\\'"  . typescript-ts-mode)
            ("\\.tsx\\'" . tsx-ts-mode))
     )

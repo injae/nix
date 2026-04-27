@@ -226,19 +226,19 @@
                  "ld" 'consult-lsp-diagnostics)
     )
 
-(use-package eglot :after (exec-path-from-shell projectile) :disabled
+(use-package eglot :no-require t :ensure nil :after (exec-path-from-shell projectile)
     :preface
     (defun my/eglot-ensure ()
         (require 'exec-path-from-shell)
         (exec-path-from-shell-initialize)
         (eglot-ensure))
     :hook (
-          (rust-mode   . my/eglot-ensure)
-          (go-mode     . my/eglot-ensure)
-          (nix-mode    . my/eglot-ensure)
+          ;(rust-mode   . my/eglot-ensure)
+          ;(go-mode     . my/eglot-ensure)
+          ;(nix-mode    . my/eglot-ensure)
           (python-base-mode . my/eglot-ensure)
-          
-)
+          (typescript-ts-base-mode . my/eglot-ensure)
+    )
     :config
     (add-to-list 'eglot-server-programs
                 '((rust-ts-mode rust-mode) .
@@ -251,15 +251,24 @@
                                       :typeHints (:enable nil)
                                       :chainingHints (:enable nil)))
                          )))
-    (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
+    (add-to-list 'eglot-server-programs '(nix-mode . ("nixd")))
     )
 
-(use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x") :disabled
+(use-package eglot-python-preset :after eglot
+    :custom (eglot-python-preset-lsp-server 'ty)
+    ) ; or 'basedpyright, 'pyrefly, or 'rass
+
+(use-package eglot-typescript-preset :after eglot
+  :config (eglot-typescript-preset-setup)
+  )
+
+
+(use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
     :after eglot
     :config (eglot-x-setup)
     )
 
-(use-package flycheck-eglot :after (flycheck eglot)
+(use-package flycheck-eglot :after (flycheck eglot) :disabled
     :functions (flycheck-eglot-mode)
     :config (flycheck-eglot-mode)
     )
@@ -272,26 +281,8 @@
     :config (add-to-list 'eldoc-box-frame-parameters '(alpha . 0.80))
     )
 
-;; need to install https://github.com/blahgeek/emacs-lsp-booster
-(use-package eglot-booster :ensure (:host github :repo "jdtsmith/eglot-booster")
-    :after eglot
-    :config (eglot-booster-mode)
-    )
-
 (use-package consult-eglot :after eglot)
 
-(use-package lsp-bridge :after exec-path-from-shell :disabled
-    :ensure (:host github
-             :repo "manateelazycat/lsp-bridge"
-             :files (:defaults ("*.el" "*.py" "acm" "core"
-                                "langserver" "multiserver" "resources"))
-             :build (:not elpaca--byte-compile)
-             )
-    :init
-    ;; (setq lsp-bridge-enable-log nil)
-    (global-lsp-bridge-mode)
-    (add-hook 'envrc-mode-hook 'lsp-bridge-restart-process)
-    )
 
 (use-package lsp-key-map :no-require t :ensure nil :after (:any lsp-mode eglot)
 :preface
@@ -308,7 +299,7 @@
 
     (defun lsp-key-map-find-definition ()
         (interactive)
-        (lsp-key-mapper 'lsp-find-definition 'xref-find-declaration))
+        (lsp-key-mapper 'lsp-find-definition 'xref-find-definitions))
 
     (defun lsp-key-map-find-implementation ()
         (interactive)
@@ -316,7 +307,7 @@
 
     (defun lsp-key-map-find-references ()
         (interactive)
-        (lsp-key-mapper 'lsp-find-references 'eglot-x-find-refs))
+        (lsp-key-mapper 'lsp-find-references 'xref-find-references))
 
     (defun lsp-key-map-find-typeDefinition ()
         (interactive)

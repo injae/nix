@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package copilot :ensure (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
+(use-package copilot :ensure (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el") :after track-changes)
     :preface
     (defun copilot-disable-warning ()
         (setq-local copilot--indent-warning-printed-p t))

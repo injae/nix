@@ -26,27 +26,20 @@
     (add-hook 'python-base-mode-hook (lambda ()
         (setq-local python-shell-interpreter (pet-executable-find "python")
                     python-shell-virtualenv-root (pet-virtualenv-root))
-        (pet-flycheck-setup)
-        (setq-local lsp-pyright-python-executable-cmd python-shell-interpreter
-                    lsp-pyright-venv-path python-shell-virtualenv-root)
+        ;(pet-flycheck-setup)
+        ;(setq-local lsp-pyright-python-executable-cmd python-shell-interpreter
+        ;            lsp-pyright-venv-path python-shell-virtualenv-root)
 
-        (require 'lsp-python-ty)
-        ;(require 'lsp-pyright)
-        (require 'lsp-ruff)
-        (lsp-deferred)
-        (setq-local dap-python-executable python-shell-interpreter)
+        ;(require 'lsp-python-ty)
+        ;;(require 'lsp-pyright)
+        ;(require 'lsp-ruff)
+        ;(lsp-deferred)
+        ;(setq-local dap-python-executable python-shell-interpreter)
         ))
-
     )
 
 (use-package flymake-ruff :after (python eglot) :disabled
     :hook (python-base-mode . flymake-ruff-load))
-
-(use-package poetry :after python :disabled
-    :functions (poetry-tracking-mode)
-    ;:ensure-system-package ((poetry . "pip install poetry"))
-    :hook (python-base-mode . poetry-tracking-mode)
-    )
 
 (use-package lsp-pyright :after (python) :disabled
     :custom (lsp-pyright-langserver-command "basedpyright")
