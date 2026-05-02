@@ -3,9 +3,6 @@ _:
 [
   "google-drive"
 
-  # Development Tools
-  #"homebrew/cask/docker"
-
   "ghostty"
   "visual-studio-code"
 
@@ -34,14 +31,16 @@ _:
   "openlens"
   "freelens"
 
-  # Wine - Proton - Metal
-  "whisky"
-
   "logitech-g-hub"
+  "scroll-reverser"
 
   # VPN
   "tailscale-app"
 
   #VM
   "utm"
+
+  "kftray"
+
+  "TheBoredTeam/boring-notch/boring-notch"
 ]

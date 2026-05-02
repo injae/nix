@@ -6,7 +6,7 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
-  system = pkgs.stdenv.hostPlatform.system;
+  inherit (pkgs.stdenv.hostPlatform) system;
   stable = inputs.nixpkgs-stable.legacyPackages.${system};
   exclude = [
     "default.nix"

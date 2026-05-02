@@ -4,19 +4,22 @@
   homebrew = {
     enable = true;
     user = flake.config.people.myself;
-    casks = pkgs.callPackage ./casks.nix { };
     onActivation = {
       autoUpdate = true;
       cleanup = "zap";
-      upgrade = true;
+      upgrade = false;
     };
 
-    taps = [ ];
+    taps = [
+      "hcavarsan/kftray"
+      "theboredteam/boring-notch"
+    ];
     brews = [
       "bazelisk"
       "bash"
       "ksops"
     ];
+    casks = pkgs.callPackage ./casks.nix { };
 
     # $ nix shell nixpkgs#mas
     # $ mas search <app name>
