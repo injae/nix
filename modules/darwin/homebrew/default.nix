@@ -25,7 +25,6 @@
     # $ mas search <app name>
     masApps = {
       Xcode = 497799835;
-      KakaoTalk = 869223134;
       WindowsApp = 1295203466; # Microsoft Remote Desktop
       Yoink = 457622435;
       MicrosoftOutlook = 985367838;

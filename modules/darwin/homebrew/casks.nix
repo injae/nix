@@ -43,4 +43,6 @@ _:
   "kftray"
 
   "TheBoredTeam/boring-notch/boring-notch"
+
+  "claude-code"
 ]
