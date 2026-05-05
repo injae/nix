@@ -25,7 +25,7 @@ in
   };
 
   home.file.".config/rassumfrassum" = {
-    source = ./rssumfrassum;
+    source = ./rassumfrassum;
   };
 
   home.packages =
