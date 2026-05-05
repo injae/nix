@@ -15,32 +15,24 @@
         in
         lib.mkMerge [ initNormal ];
 
-      envExtra =
-        ''
-          export PATH=$PATH:/run/current-system/sw/bin/:$HOME/.local/bin
+      envExtra = ''
+        export PATH=$PATH:/run/current-system/sw/bin/:$HOME/.local/bin
 
-          # disable usage report
-          export SCOUT_DISABLE=1
+        # disable usage report
+        export SCOUT_DISABLE=1
 
-          # rust sccache setting
-          export RUSTC_WRAPPER=sccache
+        # rust sccache setting
+        export RUSTC_WRAPPER=sccache
 
-          export PATH="$PATH:$HOME/.cargo/bin"
+        export PATH="$PATH:$HOME/.cargo/bin"
 
-          # cppm binary path
-          export PATH="$PATH:$HOME/.cppm/bin"
+        # cppm binary path
+        export PATH="$PATH:$HOME/.cppm/bin"
 
 
-          export JAVA_HOME=${pkgs.jdk.home}
-        ''
-        + (
-          if pkgs.stdenv.isDarwin then
-            ''
-              eval "$(/opt/homebrew/bin/brew shellenv)"
-            ''
-          else
-            ""
-        );
+        export JAVA_HOME=${pkgs.jdk.home}
+      ''
+      + (if pkgs.stdenv.isDarwin then ''eval "$(/opt/homebrew/bin/brew shellenv)"'' else "");
     };
   };
 }
