@@ -45,9 +45,7 @@
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
        ;(before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
-       (rust-mode           . lsp-deferred)
-       (go-ts-mode          . lsp-deferred)
-       (go-mode             . lsp-deferred))
+       )
 
 :config
     ;(lsp-mode)
@@ -226,63 +224,32 @@
                  "ld" 'consult-lsp-diagnostics)
     )
 
+(use-package sideline-eglot :disabled
+    :init (setq sideline-backends-right '(sideline-eglot))
+    )
+
 (use-package eglot :no-require t :ensure nil :after (exec-path-from-shell projectile)
     :preface
+    (defun my/eglot-eldoc ()
+        (setq eldoc-documentation-strategy
+                'eldoc-documentation-compose-eagerly))
     (defun my/eglot-ensure ()
-        (require 'exec-path-from-shell)
         (exec-path-from-shell-initialize)
         (eglot-ensure))
-    :hook (
-          ;(rust-mode   . my/eglot-ensure)
-          ;(go-mode     . my/eglot-ensure)
-          ;(nix-mode    . my/eglot-ensure)
-          (python-base-mode . my/eglot-ensure)
-          (typescript-ts-base-mode . my/eglot-ensure)
-    )
+    :hook (eglot-managed-mode . my/eglot-eldoc)
     :config
-    (add-to-list 'eglot-server-programs
-                '((rust-ts-mode rust-mode) .
-                     ("rust-analyzer"
-                         :initializationOptions
-                         (:check (:command "clippy")
-                          :procMacro (:enable t)
-                          :diagnostics (:disabled ["unresolved-import"])
-                          :inlayHint (:parameterHints (:enable nil)
-                                      :typeHints (:enable nil)
-                                      :chainingHints (:enable nil)))
-                         )))
-    (add-to-list 'eglot-server-programs '(nix-mode . ("nixd")))
+    (add-to-list 'eglot-server-programs '(go-ts-mode   . ("rass" "go")))
+    (add-to-list 'eglot-server-programs '(go-mode   . ("rass" "go")))
+    (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rass" "rust")))
+    (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("rass" "nix")))
     )
-
-(use-package eglot-python-preset :after eglot
-    :custom (eglot-python-preset-lsp-server 'ty)
-    ) ; or 'basedpyright, 'pyrefly, or 'rass
-
-(use-package eglot-typescript-preset :after eglot
-  :config (eglot-typescript-preset-setup)
-  )
-
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
     :after eglot
     :config (eglot-x-setup)
     )
 
-(use-package flycheck-eglot :after (flycheck eglot) :disabled
-    :functions (flycheck-eglot-mode)
-    :config (flycheck-eglot-mode)
-    )
-
-(use-package eldoc-box :after eglot
-    :hook (eglot-managed-mode . eldoc-box-hover-at-point-mode)
-          ;(eglot-managed-mode . eldoc-box-hover-mode)
-    :custom (eldoc-box-clear-with-C-g t)
-            (eldoc-box-offset 1)
-    :config (add-to-list 'eldoc-box-frame-parameters '(alpha . 0.80))
-    )
-
 (use-package consult-eglot :after eglot)
-
 
 (use-package lsp-key-map :no-require t :ensure nil :after (:any lsp-mode eglot)
 :preface

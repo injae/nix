@@ -66,6 +66,11 @@
         (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode))
     )
 
+
+(use-package eglot-typescript-preset :after eglot
+  :config (eglot-typescript-preset-setup)
+  )
+
 (use-package typescript-ts-mode :ensure nil :no-require t
     ;:hook (typescript-ts-base-mode .
     ;          (lambda ()
@@ -74,6 +79,7 @@
     ;              (lsp-deferred)))
     :mode (("\\.ts\\'"  . typescript-ts-mode)
            ("\\.tsx\\'" . tsx-ts-mode))
+    :hook (typescript-ts-base-mode . my/eglot-ensure)
     )
 
 

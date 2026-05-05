@@ -30,11 +30,6 @@
          (setf git-link-use-commit t)
 )
 
-;; git history view mode
-(use-package smeargle :disabled
-:commands smeargle
-)
-
 (use-package blamer
 :bind (("s-i" . blamer-show-posframe-commit-info))
 :general (leader "gb" 'blamer-show-posframe-commit-info)
@@ -60,14 +55,6 @@
     )
 
 (use-package git-timemachine)
-
-(use-package consult-gh :after consult :disabled
-    :ensure (consult-gh :files (:defaults "*.el"))
-    :config
-        (consult-gh-embark-mode +1)
-        (consult-gh-forge-mode +1)
-    )
-
 
 (provide '+git)
 ;;; +git.el ends here

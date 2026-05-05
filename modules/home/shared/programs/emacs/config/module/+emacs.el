@@ -16,6 +16,7 @@
 
 (use-package emacs :ensure nil
     :config
+    (setq frame-resize-pixelwise t)
     (setq ad-redefinition-action 'accept)
     (setq max-lisp-eval-depth 10000)
     (setq debug-on-error nil) ; debug option

@@ -3,12 +3,12 @@
 ;;; Code:
 
 (use-package tree-sitter
-  :hook ((emacs-startup . global-tree-sitter-mode)
+  :hook ((emacs-startup        . global-tree-sitter-mode)
          (tree-sitter-after-on . tree-sitter-hl-mode))
 )
 
 ;; 
-(use-package tree-sitter-langs :after tree-sitter)
+(use-package tree-sitter-langs  :after tree-sitter)
 (use-package tree-sitter-indent :after tree-sitter :disabled
   :hook (tree-sitter-after-on . tree-sitter-indent-mode)
   )
@@ -16,21 +16,10 @@
 
 (use-package evil-textobj-tree-sitter :after (evil tree-sitter)
   :config
-  ;; bind `function.outer`(entire function block) to `f` for use in things like `vaf`, `yaf`
   (define-key evil-outer-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.outer"))
-  ;; bind `function.inner`(function block without name and args) to `f` for use in things like `vif`, `yif`
   (define-key evil-inner-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.inner"))
-
-  ;; You can also bind multiple items and we will match the first one we can find
   (define-key evil-outer-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj ("conditional.outer" "loop.outer")))
   )
-
-(use-package treesit-auto :disabled
-    ;:custom (treesit-auto-install 'prompt)
-    :config
-    ;; (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode)
-    )
 
 (use-package treesit :ensure nil
     :if (treesit-available-p)
@@ -68,19 +57,6 @@
     :custom (combobulate-key-prefix "C-c C-o")
     :hook ((prog-mode . combobulate-mode))
     )
-
-
-(use-package treesit-langs :disabled
-    :ensure (treesit-langs :repo "kiennq/treesit-langs"
-                           :host github
-                           :files (:defaults "treesit-*.el" "queries"))
-    :hook (prog-mode .
-              (lambda () (ignore-errors (treesit-hl-toggle))))
-    :custom
-        (treesit-langs-git-dir nil)
-        (treesit-langs-grammar-dir (expand-file-name "tree-sitter" user-emacs-directory))
-    :config (add-to-list 'treesit-extra-load-path treesit-langs-grammar-dir)
-)
 
 (provide '+tree-sitter)
 ;;; +tree-sitter.el ends here

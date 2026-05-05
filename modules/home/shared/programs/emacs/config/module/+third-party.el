@@ -13,7 +13,7 @@
                  "sp" 'smudge-controller-previous-track
                  "ss" 'smudge-controller-toggle-play)
 :config
-    (exec-path-from-shell-copy-envs '("SPOTIFY_ID" "SPOTIFY_SECRET"))
+    (exec-path-from-shell-copy-envs    '("SPOTIFY_ID" "SPOTIFY_SECRET"))
     (setq smudge-spotify-client-id     (getenv "SPOTIFY_ID"))
     (setq smudge-spotify-client-secret (getenv "SPOTIFY_SECRET"))
     (setq smudge-transport 'connect)

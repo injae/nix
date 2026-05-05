@@ -4,8 +4,9 @@
 
 ;; buffer manage
 (use-package buffer-move
-:general (leader
-	   "b c" #'clean-buffer-list
+:general
+    (leader
+	   "b c" 'clean-buffer-list
        "b r" 'eval-buffer
 	   "b h" 'buf-move-left
 	   "b j" 'buf-move-down
@@ -30,12 +31,6 @@
 (use-package vdiff)
 
 (use-package ztree)
-
-(use-package popwin :disabled
-    :config (popwin-mode 1)
-    )
-
-(use-package burly :disabled)
 
 (provide '+buffer)
 ;;; +buffer.el ends here

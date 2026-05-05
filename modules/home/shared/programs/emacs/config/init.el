@@ -121,6 +121,11 @@
     (setq auto-save-file-name-transforms `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
     )
 
+
+(use-package editorconfig
+    :config (editorconfig-mode 1)
+    )
+
 ;; custom lisp library
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/"))
 
@@ -149,7 +154,7 @@
              emacs font evil
              git grep-util extension
              project-manage completion
-             window   buffer  ui
+             window buffer ui
              org terminal edit
              flycheck search
              multi-mode util
@@ -162,7 +167,7 @@
         '( ;; programming modules
              tree-sitter lsp debug snippet
              prog-search doc ssh
-             coverage copilot tools
+             coverage copilot
              ;;; language support
              just cpp lisp csharp
              rust python gleam

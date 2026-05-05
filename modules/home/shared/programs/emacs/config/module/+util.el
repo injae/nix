@@ -4,8 +4,6 @@
 
 (use-package daemons)
 
-(use-package try :defer t)
-
 (use-package sudo-mode :ensure nil :no-require t
 :preface
 (defun sudo-find-file (file-name)

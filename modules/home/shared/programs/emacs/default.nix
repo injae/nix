@@ -24,6 +24,10 @@ in
     recursive = true;
   };
 
+  home.file.".config/rassumfrassum" = {
+    source = ./rssumfrassum;
+  };
+
   home.packages =
     with pkgs;
     [
@@ -44,7 +48,8 @@ in
         })).override
         {
           # https://github.com/NixOS/nixpkgs/issues/395169
-          withNativeCompilation = (!pkgs.stdenv.isDarwin);
+          #withNativeCompilation = (!pkgs.stdenv.isDarwin);
+          withNativeCompilation = true;
           withPgtk = (pkgs.stdenv.isDarwin);
         }
       )

@@ -2,9 +2,9 @@
 ;;; Commentary:
 ;;; Code:
 
-(setq flymake-mode nil)
+;(setq flymake-mode nil)
 
-(use-package flycheck :after (exec-path-from-shell projectile)
+(use-package flycheck :after (exec-path-from-shell projectile) :disabled
     :custom (flycheck-clang-language-standard "c++17")
     :hook (emacs-startup . global-flycheck-mode)
     :config
@@ -64,7 +64,6 @@
     :hook (emacs-startup . global-jinx-mode)
     :general (leader "sf" #'jinx-correct)
     )
-
 
 (provide '+flycheck)
 ;;; +flycheck.el ends here

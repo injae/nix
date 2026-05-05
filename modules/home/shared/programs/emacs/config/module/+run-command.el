@@ -3,7 +3,6 @@
 ;;; Code:
 
 (use-package run-command :after vterm
-    ;:ensure-system-package (grip . "pip install grip")
     :preface
     (defun run-command-recipe ()
         (list

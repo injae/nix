@@ -2,24 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package ghostel
-    :config (setq ghostel-tramp-shell-integration t)
-    :hook (ghostel-mode . (lambda () (display-line-numbers-mode -1)))
-    )
-
-(use-package evil-ghostel
-  :vc (:url "https://github.com/dakra/ghostel"
-       :lisp-dir "extensions/evil-ghostel"
-       :rev :newest)
-  :after (ghostel evil)
-  :hook (ghostel-mode . evil-ghostel-mode))
-
-
 (use-package vterm :after (evil-collection exec-path-from-shell projectile)
 ;:custom (vterm-always-compile-module t)
 :preface
   (defface my/vterm-face
-    '((t :family "NanumGothicCoding" :height 130))
+    '((t :family "NanumGothicCoding" :height 140))
     "Font face for vterm buffer.")
   (defun my/vterm-font-setup () (buffer-face-set 'my/vterm-face))
 :config
@@ -121,19 +108,6 @@ shell exits, the buffer is killed."
 )
 
 (use-package powershell)
-
-(use-package eat
-    :ensure (
-      :host codeberg
-      :repo "akib/emacs-eat"
-      :files (
-         "*.el" ("term" "term/*.el") "*.texi"
-         "*.ti" ("terminfo/e" "terminfo/e/*")
-         ("terminfo/65" "terminfo/65/*")
-         ("integration" "integration/*")
-         (:exclude ".dir-locals.el" "*-tests.el"))
-      )
-    )
 
 (provide '+terminal)
 ;;; +terminal.el ends here

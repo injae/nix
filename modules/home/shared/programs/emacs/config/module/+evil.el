@@ -3,20 +3,21 @@
 ;;; Code:
 
 (use-package evil
-    :preface
-    (setq evil-want-keybinding nil)
-    :custom
-    (evil-want-C-u-scroll t)
-    (evil-symbol-word-search t)
-    (evil-want-minibuffer t)
+    :custom ((evil-want-C-u-scroll t)
+             (evil-symbol-word-search t)
+             (evil-want-minibuffer t))
+    :init
+    (setq evil-want-integration   t
+          evil-want-keybinding  nil)
     :config
     (define-key evil-normal-state-map (kbd "q") 'nil) ; evil macro disable
     (define-key evil-visual-state-map (kbd "R") 'evil-visual-exchange-corners)
     (setq-default evil-kill-on-visual-paste nil)
     ;; visual mode 'p' command update clipboard problem fix
-    (evil-mode)
     (evil-ex-define-cmd "k" 'kill-current-buffer)
     (fset 'evil-visual-update-x-selection 'ignore)
+
+    (evil-mode)
 )
 
 (elpaca-wait)
@@ -64,8 +65,6 @@
 
 
 (use-package evil-collection :after evil
-    :functions evil-collection-init
-    :preface (setq evil-want-keybinding nil)
     :custom (evil-collection-setup-minibuffer t)
     :config (evil-collection-init)
 )
@@ -78,11 +77,9 @@
             ("C-k" . move-text-up))
 )
 
-(use-package evil-visualstar
 ; vim visual mode에서 * #를 사용해서 같은 단어 검색가능
-:after evil
-:functions global-evil-visualstar-mode
-:config (global-evil-visualstar-mode t)
+(use-package evil-visualstar :after evil
+    :config (global-evil-visualstar-mode t)
 )
 
 (use-package evil-string-inflection
@@ -106,19 +103,16 @@
 ; 전부 감싸기 => y-s-s-${change}
 ; 바꾸기: => c-s-${target}( "(", "{", "["), ${change}
 ; 벗기기: => d-s-${target}( "(", "{", "[")
-:functions global-evil-surround-mode
 :config (global-evil-surround-mode)
 )
 
 (use-package evil-indent-plus
 :after evil
-:functions evil-indent-plus-default-bindings
 :config (evil-indent-plus-default-bindings)
 )
 
 ;;; visual hint
 (use-package evil-goggles :after evil
-:functions evil-goggles-mode
 :config (setq evil-goggles-pulse t)
         (setq evil-goggles-duration 0.500)
         (evil-goggles-mode)

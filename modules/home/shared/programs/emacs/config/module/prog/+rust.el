@@ -8,8 +8,8 @@
     ;                       (rust-analyzer . "rustup component add rust-analyzer"))
     :mode ("\\.rs\\'" . rustic-mode)
     ;:hook (rustic-mode . lsp-deferred)
-    :hook (rust-mode . lsp-deferred)
-    ;:hook (rust-mode . eglot-mode)
+    :hook (rust-mode    . my/eglot-ensure)
+          (rust-ts-mode . my/eglot-ensure)
     :general (leader "hrf" 'rust-format-buffer)
     :init (defun ij/rustic-mode-hook ()
               (when buffer-file-name (setq-local buffer-save-without-query t)))
@@ -27,21 +27,12 @@
 )
 
 (use-package rust-mode :after exec-path-from-shell
-;:ensure-system-package ((rustup . "curl https://sh.rustup.rs -sSf | sh")
-;                        (rust-analyzer . "rustup component add rust-analyzer"))
-:mode ("\\.rs\\'" . rust-mode)
-;:hook (rust-mode . lsp-deferred)
+:mode ("\\.rs\\'" . rust-ts-mode)
+:hook (rust-ts-mode . my/eglot-ensure)
 :general (leader "hrf" 'rust-format-buffer)
-;:config ;(setq lsp-eldoc-hook nil)
-        ;(setq lsp-enable-symbol-highlighting nil)
-        ;(setq lsp-signature-auto-activate nil)
-        ;(setq rustic-analyzer-command '("rustup run stable rust-analyzer"))
-        ;(setq rustic-lsp-server 'rust-analyzer)
-        ;(setq lsp-rust-server 'rust-analyzer)
-        ;(lsp-flycheck-add-mode 'rustic-mode)
 )
 
-(use-package flycheck-rust :after (flycheck rustic)
+(use-package flycheck-rust :after (flycheck rustic) :disabled
 :hook (flycheck-mode . flycheck-rust-setup)
 )
 

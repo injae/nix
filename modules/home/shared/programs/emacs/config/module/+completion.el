@@ -2,19 +2,13 @@
 ;;; Commentary:
 ;;; Code:
 
+
+;(global-completion-preview-mode)
+
 (use-package which-key
-:functions which-key-mode
 :custom  (which-key-allow-evil-operators t)
          (which-key-show-operator-state-maps t)
  :config (which-key-mode)
-)
-
-(use-package which-key-posframe :disabled
-:after which-key
-:config
-    (setq which-key-posframe-border-width 15)
-    (setq which-key-posframe-poshandler 'posframe-poshandler-window-top-center)
-    (which-key-posframe-mode)
 )
 
 ;;; minibuffer
@@ -33,8 +27,8 @@
                         vertico-grid
                         vertico-unobtrusive))
     :general (:keymaps 'vertico-map
-             :state 'insert
-             "<escape>" #'evil-normal-state)
+              :state   'insert
+              "<escape>" #'evil-normal-state)
     :custom
     ;; Different scroll margin
     ;; (vertico-scroll-margin 0)
@@ -52,15 +46,15 @@
     :init (savehist-mode))
 
 (use-package emacs :ensure nil
-    :defines crm-separator
-    :preface
-    (defun crm-indicator (args)
-        (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" "" crm-separator)
-                  (car args))
-            (cdr args)))
     :init
-    (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+    ;; Prompt indicator for `completing-read-multiple'.
+    (when (< emacs-major-version 31)
+        (advice-add #'completing-read-multiple :filter-args
+                    (lambda (args)
+                        (cons (format "[CRM%s] %s"
+                                    (string-replace "[ \t]*" "" crm-separator)
+                                    (car args))
+                            (cdr args)))))
 
     ;; Do not allow the cursor in the minibuffer prompt
     (setq minibuffer-prompt-properties
@@ -98,24 +92,24 @@
     ;; Replace bindings. Lazily loaded due by `use-package'.
     :bind (;; C-c bindings (mode-specific-map)
             ("C-c M-x" . consult-mode-command)
-            ("C-c h" . consult-history)
-            ("C-c k" . consult-kmacro)
-            ("C-c m" . consult-man)
-            ("C-c i" . consult-info)
+            ("C-c h"   . consult-history)
+            ("C-c k"   . consult-kmacro)
+            ("C-c m"   . consult-man)
+            ("C-c i"   . consult-info)
             ([remap Info-search] . consult-info)
             ;; C-x bindings (ctl-x-map)
             ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-            ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+            ("C-x b"   . consult-buffer)                ;; orig. switch-to-buffer
             ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
             ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
             ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
             ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
             ;; Custom M-# bindings for fast register access
-            ("M-#" . consult-register-load)
-            ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+            ("M-#"   . consult-register-load)
+            ("M-'"   . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
             ("C-M-#" . consult-register)
             ;; Other custom bindings
-            ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+            ("M-y"   . consult-yank-pop)                ;; orig. yank-pop
             ;; M-g bindings (goto-map)
             ("M-g e" . consult-compile-error)
             ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
@@ -133,21 +127,21 @@
             ("M-s G" . consult-git-grep)
             ("M-s r" . consult-ripgrep)
             ("M-s l" . consult-line)
-            ("C-s" . consult-line)
+            ("C-s"   . consult-line)
             ("M-s L" . consult-line-multi)
             ("M-s k" . consult-keep-lines)
             ("M-s u" . consult-focus-lines)
             ;; Isearch integration
             ("M-s e" . consult-isearch-history)
             :map isearch-mode-map
-            ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+            ("M-e"   . consult-isearch-history)         ;; orig. isearch-edit-string
             ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
             ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
             ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
             ;; Minibuffer history
             :map minibuffer-local-map
-            ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-            ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+            ("M-s"   . consult-history)                 ;; orig. next-matching-history-element
+            ("M-r"   . consult-history))                ;; orig. previous-matching-history-element
     :init
     (setq register-preview-delay 0.5
           register-preview-function #'consult-register-format)
@@ -188,8 +182,9 @@
 ;(use-package consult-jq)
 
 (use-package marginalia
-    :functions marginalia-mode
-    :config (marginalia-mode))
+    :bind (:map minibuffer-local-map
+           ("M-A" . marginalia-cycle))
+    :init (marginalia-mode))
 
 (use-package embark
     :functions embark-prefix-help-command
@@ -240,28 +235,24 @@
     (corfu-cycle t)
     (corfu-preselect 'prompt)
     :hook ((corfu-mode    . corfu-history-mode)
-           (emacs-startup . global-corfu-mode)
            (corfu-mode    . corfu-popupinfo-mode))
-    :config
-    ;; https://github.com/emacs-evil/evil-collection/issues/766
-    ;; (global-corfu-mode)
-    ;;(advice-remove 'corfu--setup 'evil-normalize-keymaps)
-    ;;(advice-remove 'corfu--teardown 'evil-normalize-keymaps)
-
-    ;;(advice-add 'corfu--setup :after (lambda (&rest r) (evil-normalize-keymaps)))
-    ;;(advice-add 'corfu--teardown :after  (lambda (&rest r) (evil-normalize-keymaps)))
+    :init
+    (setq global-corfu-minibuffer
+        (lambda ()
+            (not (or (bound-and-true-p mct--active)
+                    (bound-and-true-p vertico--input)
+                    (eq (current-local-map) read-passwd-map)))))
+    (global-corfu-mode)
 )
 
 (use-package kind-icon :after corfu
-    :defines corfu-margin-formatters
-    :functions kind-icon-margin-formatter
-    :custom (kind-icon-default-face 'corfu-default)
+    :custom ((kind-icon-blend-background t)
+             (kind-icon-default-face 'corfu-default))
     :config (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
     )
 
 ;; Completion
 (use-package orderless
-    ;:custom (completion-styles '(orderless partial-completion basic))
     :custom ((completion-styles '(orderless basic))
              (completion-category-defaults nil)
              (completion-category-overrides '((file (styles . (partial-completion))))))
@@ -271,8 +262,8 @@
 (use-package affe :after (consult orderless)
     :preface
     (defun affe-orderless-regexp-compiler (input _type _ignorecase)
-        (setq input (orderless-pattern-compiler input))
-        (cons input (lambda (str) (orderless--highlight input str))))
+        (setq input (cdr (orderless-compile input)))
+        (cons input (apply-partially #'orderless--highlight input t)))
     :config (setq affe-regexp-compiler #'affe-orderless-regexp-compiler)
             (consult-customize affe-grep affe-find :preview-key 'any)
     )
@@ -299,6 +290,7 @@
            ("C-c p r" . cape-rfc1345))
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
     (add-to-list 'completion-at-point-functions #'cape-file)
     (add-to-list 'completion-at-point-functions #'cape-history)
     (add-to-list 'completion-at-point-functions #'cape-elisp-block)

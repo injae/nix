@@ -3,10 +3,12 @@
 ;;; Code:
 
 (use-package alert
-:commands (alert)
-:custom (alert-default-style 'notifier))
+    :custom (alert-default-style 'notifier)
+    )
 
-(use-package page-break-lines :defer t)
+(use-package page-break-lines
+    :config (page-break-lines-mode 1)
+    )
 
 (use-package dashboard
     :custom (
@@ -43,10 +45,6 @@
                     "http://feeds.feedburner.com/geeknews-feed"
                     "https://qiita.com/popular-items/feed"
                     "https://www.reddit.com/r/emacs.rss"))
-    )
-
-(use-package atomic-chrome
-    :config (atomic-chrome-start-server)
     )
 
 (provide '+extension)
