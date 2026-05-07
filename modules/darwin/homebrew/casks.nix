@@ -45,4 +45,6 @@ _:
   "TheBoredTeam/boring-notch/boring-notch"
 
   "claude-code"
+
+  "headlamp"
 ]
