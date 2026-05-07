@@ -79,6 +79,9 @@
 
 (elpaca-wait)
 
+(use-package compat :ensure (:wait t))
+(use-package track-changes :ensure (:wait t))
+
 (use-package exec-path-from-shell
     :custom (
                 (exec-path-from-shell-variables '("PATH"
