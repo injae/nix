@@ -3,11 +3,6 @@
 ;;; Code:
 
 (use-package lsp-mode :after (exec-path-from-shell projectile)
-:preface
-    (defface lsp-flycheck-info-unnecessary '((t))
-        "Face which apply to side line for symbols not used.
-        Possibly erroneously redundant of lsp-flycheck-info-unnecessary-face."
-        :group 'lsp-ui-sideline)
 :commands (lsp lsp-deferred)
 :custom (lsp-inhibit-message t)
         (lsp-message-project-root-warning t)
@@ -30,7 +25,7 @@
         (lsp-rust-analyzer-server-display-inlay-hints nil)
         (lsp-headerline-breadcrumb-enable-diagnostics nil)
         (lsp-completion-provider :none) ; with corfu
-        (lsp-diagnostics-provider :flycheck)
+        (lsp-diagnostics-provider :flymake)
         (lsp-enable-suggest-server-download nil)
         (lsp-javascript-format-enable nil)
         (lsp-typescript-format-enable nil)
@@ -41,9 +36,8 @@
         (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
             '(orderless)))
 
-
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
-       ;(before-save         . lsp-format-buffer)
+       (before-save         . lsp-format-buffer)
        (lsp-mode            . lsp-enable-which-key-integration)
        )
 
@@ -256,7 +250,7 @@
     (defun lsp-key-mapper (lsp-func eglot-func)
         (if (and (bound-and-true-p lsp-mode) (fboundp lsp-func))
             (call-interactively lsp-func)
-            (if (and (bound-and-true-p eglot--managed-mode) (fboundp eglot-func))
+            (if (and (eglot-managed-p) (fboundp eglot-func))
                 (call-interactively eglot-func)
             (message "No LSP client available for code actions"))))
 
