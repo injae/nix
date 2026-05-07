@@ -2,7 +2,8 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package copilot :ensure (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el") :after track-changes)
+
+(use-package copilot :ensure (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
     :preface
     (defun copilot-disable-warning ()
         (setq-local copilot--indent-warning-printed-p t))
@@ -14,10 +15,10 @@
             (progn (copilot-accept-completion))
             (copilot-complete)))
     :hook ((prog-mode . copilot-mode)
+           (prog-mode . copilot-nes-mode)
            (text-mode . copilot-mode)
            (copilot-mode . copilot-disable-warning))
     ;; :custom (copilot--indent-warning-printed-p t)
-    :custom (copilot-max-char -1) ;; disable the max char limit
     :bind (:map copilot-mode-map
                 ;; ("<tab>" . my/copilot-tab)
                 ;; ("C-<return>" . my/copilot-tab)
@@ -28,6 +29,8 @@
                 ("C-p" . copilot-previous)
                 ("C-g" . copilot-clear-overlay)
               )
+    :custom (copilot-max-char -1) ;; disable the max char limit
+            (copilot-log-max 1000)
     )
 
 
