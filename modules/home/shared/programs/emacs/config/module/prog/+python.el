@@ -12,8 +12,9 @@
 (use-package python-pytest)
 
 (use-package eglot-python-preset :after eglot
-    :custom (eglot-python-preset-lsp-server 'ty)
-    ) ; or 'basedpyright, 'pyrefly, or 'rass
+    :custom (eglot-python-preset-lsp-server 'rass)
+    :config (setopt eglot-python-preset-rass-tools '(ty ruff))
+    )
 
 (use-package pet :after python
     :config
