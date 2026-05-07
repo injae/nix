@@ -27,7 +27,7 @@ in
       default = [ ];
     };
   };
-  config = mkIf cfg.enable ({
+  config = mkIf cfg.enable {
     home.packages = [
       pkgs.colima
       pkgs.lima
@@ -47,8 +47,9 @@ in
         ProgramArguments = [
           "${pkgs.colima}/bin/colima"
           "start"
-        ] ++ cfg.arguments;
+        ]
+        ++ cfg.arguments;
       };
     };
-  });
+  };
 }

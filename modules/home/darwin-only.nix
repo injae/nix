@@ -24,8 +24,12 @@ in
         ];
         mounts = [
           {
+            location = "$HOME";
+            writable = true;
+          }
+          {
             location = publicEcrCertDir;
-            mountPoint = "/usr/local/share/ca-certificates/public-ecr.crt";
+            mountPoint = "/usr/local/share/ca-certificates";
             writable = false;
           }
         ];
