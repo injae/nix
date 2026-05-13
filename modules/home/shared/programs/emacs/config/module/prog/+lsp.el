@@ -37,7 +37,7 @@
             '(orderless)))
 
 :hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
-       (before-save         . lsp-format-buffer)
+       (before-save         . (lambda () (when (bound-and-true-p lsp-mode) (lsp-format-buffer))))
        (lsp-mode            . lsp-enable-which-key-integration)
        )
 
@@ -232,8 +232,9 @@
         (eglot-ensure))
     :hook (eglot-managed-mode . my/eglot-eldoc)
     :config
+    (add-hook    'before-save-hook      (lambda () (when (eglot-managed-p) (eglot-format-buffer))))
     (add-to-list 'eglot-server-programs '(go-ts-mode   . ("rass" "go")))
-    (add-to-list 'eglot-server-programs '(go-mode   . ("rass" "go")))
+    (add-to-list 'eglot-server-programs '(go-mode      . ("rass" "go")))
     (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rass" "rust")))
     (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("rass" "nix")))
     )
