@@ -4,18 +4,8 @@
 
 (use-package vterm :after (evil-collection exec-path-from-shell projectile)
 ;:custom (vterm-always-compile-module t)
-:preface
-  (defface my/vterm-face
-    '((t :family "NanumGothicCoding" :height 140))
-    "Font face for vterm buffer.")
-  (defun my/vterm-font-setup () (buffer-face-set 'my/vterm-face))
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
-    (add-hook 'vterm-mode-hook 'my/vterm-font-setup)
-    (add-hook 'vterm-mode-hook
-            (lambda ()
-                (set (make-local-variable 'buffer-face-mode-face) 'fixed-pitch)
-                    (buffer-face-mode t)))
     (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
 )
 
