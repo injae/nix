@@ -3,16 +3,16 @@
 ;;; Code:
 
 ;;; font Setting
-;; +------------+------------+
-;; | 일이삼사오 | 일이삼사오 |
-;; +------------+------------+
-;; | ABCDEFGHIJ | ABCDEFGHIJ |
-;; +------------+------------+
-;; | 1234567890 | 1234567890 |
-;; +------------+------------+
-;; | 일이삼사오 | 일이삼사오 |
-;; | abcdefghij | abcdefghij |
-;; +------------+------------+
+;; ┌────────────┬────────────┐
+;; │ 일이삼사오 │ 일이삼사오 │
+;; ├────────────┼────────────┤
+;; │ ABCDEFGHIJ │ ABCDEFGHIJ │
+;; ├────────────┼────────────┤
+;; │ 1234567890 │ 1234567890 │
+;; ├────────────┼────────────┤
+;; │ 일이삼사오 │ 일이삼사오 │
+;; │ abcdefghij │ abcdefghij │
+;; └────────────┴────────────┘
 
 ;; text utf-8 setting
 ;(setq utf-translate-cjk-mode nil)
@@ -23,25 +23,13 @@
 (set-keyboard-coding-system  'utf-8)
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
-;(setq system-time-locale "C")
 
 ; some font use mode speed up config (ex: org-superstar)
 (setq inhibit-compacting-font-caches t)
-;;  NanumGothicCoding Setting
-(set-face-attribute   'default           nil        :family "FiraCode Nerd Font Mono" :height    140)
-(set-fontset-font nil 'hangul            (font-spec :family "NanumGothicCoding"       :pixelsize 18))
-(set-fontset-font nil 'japanese-jisx0208 (font-spec :family "NanumGothicCoding"       :pixelsize 18))
-(setq face-font-rescale-alist '(("NanumGothicCoding" . 1.3)))
 
-; D2Coding Setting
-;(set-face-attribute   'default            nil       :family "Fira Code" :height 120)
-;(set-fontset-font nil 'hangul            (font-spec :family "D2Coding"  :pixelsize 18))
-;(set-fontset-font nil 'japanese-jisx0208 (font-spec :family "D2Coding"  :pixelsize 18))
-;(setq face-font-rescale-alist '(("D2coding" . 1.17)))
-
-;(set-face-attribute   'default            nil       :family "FiraCode Nerd Font Mono" :height 120)
-;(setq face-font-rescale-alist '(("D2coding" . 1.03877)))
-;(setq face-font-rescale-alist '(("D2coding" . 0.85)))
+(setq-default line-spacing 0)
+(set-face-attribute 'default nil :font "Sarasa Mono K" :height 160)
+(set-fontset-font t 'unicode "Sarasa Mono K" nil 'prepend)
 
 (defun change-mac-input-method ()
     "change input-source in MacOS"
@@ -55,10 +43,6 @@
         (set-file-name-coding-system 'utf-8)
         (setq default-process-coding-system '(utf-8 . utf-8))
         (set-terminal-coding-system  'utf-8)))
-
-(setq-default line-spacing 3)
-
-;; (global-font-lock-mode t)
 
 ;; 한글입력할때 완성전까지 안보이는 문제 해결을 위해 내장 한글입력기 사용
 ;; Linux 내장 한글입력기 사용법
@@ -87,16 +71,21 @@
     (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
     ; Enable ligatures in programming modes
     (ligature-set-ligatures '(prog-mode org-mode)
-            '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
-            ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
-            "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
-            "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
-            "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
-            "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
-            "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
-            "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
-            "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
-            "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
+        '("--" "---" "==" "===" "!=" "!==" "=!=" "=:=" "=/=" "<="
+            ">=" "&&" "&&&" "&=" "++" "+++" "***" ";;" "!!" "??"
+            "?:" "?." "?=" "<:" ":<" ":>" ">:" "<>" "<<<" ">>>"
+            "<<" ">>" "||" "-|" "_|_" "|-" "||-" "|=" "||=" "##"
+            "###" "####" "#{" "#[" "]#" "#(" "#?" "#_" "#_(" "#:"
+            "#!" "#=" "^=" "<$>" "<$" "$>" "<+>" "<+" "+>" "<*>"
+            "<*" "*>" "</" "</>" "/>" "<!--" "<#--" "-->" "->" "->>"
+            "<<-" "<-" "<=<" "=<<" "<<=" "<==" "<=>" "<==>" "==>"
+            "=>" "=>>" ">=>" ">>=" ">>-" ">-" "-<" "-<<" ">->"
+            "<-<" "<-|" "<=|" "|=>" "|->" "<->" "<~~" "<~" "<~>"
+            "~~" "~~>" "~>" "~-" "-~" "~@" "[||]" "|]" "[|" "|}"
+            "{|" "[<" ">]" "|>" "<|" "||>" "<||" "|||>" "<|||"
+            "<|>" "..." ".." ".=" "..<" ".?" "::" ":::" ":=" "::="
+            ":?" ":?>" "//" "///" "/*" "*/" "/=" "//=" "/==" "@_"
+            "__"))
     (global-ligature-mode t)
 )
 

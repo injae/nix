@@ -13,6 +13,7 @@ in
       hack-font
       noto-fonts-color-emoji
       nanum-gothic-coding
+      sarasa-gothic
     ]
     ++ nerd-fonts;
 }
