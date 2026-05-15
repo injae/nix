@@ -3,9 +3,9 @@
 ;;; Code:
 
 (use-package yaml-mode
-:hook (yaml-mode . (lambda () (lsp)))
-:mode (("\\.yaml\\'" . yaml-mode)
-       ("\\.yml\\'"  . yaml-mode))
+:mode (("\\.yaml\\'" . yaml-ts-mode)
+       ("\\.yml\\'"  . yaml-ts-mode))
+:hook (yaml-ts-mode  . my/eglot-ensure)
 )
 
 (use-package toml-mode

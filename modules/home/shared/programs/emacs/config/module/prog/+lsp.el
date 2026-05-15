@@ -228,13 +228,14 @@
         (setq eldoc-documentation-strategy
                 'eldoc-documentation-compose-eagerly))
     (defun my/eglot-ensure ()
+        (interactive)
         (exec-path-from-shell-initialize)
         (eglot-ensure))
     :hook (eglot-managed-mode . my/eglot-eldoc)
     :config
     (add-hook    'before-save-hook      (lambda () (when (eglot-managed-p) (eglot-format-buffer))))
-    (add-to-list 'eglot-server-programs '(go-ts-mode   . ("rass" "go")))
-    (add-to-list 'eglot-server-programs '(go-mode      . ("rass" "go")))
+    (add-to-list 'eglot-server-programs '((go-mode go-dot-mod-mode go-dot-work-mode go-ts-mode go-mod-ts-mode) . ("rass" "go")))
+    (add-to-list 'eglot-server-programs '((yaml-ts-mode yaml-mode) . ("rass" "yaml")))
     (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rass" "rust")))
     (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("rass" "nix")))
     )

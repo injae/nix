@@ -26,6 +26,7 @@ in
 
   home.file.".config/rassumfrassum" = {
     source = ./rassumfrassum;
+    recursive = true;
   };
 
   home.packages =
