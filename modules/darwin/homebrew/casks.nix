@@ -47,4 +47,7 @@ _:
   "claude-code"
 
   "headlamp"
+
+  "bruno"
+  "postman"
 ]
