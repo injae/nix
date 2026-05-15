@@ -2,44 +2,14 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package gptel :after markdown-mode
-  :config
-    (setq
-        gptel-model 'mistral:latest
-        gptel-backend (gptel-make-ollama "Ollama"
-                        :host "localhost:11434"
-                        :stream t
-                        :models '(codellama:34b mistral:latest)
-                        )
-        gptel-use-curl nil
-      )
-  )
-
-(use-package smerge-mode :ensure nil :hook (prog-mode . smerge-mode))
-
-(use-package elysium :after (gptel smerge-mode)
-    :custom
-    (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
-    (elysium-window-style 'vertical) ; Can be customized to horizontal
-    )
-
-(use-package browser-hist :after embark
-    :config (setq browser-hist-default-browser 'chrome)
-    )
-
-(use-package mcp :after gptel
-  :custom (mcp-hub-servers
-            `(("filesystem"
-                . (:command "npx"
-                   :args    ("-y" "@modelcontextprotocol/server-filesystem" "~/")))
-              ("fetch"
-                . (:command "uvx" :args ("mcp-server-fetch")))
-              ("nixos"
-                . (:command "uvx" :args ("mcp-nixos")))
-             ))
-  :config (require 'mcp-hub)
-  :hook (after-init . mcp-hub-start-all-server))
-
+(use-package claude-code-ide :ensure (:repo "manzaltu/claude-code-ide.el" :host github)
+    :config
+    ;; Or switch back to vterm (default)
+    (claude-code-ide-emacs-tools-setup)
+    (setq claude-code-ide-terminal-backend 'vterm)
+    (setq claude-code-ide-vterm-anti-flicker t)
+    (setq claude-code-ide-vterm-render-delay 0.01)
+)
 
 (provide '+ai)
 ;;; +ai.el ends here
