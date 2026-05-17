@@ -1,0 +1,213 @@
+;;; +lsp-mode-backup.el --- lsp-mode settings backup -*- lexical-binding: t; -*-
+;;; Backed up from +lsp.el
+
+(use-package lsp-mode :after (exec-path-from-shell projectile)
+:commands (lsp lsp-deferred)
+:custom (lsp-inhibit-message t)
+        (lsp-message-project-root-warning t)
+        (lsp-enable-file-watchers nil)
+        (lsp-file-watch-threshold 1000)
+        (lsp-enable-completion-at-point t)
+        (lsp-prefer-flymake nil)
+        (lsp-auto-guess-root t)
+        (lsp-response-timeout 25)
+        (lsp-eldoc-render-all nil)
+        (lsp-enable-indentation nil) ; use apheleia
+        (lsp-enable-on-type-formatting nil) ; use apheleia
+        (lsp-enable-dap-auto-configure t)
+        (lsp-completion-show-kind t)
+        (lsp-lens-enable t)
+        (lsp-enable-snippet t)
+        (lsp-enable-links t)
+        (lsp-idle-delay 0.500)
+        (lsp-log-io t)
+        (lsp-rust-analyzer-server-display-inlay-hints nil)
+        (lsp-headerline-breadcrumb-enable-diagnostics nil)
+        (lsp-completion-provider :none) ; with corfu
+        (lsp-diagnostics-provider :flymake)
+        (lsp-enable-suggest-server-download nil)
+        (lsp-javascript-format-enable nil)
+        (lsp-typescript-format-enable nil)
+        (lsp-disabled-clients '(tfls))
+        ;(lsp-rust-analyzer-cargo-watch-command "clipy")
+:init
+    (defun my/lsp-mode-setup-completion ()
+        (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+            '(orderless)))
+
+:hook ((lsp-completion-mode . my/lsp-mode-setup-completion)
+       (before-save         . (lambda () (when (bound-and-true-p lsp-mode) (lsp-format-buffer))))
+       (lsp-mode            . lsp-enable-which-key-integration)
+       )
+
+:config
+    ;(lsp-mode)
+    ;;corfu + lsp pause bugfix
+    ;; (advice-add #'lsp-completion-at-point :around #'cape-wrap-noninterruptible)
+    (dolist (dir '("[/\\\\]\\.ccls-cache\\'"
+                    "[/\\\\]\\.mypy_cache\\'"
+                    "[/\\\\]\\.pytest_cache\\'"
+                    "[/\\\\]\\.cache\\'"
+                    "[/\\\\]\\.clwb\\'"
+                    "[/\\\\]__pycache__\\'"
+                    "[/\\\\]bazel-bin\\'"
+                    "[/\\\\]bazel-code\\'"
+                    "[/\\\\]bazel-genfiles\\'"
+                    "[/\\\\]bazel-out\\'"
+                    "[/\\\\]bazel-testlogs\\'"
+                    "[/\\\\]third_party\\'"
+                    "[/\\\\]third-party\\'"
+                    "[/\\\\]buildtools\\'"
+                    "[/\\\\]out\\'"
+                    "[/\\\\]build\\'"
+                    ))
+        (push dir lsp-file-watch-ignored-directories))
+
+    (setq lsp-pyright-multi-root nil)
+    (setq lsp-go-use-gofumpt t)
+    (setq lsp-gopls-hover-kind "NoDocumentation")
+    (lsp-register-custom-settings
+        '(("gopls.staticcheck" t t)
+          ("gopls.allExperiments" t t)
+          ;;("gopls.usePlaceholders" t t)
+          ("rust-analyzer.cargo.runBuildScript" t t)
+
+          ;;("pylsp.plugins.black.enabled" t t)
+          ;;("pylsp.plugins.ruff.enabled" t t)
+          ;;("pylsp.plugins.rope_autoimport.enabled" t t)
+          ))
+
+    (setq lsp-go-analyses
+        '((ST1000 . :json-false)))
+    (setq lsp-go-gopls-placeholders nil)
+    ;(defvar-local lsp-format-on-save t "Format `lsp-mode'-managed buffer before save.")
+    ;(defun lsp-format-on-save-not-apheleia ()
+    ;"Format on save using LSP server, not `apheleia'."
+    ;    (progn
+    ;        (add-hook 'before-save-hook #'lsp-format-buffer nil 'local)
+    ;        (setq-local apheleia-mode nil)))
+    ;(add-hook 'lsp-configure-hook #'lsp-format-on-save-not-apheleia)
+)
+
+(use-package lsp-ui :after lsp-mode
+:commands lsp-ui-mode
+:general (leader ;"ld"  #'lsp-ui-doc-focus-frame
+                 "lpr" #'lsp-ui-peek-find-references
+                 "lpd" #'lsp-ui-peek-find-definitions
+                 "lpi" #'lsp-ui-peek-find-implementation)
+         (:keymaps 'lsp-ui-peek-mode-map
+                 "k"   #'lsp-ui-peek--select-prev
+                 "j"   #'lsp-ui-peek--select-next)
+
+:custom (scroll-margin 0)
+        (lsp-headerline-breadcrumb-icons-enable t)
+        (lsp-lens-enable nil)
+        (lsp-ui-peek-enable t)
+        (lsp-ui-flycheck-enable t)
+        (lsp-ui-doc-enable t)
+        (lsp-ui-doc-show-with-cursor t)
+        (lsp-ui-sideline-enable t)
+        (lsp-ui-sideline-show-hover nil)
+        (lsp-ui-sideline-actions-icon nil)
+        (lsp-ui-sideline-show-code-actions t)
+        ;(lsp-ui-sideline-show-diagnostics t)
+)
+
+(use-package lsp-booster :ensure nil :no-require t
+    :preface
+        (defun lsp-booster--advice-json-parse (old-fn &rest args)
+            "Try to parse bytecode instead of json."
+            (or
+            (when (equal (following-char) ?#)
+                (let ((bytecode (read (current-buffer))))
+                (when (byte-code-function-p bytecode)
+                    (funcall bytecode))))
+            (apply old-fn args)))
+            (advice-add (if (progn (require 'json)
+                                (fboundp 'json-parse-buffer))
+                            'json-parse-buffer
+                        'json-read)
+                        :around
+                        #'lsp-booster--advice-json-parse)
+
+        (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+            "Prepend emacs-lsp-booster command to lsp CMD."
+            (let ((orig-result (funcall old-fn cmd test?)))
+                (if (and (not test?)                             ;; for check lsp-server-present?
+                        (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+                        lsp-use-plists
+                        (not (functionp 'json-rpc-connection))  ;; native json-rpc
+                        (executable-find "emacs-lsp-booster"))
+                    (progn
+                    (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+                        (setcar orig-result command-from-exec-path))
+                    (message "Using emacs-lsp-booster for %s!" orig-result)
+                    (cons "emacs-lsp-booster" orig-result))
+                orig-result)))
+    :config
+        (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+    )
+
+(use-package lsp-treemacs :disabled
+:after (lsp-mode doom-modeline)
+:config ;(setq lsp-metals-treeview-enable t)
+        ;(setq lsp-metals-treeview-show-when-views-received t)
+        (lsp-treemacs-sync-mode 1)
+)
+
+(use-package dap-mode :disabled
+:after lsp-mode
+:commands (dap-debug)
+:general (leader "dd" 'dap-debug)
+;:custom (dap-lldb-debug-program '("/Users/nieel/.vscode/extensions/lanza.lldb-vscode-0.2.2/bin/darwin/bin/lldb-vscode"))
+:config
+    (setq dap-auto-configure-features '(sessions locals controls tooltip))
+    (add-hook 'dap-stopped-hook (lambda (arg) (call-interactively #'dap-hydra)))
+    (dap-mode)
+)
+
+(use-package dap-ui-setting :no-require t :ensure nil
+:after dap-mode
+:preface
+  (defun my/window-visible (b-name)
+      "Return whether B-NAME is visible."
+      (-> (-compose 'buffer-name 'window-buffer)
+          (-map (window-list))
+          (-contains? b-name)))
+
+  (defun my/show-debug-windows (session)
+      "Show debug windows."
+      (let ((lsp--cur-workspace (dap--debug-session-workspace session)))
+          (save-excursion
+          ;; display locals
+          (unless (my/window-visible dap-ui--locals-buffer)
+              (dap-ui-locals))
+          ;; display sessions
+          (unless (my/window-visible dap-ui--sessions-buffer)
+              (dap-ui-sessions)))))
+
+  (defun my/hide-debug-windows (session)
+      "Hide debug windows when all debug sessions are dead."
+      (unless (-filter 'dap--session-running (dap--get-sessions))
+          (and (get-buffer dap-ui--sessions-buffer)
+              (kill-buffer dap-ui--sessions-buffer))
+          (and (get-buffer dap-ui--locals-buffer)
+              (kill-buffer dap-ui--locals-buffer))))
+:config
+    (add-hook 'dap-terminated-hook 'my/hide-debug-windows)
+    (add-hook 'dap-stopped-hook 'my/show-debug-windows)
+)
+
+(use-package lsp-grammarly :disabled
+:hook (text-mode . (lambda () (require 'lsp-grammarly) (lsp)))
+)
+
+(use-package consult-lsp :requires (lsp-mode consult)
+    :after (lsp-mode consult)
+    :bind (:map lsp-mode-map
+            ([remap xref-find-apropos] . consult-lsp-symbols))
+    :general (leader
+                 "ls" 'consult-lsp-symbols
+                 "lf" 'consult-lsp-file-symbols
+                 "ld" 'consult-lsp-diagnostics)
+    )
