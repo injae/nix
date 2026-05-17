@@ -45,6 +45,7 @@
             "w"     '(:wk "Windows")
             "h"     '(:wk "Hacking")
             "l"     '(:wk "Lisp or LSP")
+            "a"     '(:wk "ai")
             "hr"    '(:wk "Rust")
             "er"    '(restart-emacs :wk "Restart")
             "el"    '(reload-emacs :wk "Reload")
