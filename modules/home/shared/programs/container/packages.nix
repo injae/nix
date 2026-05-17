@@ -5,6 +5,9 @@
     docker
     docker-buildx
     docker-compose
+
+    docker-language-server
+
     #docker-credential-helpers
     dive
     istioctl
