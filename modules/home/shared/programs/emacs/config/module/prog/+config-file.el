@@ -2,13 +2,12 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package cmake-mode
+(use-package cmake-mode :after exec-path-from-shell
 ;:ensure-system-package (cmake-language-server . "pip3 install cmake-language-server")
-:commands cmake-mode
-:mode (("\\.cmake\\'"    . cmake-mode)
-       ("CMakeLists.txt" . cmake-mode))
+:mode (("\\.cmake\\'"    . cmake-ts-mode)
+       ("CMakeLists.txt" . cmake-ts-mode))
 :custom (cmake-tab-width 4)
-:hook (cmake-mode . (lambda () (require 'lsp-cmake) (lsp)))
+:hook (cmake-mode . my/eglot-ensure)
 )
 
 (use-package dotenv-mode

@@ -2,9 +2,10 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package gleam-ts-mode
+(use-package gleam-ts-mode :after exec-path-from-shell
     :mode (rx ".gleam" eos)
-    :hook (gleam-ts-mode . lsp-deferred)
+    :hook (gleam-ts-mode . my/eglot-ensure)
+    :config (add-to-list 'eglot-server-programs '(gleam-ts-mode . ("gleam" "lsp")))
     )
 
 (provide '+gleam)

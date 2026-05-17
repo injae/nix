@@ -1,15 +1,12 @@
-;;; +git.el --- Summery
+;;; +haskell.el --- Summery
 ;;; -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
-(use-package haskell-mode
+(use-package haskell-mode :after exec-path-from-shell
 :mode ("\\.hs\\'"    . haskell-mode)
-)
-
-(use-package lsp-haskell :after haskell-mode
-:hook ((haskell-mode . (lambda () (lsp)))
-       (haskell-literate-mode . (lambda () (lsp))))
+:hook ((haskell-mode          . my/eglot-ensure)
+       (haskell-literate-mode . my/eglot-ensure))
 )
 
 (provide '+haskell)

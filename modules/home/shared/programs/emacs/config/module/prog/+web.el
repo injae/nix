@@ -21,7 +21,6 @@
     (web-mode-code-indent-offset 2)
     (web-mode-enable-auto-pairing t)
     (web-mode-enable-css-colorization t)
-    ;:config (add-hook 'web-mode-hook #'lsp)
 )
 
 (use-package vue-ts-mode
