@@ -24,7 +24,7 @@ in
 self: super:
 let
   masterPkg = import inputs.nixpkgs-master {
-    system = super.system;
+    system = super.stdenv.hostPlatform.system;
     config.allowUnfree = true;
   };
 in
