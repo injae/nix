@@ -17,9 +17,9 @@
         )
     (dolist
         (it target)
-        ;; (native-compile-async (f-swap-ext it "el"))
-        (require (intern (f-filename it)))
-        ))
+        (condition-case err
+            (require (intern (f-filename it)))
+          (error (message "Failed to load module %s: %s" it (error-message-string err))))))
 
 (defun temp-buffer ()
     "open up a guaranteed new scratch buffer"
