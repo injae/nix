@@ -83,7 +83,6 @@
     ;; (doom-modeline-iconer-state-icon t)
     ;; (doom-modeline--battery-status t)
   :init
-    (setq find-file-visit-truename t)
     (setq inhibit-compacting-font-caches t)
   :config
     (doom-modeline-mode 1)
