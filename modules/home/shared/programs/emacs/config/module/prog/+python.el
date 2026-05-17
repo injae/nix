@@ -5,7 +5,7 @@
 (use-package python-mode :after exec-path-from-shell
     :mode (("\\.py\\'" . python-ts-mode)
            ("\\.wsgi$" . python-ts-mode))
-    :custom ((python-indent-preset 4)
+    :custom ((python-indent-offset 4)
              (python-indent-block-paren-deeper t))
     )
 

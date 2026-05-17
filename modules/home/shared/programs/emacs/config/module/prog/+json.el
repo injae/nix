@@ -2,16 +2,9 @@
 ;;; Commentary:
 ;;; Code:
 
-
 (use-package json-mode
-    :mode  (("\\.json\\'"       . json-mode)
-            ("/Pipfile.lock\\'" . json-mode))
-)
-
-(use-package jsonian :ensure (:type git :host github :repo "iwahbe/jsonian")
-    :after so-long
-    :custom (jsonian-no-so-long-mode)
-    :config
+    :mode  (("\\.json\\'" . json-ts-mode))
+    :preface
     (defun json-pretty (start end)
         (interactive "*r")
         (replace-string "\\\"" "\"" nil start end)
@@ -27,6 +20,13 @@
         (yank-pop)
         (json-pretty (region-beginning) (region-end))
         )
+    :custom
+    (json-ts-mode-indent-offset 2)
+)
+
+(use-package jsonian :ensure (:type git :host github :repo "iwahbe/jsonian")
+    :after so-long
+    :custom (jsonian-no-so-long-mode)
     )
 
 (use-package json-reformat

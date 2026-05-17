@@ -2,10 +2,8 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package nix-mode)
-
 (use-package nix-ts-mode :after exec-path-from-shell
-    :mode "\\.nix\\'"
+    :mode ("\\.nix\\'" . nix-ts-mode)
     :hook (nix-ts-mode . my/eglot-ensure)
 )
 

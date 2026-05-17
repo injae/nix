@@ -2,10 +2,10 @@
 ;;; Commentary:
 ;;; Code:
 
-
 (use-package emacs-lisp :no-require t :after general :ensure nil
     :general (leader "le" '(eval-print-last-sexp :wk "Elisp Evaluate"))
     :hook (emacs-lisp-mode . (lambda () (setq format-all-formatters '(("Emacs Lisp")))))
+    :custom (lisp-indent-offset 4)
     )
 
 (use-package scratch-comment
@@ -21,6 +21,7 @@
     (require 'slime-autoloads)
     (slime-setup '(slime-fancy))
     )
+
 (use-package elisp-slime-nav :diminish elisp-slime-nav-mode
     :hook ((emacs-lisp-mode ielm-mode) . elisp-slime-nav-mode)
     )

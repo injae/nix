@@ -7,12 +7,7 @@
          (tree-sitter-after-on . tree-sitter-hl-mode))
 )
 
-;; 
 (use-package tree-sitter-langs  :after tree-sitter)
-(use-package tree-sitter-indent :after tree-sitter :disabled
-  :hook (tree-sitter-after-on . tree-sitter-indent-mode)
-  )
-;(use-package tsi :ensure (:type git :host github :repo "orzechowskid/tsi.el") :after tree-sitter :disabled)
 
 (use-package evil-textobj-tree-sitter :after (evil tree-sitter)
   :config
@@ -34,22 +29,23 @@
                 (treesit-install-language-grammar lang)))))
     :config
     (setq treesit-language-source-alist
-        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-          (cmake "https://github.com/uyha/tree-sitter-cmake")
-          (css "https://github.com/tree-sitter/tree-sitter-css")
-          (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-          (go "https://github.com/tree-sitter/tree-sitter-go")
-          (html "https://github.com/tree-sitter/tree-sitter-html")
+        '((bash       "https://github.com/tree-sitter/tree-sitter-bash")
+          (cmake      "https://github.com/uyha/tree-sitter-cmake")
+          (css        "https://github.com/tree-sitter/tree-sitter-css")
+          (elisp      "https://github.com/Wilfred/tree-sitter-elisp")
+          (go         "https://github.com/tree-sitter/tree-sitter-go")
+          (html       "https://github.com/tree-sitter/tree-sitter-html")
           (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-          (json "https://github.com/tree-sitter/tree-sitter-json")
-          (make "https://github.com/alemuller/tree-sitter-make")
-          (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-          (python "https://github.com/tree-sitter/tree-sitter-python")
-          (toml "https://github.com/tree-sitter/tree-sitter-toml")
-          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (json       "https://github.com/tree-sitter/tree-sitter-json")
+          (make       "https://github.com/alemuller/tree-sitter-make")
+          (markdown   "https://github.com/ikatyang/tree-sitter-markdown")
+          (nix        "https://github.com/nix-community/tree-sitter-nix")
+          (python     "https://github.com/tree-sitter/tree-sitter-python")
+          (toml       "https://github.com/tree-sitter/tree-sitter-toml")
+          (tsx        "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
           (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-          (nix "https://github.com/nix-community/tree-sitter-nix")
-          (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+          (vue        "https://github.com/ikatyang/tree-sitter-vue")
+          (yaml       "https://github.com/ikatyang/tree-sitter-yaml")))
     (setq treesit-font-lock-level 4)
 )
 
