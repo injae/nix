@@ -10,7 +10,7 @@
 
 ;; google translation # need to migration
 (use-package google-translate
-:general (leader "ft" 'google-translate-smooth-ui)
+:general (leader "ft" 'google-translate-smooth-translate)
 :config
   (setq google-translate-default-target-language "ko")
   (setq google-translate-translation-directions-alist
