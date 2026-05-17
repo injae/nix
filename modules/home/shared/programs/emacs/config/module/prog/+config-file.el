@@ -2,17 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package yaml-mode
-:mode (("\\.yaml\\'" . yaml-ts-mode)
-       ("\\.yml\\'"  . yaml-ts-mode))
-:hook (yaml-ts-mode  . my/eglot-ensure)
-)
-
-(use-package toml-mode
-:mode (("\\.toml\\'" . toml-mode)
-       ("Pipfile\\'" . toml-mode))
-)
-
 (use-package cmake-mode
 ;:ensure-system-package (cmake-language-server . "pip3 install cmake-language-server")
 :commands cmake-mode
@@ -24,7 +13,7 @@
 
 (use-package dotenv-mode
     :mode (("\\.env\\..*\\'" . dotenv-mode)
-           ("\\.envrc\\'" . dotenv-mode)))
+           ("\\.envrc\\'"    . dotenv-mode)))
 
 (use-package protobuf-mode :mode "\\.proto\\'")
 (use-package plantuml-mode :mode "\\.plantuml\\'")
