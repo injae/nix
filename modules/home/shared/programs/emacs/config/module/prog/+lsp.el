@@ -21,7 +21,12 @@
         (eglot-ensure))
     :hook (eglot-managed-mode . my/eglot-eldoc)
     :config
-    (add-hook    'before-save-hook      (lambda () (when (eglot-managed-p) (eglot-format-buffer))))
+    (add-hook 'before-save-hook (lambda ()
+                (when (and (eglot-managed-p)
+                           (derived-mode-p 'nix-mode    'nix-ts-mode
+                                           'go-mode     'go-ts-mode
+                                           'python-mode 'python-ts-mode))
+                  (eglot-format-buffer))))
     (add-to-list 'eglot-server-programs '((go-mode go-dot-mod-mode go-dot-work-mode go-ts-mode go-mod-ts-mode) . ("rass" "go")))
     (add-to-list 'eglot-server-programs '((yaml-ts-mode yaml-mode) . ("rass" "yaml")))
     (add-to-list 'eglot-server-programs '((rust-ts-mode rust-mode) . ("rass" "rust")))
