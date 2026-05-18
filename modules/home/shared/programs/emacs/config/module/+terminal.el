@@ -48,6 +48,8 @@
     :custom (vterm-toggle-projectile-root t)
     :config
     (setq vterm-toggle-fullscreen-p nil)
+    (add-to-list 'vterm-toggle-togglable-buffer-functions
+                 (lambda (buf) (not (string-match-p "\\*claude-code" (buffer-name buf)))))
     (add-to-list 'display-buffer-alist
                 '((lambda (buffer-or-name _)
                     (let ((buffer (get-buffer buffer-or-name)))
@@ -55,10 +57,6 @@
                         (or (equal major-mode 'vterm-mode)
                             (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
                     (display-buffer-reuse-window display-buffer-at-bottom)
-                    ;;(display-buffer-reuse-window display-buffer-in-direction)
-                    ;;display-buffer-in-direction/direction/dedicated is added in emacs27
-                    ;;(direction . bottom)
-                    ;;(dedicated . t) ;dedicated is supported in emacs27
                     (reusable-frames . visible)
                     (window-height . 0.3)))
     )
