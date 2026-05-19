@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
     "PostToolUse": [
       {
@@ -11,11 +12,31 @@
       }
     ]
   },
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Read(**/*.p12)",
+      "Read(**/*.p8)",
+      "Read(**/*.pfx)",
+      "Read(**/.gcp/**)",
+      "Read(**/.azure/**)",
+      "Read(**/.ssh/**)",
+      "Read(**/.aws/credentials)",
+      "Read(**/secrets/**)",
+      "Read(./.config/sops/**)",
+      "Read(./.config/sops-nix/**)",
+      "Bash(rm -rf /:*)"
+    ]
+  },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "mcp-server-dev@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true
   }
 }

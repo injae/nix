@@ -1,5 +1,5 @@
 ---
-name: emacs-detect
+name: emacs-dev
 description: Use this skill at the very start of every session to detect whether Claude is running inside Emacs and configure MCP tools accordingly. Triggers automatically on session start per CLAUDE.md instructions.
 user-invocable: true
 allowed-tools:

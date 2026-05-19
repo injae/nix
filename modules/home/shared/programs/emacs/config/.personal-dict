@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1188 
+personal_ws-1.1 en 1191 
 ABCDEFGHIJ
 ARGN
 Accu
@@ -24,6 +24,7 @@ CCACHE
 CLI
 CORSMiddleware
 CPM
+CRD
 CSV
 CVXOPT
 CXX
@@ -320,6 +321,7 @@ buildx
 builtins
 cachix
 calc
+cancellable
 cancelled
 capf
 ccache
@@ -792,6 +794,7 @@ nameservers
 namespace
 namespaces
 nano
+nat
 nav
 ndjson
 ne
