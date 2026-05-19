@@ -10,11 +10,12 @@
            (pos (cdr loc)))
       (when (and buf pos)
         (with-current-buffer buf
-          (save-excursion
-            (goto-char pos)
-            (let ((start (point)))
-              (forward-sexp 1)
-              (buffer-substring-no-properties start (point)))))))))
+          (let ((inhibit-redisplay t))
+            (save-excursion
+              (goto-char pos)
+              (let ((start (point)))
+                (forward-sexp 1)
+                (buffer-substring-no-properties start (point))))))))))
 
 (defun claude-code-ide-mcp--describe-function-part (sym name)
   "Return function documentation string for SYM (named NAME)."
@@ -63,12 +64,12 @@
            (pos (cdr loc)))
       (when (and buf pos)
         (with-current-buffer buf
-          (save-excursion
-            (goto-char pos)
-            (let ((start (point)))
-              (forward-sexp 1)
-              (buffer-substring-no-properties start (point)))))))))
-
+          (let ((inhibit-redisplay t))
+            (save-excursion
+              (goto-char pos)
+              (let ((start (point)))
+                (forward-sexp 1)
+                (buffer-substring-no-properties start (point))))))))))
 (defun claude-code-ide-mcp--describe-variable-part (sym name)
   "Return variable documentation string for SYM (named NAME)."
   (let* ((doc (documentation-property sym 'variable-documentation t))

@@ -44,11 +44,11 @@ The return value is formatted with `prin1-to-string'."
             (prin1-to-string result)))))
     (error (format "Error calling '%s': %s" name (error-message-string err)))))
 
-(defun claude-code-ide-mcp-check-elisp-parens (code)
-  "Return t if CODE has balanced parentheses, or an error string if not."
+(defun claude-code-ide-mcp-check-elisp-parens (file-path)
+  "Return t if FILE-PATH has balanced parentheses, or an error string if not."
   (condition-case err
       (with-temp-buffer
-        (insert code)
+        (insert-file-contents file-path)
         (emacs-lisp-mode)
         (check-parens)
         t)

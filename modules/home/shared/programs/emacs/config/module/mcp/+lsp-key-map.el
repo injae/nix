@@ -18,34 +18,58 @@
                          (substring-no-properties (xref-item-summary xref)))))
              xrefs "\n"))))
 
+(defun claude-code-ide-mcp--with-identifier (file-path identifier fn)
+  "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN.
+Uses session context and restores cursor position afterward via save-excursion.
+inhibit-redisplay prevents visible cursor jumps in open windows."
+  (claude-code-ide-mcp-server-with-session-context nil
+    (with-current-buffer (or (find-buffer-visiting file-path)
+                             (find-file-noselect file-path))
+      (let ((inhibit-redisplay t))
+        (save-excursion
+          (goto-char (point-min))
+          (if (search-forward identifier nil t)
+              (progn
+                (backward-char (length identifier))
+                (funcall fn))
+            (format "Identifier '%s' not found in %s" identifier file-path)))))))
+
 (defun claude-code-ide-mcp--at-position (file-path line column fn)
-  "Open FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN."
-  (with-current-buffer (find-file-noselect file-path)
-    (goto-char (point-min))
-    (when (and line (> line 0))
-      (forward-line (1- line)))
-    (when (and column (>= column 0))
-      (move-to-column column))
-    (funcall fn)))
+  "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN.
+Uses session context and restores cursor position afterward via save-excursion.
+inhibit-redisplay prevents visible cursor jumps in open windows."
+  (claude-code-ide-mcp-server-with-session-context nil
+    (with-current-buffer (or (find-buffer-visiting file-path)
+                             (find-file-noselect file-path))
+      (let ((inhibit-redisplay t))
+        (save-excursion
+          (goto-char (point-min))
+          (when (and line (> line 0))
+            (forward-line (1- line)))
+          (when (and column (>= column 0))
+            (move-to-column column))
+          (funcall fn))))))
 
 (defun claude-code-ide-mcp-lsp-find-definition (identifier file-path)
   "Find definition of IDENTIFIER via xref backend in FILE-PATH context."
   (condition-case err
-      (with-current-buffer (find-file-noselect file-path)
-        (let* ((backend (xref-find-backend))
-               (xrefs (xref-backend-definitions backend identifier)))
-          (claude-code-ide-mcp--format-xrefs
-           (format "Definitions of '%s'" identifier) xrefs)))
+      (claude-code-ide-mcp--with-identifier
+       file-path identifier
+       (lambda ()
+         (claude-code-ide-mcp--format-xrefs
+          (format "Definitions of '%s'" identifier)
+          (xref-backend-definitions (xref-find-backend) identifier))))
     (error (format "Error finding definition: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-references (identifier file-path)
-  "Find all references to IDENTIFIER via xref backend in FILE-PATH context."
+  "Find all references to IDENTIFIER via LSP in FILE-PATH context."
   (condition-case err
-      (with-current-buffer (find-file-noselect file-path)
-        (let* ((backend (xref-find-backend))
-               (xrefs (xref-backend-references backend identifier)))
-          (claude-code-ide-mcp--format-xrefs
-           (format "References to '%s'" identifier) xrefs)))
+      (claude-code-ide-mcp--with-identifier
+       file-path identifier
+       (lambda ()
+         (claude-code-ide-mcp--format-xrefs
+          (format "References to '%s'" identifier)
+          (xref-backend-references (xref-find-backend) identifier))))
     (error (format "Error finding references: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-implementation (file-path line column)

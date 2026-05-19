@@ -48,6 +48,28 @@ Detect whether this session is running inside Emacs and configure MCP tools for 
 | Search symbols by name pattern | `xref-find-apropos` (pattern + file_path) | Bash grep |
 | Inspect a symbol's docs/source | `describe-symbol` (name) | Read file |
 | Check compiler / linter errors | `getDiagnostics` | Bash |
+| Inspect AST node at position | `treesit-info` (file_path + line + col) | Read file |
+| Understand code block structure | `treesit-info` with `include_children: true` | Bash grep |
+| Get full file syntax tree | `treesit-info` with `whole_file: true` | imenu-list-symbols |
+
+### Tree-sitter tool (`treesit-info`) — on-demand detection and use
+
+When a task requires AST or syntax-structure analysis (e.g. "what block is this in?", "show me the structure of this function", "find all nodes of type X"):
+
+1. Call `buffer-info` (no argument) to get the current buffer's major-mode.
+2. **Tree-sitter is available** if either condition holds:
+   - Mode name ends in `-ts-mode` (e.g. `python-ts-mode`, `go-ts-mode`, `nix-ts-mode`)
+   - `(treesit-parser-list)` via `call-function` returns a non-empty list
+3. If available, load the schema: ToolSearch query `"treesit-info"` with `max_results: 2`, then call the tool.
+4. If not available, fall back to LSP or Bash for structure queries.
+
+Use `treesit-info` **instead of** plain `Read` when you need:
+- The AST node type at a specific cursor position (`file_path` + `line` + `col`)
+- The parent hierarchy of a node (`include_ancestors: true`)
+- The children of a node (`include_children: true`)
+- The complete syntax tree of a file (`whole_file: true`)
+
+`treesit-info` gives structurally precise results (e.g. "this is a `function_declaration`, its parent is `source_file`") that are impossible to get from grep or read alone.
 
 ### Notes on LSP tools
 

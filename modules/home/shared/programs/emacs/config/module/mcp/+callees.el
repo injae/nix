@@ -20,9 +20,10 @@ Uses macro-expansion so indirect calls via macros are included."
                 (format "Cannot find source for '%s' (built-in or interactively defined)." name)
               (let* ((form
                       (with-current-buffer buf
-                        (save-excursion
-                          (goto-char pos)
-                          (read (current-buffer)))))
+                        (let ((inhibit-redisplay t))
+                          (save-excursion
+                            (goto-char pos)
+                            (read (current-buffer))))))
                      (callees (helpful--callees form)))
                 (if (null callees)
                     (format "'%s' does not call any other named functions." name)
