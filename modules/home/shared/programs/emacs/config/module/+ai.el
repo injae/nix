@@ -8,8 +8,7 @@
     (claude-code-ide-open-in-new-frame t)
     (claude-code-ide-enable-mcp-server t)
     (claude-code-ide-terminal-backend 'vterm)
-    (claude-code-ide-vterm-anti-flicker t)
-    (claude-code-ide-vterm-render-delay 0.01)
+    (claude-code-ide-vterm-anti-flicker nil)
     :config
     (claude-code-ide-emacs-tools-setup)
     (load-modules-with-list
