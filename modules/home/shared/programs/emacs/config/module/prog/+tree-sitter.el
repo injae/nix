@@ -2,20 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package tree-sitter
-  :hook ((emacs-startup        . global-tree-sitter-mode)
-         (tree-sitter-after-on . tree-sitter-hl-mode))
-)
-
-(use-package tree-sitter-langs  :after tree-sitter)
-
-(use-package evil-textobj-tree-sitter :after (evil tree-sitter)
-  :config
-  (define-key evil-outer-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.outer"))
-  (define-key evil-inner-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.inner"))
-  (define-key evil-outer-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj ("conditional.outer" "loop.outer")))
-  )
-
 (use-package treesit :ensure nil
     :if (treesit-available-p)
     :preface
