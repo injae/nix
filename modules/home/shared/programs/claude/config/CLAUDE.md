@@ -18,6 +18,10 @@ When the task involves editing Nix configuration, system settings, or Emacs conf
 - **Never run `just switch` yourself.** The user will run it manually when ready — do not remind them, and do not mention it as a closing remark (e.g. "takes effect after just switch").
 - When creating a new file anywhere under `$NIX_CONFIG_DIR`, immediately run `git add <file>` afterward. Nix flakes only see files tracked by git, so untracked files are silently ignored.
 
+## Language
+
+Always respond in Korean.
+
 ## Work style
 
 Before starting any task, always explain the planned steps first, then proceed.

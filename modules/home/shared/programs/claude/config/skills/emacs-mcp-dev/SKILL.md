@@ -49,5 +49,4 @@ Add the symbol to the list in `config/module/+ai.el`:
 - File naming: use the domain/function name, not the underlying package (e.g. `+formatting.el` not `+apheleia.el`)
 - Naming: public `claude-code-ide-mcp-{verb}-{noun}`, private helpers `claude-code-ide-mcp--{name}`
 - Wrap every public function body in `condition-case err`
-- After creating the file, run `git add` (Nix flakes ignore untracked files)
 - Verify parenthesis balance via `mcp__ide__executeCode`: `(with-temp-buffer (insert-file-contents "...") (condition-case e (progn (check-parens) "balanced") (error (error-message-string e))))`

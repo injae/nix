@@ -41,6 +41,9 @@
       "Bash(rm -rf /:*)"
     ]
   },
+  "skillOverrides": {
+    "review": "off"
+  },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
