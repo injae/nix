@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 
-(use-package vterm :after (evil-collection exec-path-from-shell projectile)
+(use-package vterm :after (evil-collection exec-path-from-shell)
 ;:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
