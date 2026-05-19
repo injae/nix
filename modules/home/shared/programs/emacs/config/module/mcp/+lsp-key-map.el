@@ -144,5 +144,56 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
              :type number
              :description "Column number (0-based) where the symbol starts")))
 
+(defun claude-code-ide-mcp-lsp-workspace-symbols (query file-path)
+  "Search for symbols matching QUERY project-wide via LSP workspace/symbol.
+FILE-PATH is any file in the project to initialize the eglot server context."
+  (condition-case err
+      (claude-code-ide-mcp-server-with-session-context nil
+        (with-current-buffer (or (find-buffer-visiting file-path)
+                                 (find-file-noselect file-path))
+          (let* ((server (eglot-current-server)))
+            (unless server
+              (error "No eglot server running in %s" file-path))
+            (let* ((result (eglot--request server :workspace/symbol
+                                           `(:query ,query)))
+                   (symbols (if (vectorp result) (append result nil) result)))
+              (if (null symbols)
+                  (format "No symbols found for query: %s" query)
+                (format "Symbols matching '%s' (%d):\n\n%s"
+                        query
+                        (length symbols)
+                        (mapconcat
+                         (lambda (sym)
+                           (let* ((name (plist-get sym :name))
+                                  (container (plist-get sym :containerName))
+                                  (location (plist-get sym :location))
+                                  (uri (plist-get location :uri))
+                                  (range (plist-get location :range))
+                                  (line (1+ (plist-get
+                                             (plist-get range :start) :line)))
+                                  (file (string-remove-prefix
+                                         "file://"
+                                         (url-unhex-string uri))))
+                             (format "%s:%d  %s%s"
+                                     file line name
+                                     (if (and container
+                                              (not (string-empty-p container)))
+                                         (format " [%s]" container)
+                                       ""))))
+                         symbols
+                         "\n")))))))
+    (error (format "Error: %s" (error-message-string err)))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-lsp-workspace-symbols
+    :name "claude-code-ide-mcp-lsp-workspace-symbols"
+    :description "Search for symbols matching a query string across the entire project using LSP workspace/symbol. Equivalent to consult-eglot-symbol but non-interactive. Use this INSTEAD of grep/find/rg whenever you need to locate a symbol, type, function, or variable by name."
+    :args '((:name "query"
+             :type string
+             :description "Symbol name or partial name to search for")
+            (:name "file_path"
+             :type string
+             :description "Absolute path to any file in the project (used to find the eglot server)")))
+
 (provide '+lsp-key-map)
 ;;; +lsp-key-map.el ends here

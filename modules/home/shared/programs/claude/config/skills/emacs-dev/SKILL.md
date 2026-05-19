@@ -37,6 +37,8 @@ Detect whether this session is running inside Emacs and configure MCP tools for 
 
 **Always prefer LSP/eglot MCP tools over `grep`, `find`, or `rg` for symbol lookups.** The language server returns semantically accurate results; shell tools match text and produce false positives.
 
+**For any project-wide symbol search, use `lsp-workspace-symbols` first.** Never grep across files to find a function, type, or variable — the LSP server already has the full index.
+
 ### Tool priority for code tasks
 
 | Task | Use this tool first | Fall back to |
@@ -45,7 +47,7 @@ Detect whether this session is running inside Emacs and configure MCP tools for 
 | Find all call sites / usages | `lsp-find-references` (identifier + file_path) | `xref-find-references` |
 | Find interface implementations | `lsp-find-implementation` (file_path + line + col) | Bash grep |
 | Find type behind a variable | `lsp-find-typeDefinition` (file_path + line + col) | `describe-symbol` |
-| Search symbols by name pattern | `xref-find-apropos` (pattern + file_path) | Bash grep |
+| Search symbols by name / project-wide lookup | `lsp-workspace-symbols` (query + file_path) | `xref-find-apropos` |
 | Inspect a symbol's docs/source | `describe-symbol` (name) | Read file |
 | Check compiler / linter errors | `getDiagnostics` | Bash |
 | Inspect AST node at position | `treesit-info` (file_path + line + col) | Read file |
