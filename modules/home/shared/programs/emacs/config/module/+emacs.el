@@ -120,7 +120,7 @@
 
 )
 
-(use-package pixel-scoll-smooth :ensure nil :no-require t :disabled
+(use-package pixel-scoll-smooth :ensure nil :no-require t
 ;; default text parsing direction left -> right
 :if (version< "29" emacs-version)
 :config (pixel-scroll-precision-mode)
