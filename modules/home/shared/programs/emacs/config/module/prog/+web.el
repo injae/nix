@@ -39,7 +39,9 @@
 
 (use-package js-mode :ensure nil :no-require t
     :mode (("\\.js\\'"  . js-ts-mode)
-           ("\\.jsx\\'" . jsx-ts-mode))
+           ("\\.jsx\\'" . jsx-ts-mode)
+           ("\\.mjs\\'" . js-ts-mode)
+           ("\\.cjs\\'" . js-ts-mode))
     :custom (js-indent-level 2)
     )
 
