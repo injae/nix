@@ -9,11 +9,12 @@
     (claude-code-ide-enable-mcp-server t)
     (claude-code-ide-terminal-backend 'vterm)
     (claude-code-ide-vterm-anti-flicker nil)
+    (claude-code-ide-prevent-reflow-glitch nil)
     :config
     (claude-code-ide-emacs-tools-setup)
     (load-modules-with-list
         (f-join user-emacs-module-directory "mcp")
-        '(describe-symbol find-references callees lsp-key-map call-function buffer-info formatting)))
+        '(describe-symbol find-references callees lsp-key-map call-function buffer-info formatting navigation magit)))
 
 (provide '+ai)
 ;;; +ai.el ends here
