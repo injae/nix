@@ -67,7 +67,6 @@
     (setq tab-always-indent 'complete)
 
     ;; native-comp
-    (setq inhibit-automatic-native-compilation t)
     (setq native-compile-prune-cache t)
 )
 

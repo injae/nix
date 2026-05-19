@@ -6,6 +6,9 @@
 
 (setq package-enable-at-startup nil)
 
+(setq inhibit-automatic-native-compilation t)
+(setq native-comp-jit-compilation nil)
+
 
 (provide 'early-init)
 ;;; early-init.el ends here
