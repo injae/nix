@@ -9,4 +9,11 @@ At the start of every session:
 
 ## Elisp editing
 
-When editing `.el` files, always verify parenthesis balance before finishing any edit — count `(` and `)` in every expression written.
+When editing `.el` files, always verify parenthesis balance before finishing any edit.
+
+**In Emacs mode** (when `mcp__emacs-tools__claude-code-ide-mcp-call-function` is available), call the helper via `call-function`:
+
+- function: `claude-code-ide-mcp-check-elisp-parens`
+- args_json: `["CODE_HERE"]`
+
+Returns `t` if balanced, or an error string if not. **Otherwise** (non-Emacs mode), count `(` and `)` in every expression written.

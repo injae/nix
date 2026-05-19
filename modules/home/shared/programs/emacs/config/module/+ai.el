@@ -14,7 +14,7 @@
     (claude-code-ide-emacs-tools-setup)
     (load-modules-with-list
         (f-join user-emacs-module-directory "mcp")
-        '(describe-symbol)))
+        '(describe-symbol find-references callees lsp-key-map call-function)))
 
 (provide '+ai)
 ;;; +ai.el ends here
