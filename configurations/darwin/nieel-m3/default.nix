@@ -12,6 +12,7 @@ let
     "default.nix"
     "dock.nix"
   ];
+  home = "/Users/${flake.config.people.myself}";
 in
 {
   imports = [
@@ -26,7 +27,7 @@ in
 
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
-    home = "/Users/${flake.config.people.myself}";
+    inherit home;
   };
   system.primaryUser = flake.config.people.myself;
 
@@ -48,10 +49,17 @@ in
     };
   };
 
+  environment.variables = {
+    NIX_CONFIG_DIR = "${home}/nix";
+  };
+
   local.ollama.enable = false;
 
   # Enable touch id for sudo
-  security.pam.services.sudo_local.touchIdAuth = true;
-  security.pam.services.sudo_local.watchIdAuth = true;
-  security.pam.services.sudo_local.reattach = true;
+  security.pam.services.sudo_local = {
+    enable = true;
+    touchIdAuth = true;
+    watchIdAuth = true;
+    reattach = true;
+  };
 }

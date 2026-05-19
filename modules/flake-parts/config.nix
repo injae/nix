@@ -5,6 +5,7 @@
 }:
 let
   pkgs = inputs.nixpkgs;
+  cfg = import ../../config.nix { };
   userSubmodule = lib.types.submodule {
     options = {
       name = lib.mkOption {
@@ -45,6 +46,6 @@ in
     };
   };
   config = {
-    people = import ../../config.nix { inherit pkgs; };
+    people = cfg.people;
   };
 }

@@ -28,9 +28,6 @@
 (when (my/nixos-p) (setq elpaca-core-date (list (my/nixos/get-emacs-build-date))))
 
 
-(setq-default user-nix-directory (expand-file-name "~/nix"))
-(setq-default user-mutable-emacs-directory (expand-file-name "modules/home/shared/programs/emacs" user-nix-directory))
-
 ;; (elpaca-write-lock-file)
 ;;(setq elpaca-lock-file (expand-file-name "elpaca-lock.el" user-mutable-emacs-directory))
 (defvar elpaca-installer-version 0.12)
@@ -94,7 +91,8 @@
                                                      "MallocNanoZone"
                                                      "NIX_SSL_CERT_FILE"
                                                      "SSL_CERT_FILE"
-                                                     "REQUEST_CA_BUNDLE"))
+                                                     "REQUEST_CA_BUNDLE"
+                                                     "NIX_CONFIG_DIR"))
                 (exec-path-from-shell-arguments '("-l"))
                 (exec-path-from-shell-check-startup-files nil)
                 (exec-path-from-shell-debug nil)
@@ -146,7 +144,7 @@
 
 (use-package module-util :ensure nil :after (dash f s)
     :init
-    (setq-default user-nix-directory (expand-file-name "~/nix"))
+    (setq-default user-nix-directory (getenv "NIX_CONFIG_DIR"))
     (setq-default user-mutable-emacs-directory (f-join user-nix-directory "modules/home/shared/programs/emacs"))
     (setq-default user-emacs-module-directory (f-join user-emacs-directory "module"))
     (setq-default user-emacs-prog-module-directory (f-join user-emacs-module-directory "prog"))

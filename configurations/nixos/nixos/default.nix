@@ -7,6 +7,7 @@ let
   inherit (flake) inputs;
   inherit (inputs) self;
   user = flake.config.people.myself;
+  home = "/home/${user}";
 in
 {
   imports = [
@@ -60,7 +61,10 @@ in
   ];
   services.dbus.packages = [ pkgs.pass-secret-service ];
 
-  environment.variables.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  environment.variables = {
+    NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    NIX_CONFIG_DIR = "${home}/nix";
+  };
 
   security = {
     sudo.enable = true;

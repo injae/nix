@@ -13,6 +13,7 @@ let
     "dock.nix"
     "credentials.crt"
   ];
+  home = "/Users/${flake.config.people.myself}";
 in
 {
   imports = [
@@ -27,7 +28,7 @@ in
 
   users.users.${flake.config.people.myself} = {
     name = flake.config.people.myself;
-    home = "/Users/${flake.config.people.myself}";
+    inherit home;
   };
   system.primaryUser = flake.config.people.myself;
 
@@ -67,6 +68,7 @@ in
       REQUEST_CA_BUNDLE = ca-cert-path;
       NODE_EXTRA_CA_CERTS = ca-cert-path;
       NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      NIX_CONFIG_DIR = "${home}/nix";
     };
 
   security = {
