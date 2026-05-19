@@ -4,7 +4,7 @@
 
 At the start of every session:
 
-1. Invoke the `emacs-dev` skill to check for Emacs environment and configure MCP tools.
+1. Invoke `/emacs-dev` to check for Emacs environment and configure MCP tools.
 2. Check whether `~/.claude/CLAUDE.local.md` exists via Bash. If it exists, read and apply its contents as additional instructions for this session.
 3. If `NIX_CONFIG_DIR` is set in the environment, note that path for use in the section below.
 
@@ -14,8 +14,13 @@ When the task involves editing Nix configuration, system settings, or Emacs conf
 
 - Read `$NIX_CONFIG_DIR/CLAUDE.md` at the start of the task and treat it as the authoritative project instructions for that work.
 - All edits must target files under `$NIX_CONFIG_DIR`, not `~/.config` or other derived paths, unless the file is explicitly not Nix-managed.
-- Claude Code configuration (CLAUDE.md, settings.json, skills, hooks) is managed under `$NIX_CONFIG_DIR/modules/home/shared/programs/claude/config/`. Always edit files there, not directly in `~/.claude/`. Run `just switch` (or the equivalent activate command) to apply changes.
+- Claude Code configuration (CLAUDE.md, settings.json, skills, hooks) is managed under `$NIX_CONFIG_DIR/modules/home/shared/programs/claude/config/`. Always edit files there, not directly in `~/.claude/`.
+- **Never run `just switch` yourself.** The user will run it manually when ready — do not remind them, and do not mention it as a closing remark (e.g. "takes effect after just switch").
 - When creating a new file anywhere under `$NIX_CONFIG_DIR`, immediately run `git add <file>` afterward. Nix flakes only see files tracked by git, so untracked files are silently ignored.
+
+## Work style
+
+Before starting any task, always explain the planned steps first, then proceed.
 
 ## Elisp editing
 

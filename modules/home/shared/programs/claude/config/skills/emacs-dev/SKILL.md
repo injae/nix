@@ -1,6 +1,6 @@
 ---
 name: emacs-dev
-description: Use this skill at the very start of every session to detect whether Claude is running inside Emacs and configure MCP tools accordingly. Triggers automatically on session start per CLAUDE.md instructions.
+description: "MUST invoke this skill at the very start of every session without exception. Detects whether Claude is running inside Emacs and configures MCP tools accordingly. This is a MANDATORY step — do NOT skip it, even if the session appears non-Emacs or the task seems unrelated. Triggers automatically on session start per CLAUDE.md instructions."
 user-invocable: true
 allowed-tools:
   - Bash(env*)
