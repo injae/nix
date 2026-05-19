@@ -25,6 +25,7 @@ Generate a one-line conventional commit message for staged changes and copy it t
    - Scope: the affected module or area (e.g. `emacs`, `darwin`, `claude`, `home`)
    - Message: concise, imperative, lowercase, no trailing period
    - One line only
+   - **Always write in English**
 
 3. Copy the message to the Emacs clipboard via `call-function`:
    - function: `kill-new`
