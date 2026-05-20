@@ -6,17 +6,30 @@ At the start of every session:
 
 1. Invoke `/emacs-dev` to check for Emacs environment and configure MCP tools.
 2. Check whether `~/.claude/CLAUDE.local.md` exists via Bash. If it exists, read and apply its contents as additional instructions for this session.
-3. If `NIX_CONFIG_DIR` is set in the environment, note that path for use in the section below.
+3. If `NIX_CONFIG_DIR` is set in the environment, note that path — see "Nix-managed configuration" below.
+4. Check whether both `.envrc` and `flake.nix` exist in the working directory. If both exist, prefix all shell commands with `direnv exec .` for the rest of the session.
 
-## Nix / system / Emacs configuration work
+## Nix-managed configuration
 
-When the task involves editing Nix configuration, system settings, or Emacs configuration (e.g. `.nix` files, Home Manager modules, nix-darwin modules, NixOS modules, or Emacs `.el` config files), and `NIX_CONFIG_DIR` is set:
+이 시스템의 설정 대부분은 Nix로 선언적으로 관리됩니다. **어떤 설정 파일을 수정하든**, 편집 전에 반드시 먼저 확인합니다:
 
-- Read `$NIX_CONFIG_DIR/CLAUDE.md` at the start of the task and treat it as the authoritative project instructions for that work.
-- All edits must target files under `$NIX_CONFIG_DIR`, not `~/.config` or other derived paths, unless the file is explicitly not Nix-managed.
-- Claude Code configuration (CLAUDE.md, settings.json, skills, hooks) is managed under `$NIX_CONFIG_DIR/modules/home/shared/programs/claude/config/`. Always edit files there, not directly in `~/.claude/`.
-- **Never run `just switch` yourself.** The user will run it manually when ready — do not remind them, and do not mention it as a closing remark (e.g. "takes effect after just switch").
-- When creating a new file anywhere under `$NIX_CONFIG_DIR`, immediately run `git add <file>` afterward. Nix flakes only see files tracked by git, so untracked files are silently ignored.
+1. **Nix 관리 여부 확인**: 대상 파일이 `~/.config/`, `~/.claude/`, `/etc/` 등 파생 경로에 있다면, 실제 소스는 `$NIX_CONFIG_DIR` 아래에 있을 가능성이 높습니다. 파생 경로를 직접 수정하지 않습니다.
+2. **소스 경로 찾기**: `$NIX_CONFIG_DIR`에서 해당 설정의 원본 파일을 먼저 찾아 편집합니다.
+3. **CLAUDE.md 참조**: Nix 관련 작업이라면 `$NIX_CONFIG_DIR/CLAUDE.md`를 읽고 해당 프로젝트 지침을 따릅니다.
+
+주요 경로 매핑 (예시):
+
+| 파생 경로 | Nix 소스 경로 |
+|-----------|--------------|
+| `~/.claude/` (CLAUDE.md, settings.json, skills, hooks) | `$NIX_CONFIG_DIR/modules/home/shared/programs/claude/config/` |
+| `~/.config/` | `$NIX_CONFIG_DIR` 내 해당 모듈 |
+| `/etc/` | `$NIX_CONFIG_DIR` 내 시스템 모듈 |
+
+**예외**: 파일이 명시적으로 Nix 비관리 대상(e.g. `.envrc`, 프로젝트 로컬 파일)이거나, `CLAUDE.local.md`처럼 의도적으로 파생 경로에만 존재하는 경우는 직접 편집합니다.
+
+**Never run `just switch` yourself.** The user will run it manually when ready — do not remind them, and do not mention it as a closing remark.
+
+When creating a new file anywhere under `$NIX_CONFIG_DIR`, immediately run `git add <file>` afterward. Nix flakes only see files tracked by git, so untracked files are silently ignored.
 
 ## Language
 
@@ -25,14 +38,3 @@ Always respond in Korean.
 ## Work style
 
 Before starting any task, always explain the planned steps first, then proceed.
-
-## Elisp editing
-
-When editing `.el` files, always verify parenthesis balance before finishing any edit.
-
-**In Emacs mode** (when `mcp__emacs-tools__claude-code-ide-mcp-call-function` is available), call the helper via `call-function`:
-
-- function: `claude-code-ide-mcp-check-elisp-parens`
-- args_json: `["CODE_HERE"]`
-
-Returns `t` if balanced, or an error string if not. **Otherwise** (non-Emacs mode), count `(` and `)` in every expression written.
