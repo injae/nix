@@ -22,10 +22,10 @@
   "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN.
 Uses session context and restores cursor position afterward via save-excursion.
 inhibit-redisplay prevents visible cursor jumps in open windows."
-  (claude-code-ide-mcp-server-with-session-context nil
-    (with-current-buffer (or (find-buffer-visiting file-path)
-                             (find-file-noselect file-path))
-      (let ((inhibit-redisplay t))
+  (let ((inhibit-redisplay t))
+    (claude-code-ide-mcp-server-with-session-context nil
+      (with-current-buffer (or (find-buffer-visiting file-path)
+                               (find-file-noselect file-path))
         (save-excursion
           (goto-char (point-min))
           (if (search-forward identifier nil t)
@@ -38,10 +38,10 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
   "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN.
 Uses session context and restores cursor position afterward via save-excursion.
 inhibit-redisplay prevents visible cursor jumps in open windows."
-  (claude-code-ide-mcp-server-with-session-context nil
-    (with-current-buffer (or (find-buffer-visiting file-path)
-                             (find-file-noselect file-path))
-      (let ((inhibit-redisplay t))
+  (let ((inhibit-redisplay t))
+    (claude-code-ide-mcp-server-with-session-context nil
+      (with-current-buffer (or (find-buffer-visiting file-path)
+                               (find-file-noselect file-path))
         (save-excursion
           (goto-char (point-min))
           (when (and line (> line 0))
@@ -61,26 +61,57 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
           (xref-backend-definitions (xref-find-backend) identifier))))
     (error (format "Error finding definition: %s" (error-message-string err)))))
 
+(defun claude-code-ide-mcp--textdoc-position-params ()
+  "Return LSP TextDocumentPositionParams for the current buffer and point."
+  `(:textDocument (:uri ,(eglot--path-to-uri (buffer-file-name)))
+    :position (:line ,(1- (line-number-at-pos)) :character ,(current-column))))
+
+(defun claude-code-ide-mcp--format-locations (label locations)
+  "Format LSP Location[] LOCATIONS into a readable string under LABEL."
+  (if (null locations)
+      (format "No %s found." label)
+    (format "%s (%d):\n\n%s"
+            label
+            (length locations)
+            (mapconcat
+             (lambda (loc)
+               (let* ((uri (plist-get loc :uri))
+                      (range (plist-get loc :range))
+                      (line (1+ (plist-get (plist-get range :start) :line)))
+                      (file (string-remove-prefix "file://" (url-unhex-string uri))))
+                 (format "%s:%d" file line)))
+             locations "\n"))))
+
 (defun claude-code-ide-mcp-lsp-find-references (identifier file-path)
-  "Find all references to IDENTIFIER via LSP in FILE-PATH context."
+  "Find all references to IDENTIFIER via LSP textDocument/references in FILE-PATH context."
   (condition-case err
       (claude-code-ide-mcp--with-identifier
        file-path identifier
        (lambda ()
-         (claude-code-ide-mcp--format-xrefs
-          (format "References to '%s'" identifier)
-          (xref-backend-references (xref-find-backend) identifier))))
+         (let* ((server (eglot-current-server))
+                (result (eglot--request server :textDocument/references
+                                        (append (claude-code-ide-mcp--textdoc-position-params)
+                                                '(:context (:includeDeclaration :json-false)))))
+                (locations (if (vectorp result) (append result nil) result)))
+           (claude-code-ide-mcp--format-locations
+            (format "References to '%s'" identifier)
+            locations))))
     (error (format "Error finding references: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-implementation (file-path line column)
-  "Find implementations at FILE-PATH LINE:COLUMN via eglot."
+  "Find implementations at FILE-PATH LINE:COLUMN via eglot textDocument/implementation."
   (condition-case err
       (claude-code-ide-mcp--at-position
        file-path line column
        (lambda ()
-         (claude-code-ide-mcp--format-xrefs
-          "Implementations"
-          (eglot--lsp-xref-helper :textDocument/implementation))))
+         (let* ((server (eglot-current-server))
+                (result (eglot--request server :textDocument/implementation
+                                        (claude-code-ide-mcp--textdoc-position-params)))
+                (locations (cond
+                            ((null result) nil)
+                            ((vectorp result) (append result nil))
+                            (t (list result)))))
+           (claude-code-ide-mcp--format-locations "Implementations" locations))))
     (error (format "Error finding implementation: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-typeDefinition (file-path line column)
@@ -144,13 +175,29 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
              :type number
              :description "Column number (0-based) where the symbol starts")))
 
+(defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
+  "Return a buffer with an active eglot server for FILE-PATH's project.
+Priority: (1) buffer already visiting FILE-PATH, (2) any open buffer in the
+same project root that has eglot active, (3) find-file-noselect as last resort.
+Steps 1-2 avoid opening new files and triggering Emacs hooks."
+  (or (find-buffer-visiting file-path)
+      (when-let* ((dir (file-name-directory (expand-file-name file-path)))
+                  (proj (ignore-errors (project-current nil dir)))
+                  (root (expand-file-name (project-root proj))))
+        (seq-find
+         (lambda (buf)
+           (and (buffer-file-name buf)
+                (string-prefix-p root (expand-file-name (buffer-file-name buf)))
+                (with-current-buffer buf (eglot-current-server))))
+         (buffer-list)))
+      (find-file-noselect file-path)))
+
 (defun claude-code-ide-mcp-lsp-workspace-symbols (query file-path)
   "Search for symbols matching QUERY project-wide via LSP workspace/symbol.
-FILE-PATH is any file in the project to initialize the eglot server context."
+FILE-PATH is any file in the project to locate the eglot server context."
   (condition-case err
       (claude-code-ide-mcp-server-with-session-context nil
-        (with-current-buffer (or (find-buffer-visiting file-path)
-                                 (find-file-noselect file-path))
+        (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
           (let* ((server (eglot-current-server)))
             (unless server
               (error "No eglot server running in %s" file-path))

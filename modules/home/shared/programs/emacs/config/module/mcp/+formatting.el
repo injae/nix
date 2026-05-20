@@ -4,7 +4,8 @@
 
 (defun claude-code-ide-mcp--apheleia-with-buffer (file-path fn)
   "Visit FILE-PATH buffer and call FN with it current."
-  (let ((buf (or (find-buffer-visiting file-path)
+  (let ((inhibit-redisplay t)
+        (buf (or (find-buffer-visiting file-path)
                  (find-file-noselect file-path))))
     (with-current-buffer buf
       (funcall fn))))
