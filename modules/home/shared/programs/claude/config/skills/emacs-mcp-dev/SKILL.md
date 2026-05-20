@@ -44,9 +44,47 @@ Add the symbol to the list in `config/module/+ai.el`:
     '(... existing ... {name}))
 ```
 
+## After adding a tool
+
+Update `emacs-dev/SKILL.md`:
+- `max_results` in the ToolSearch query `"emacs-tools"` must be ≥ total number of registered `mcp__emacs-tools__*` tools. Count tools in `+ai.el` and set accordingly.
+- If the new tool is useful for code navigation, add it to the Code navigation table with its signature and fallback.
+
+## Background operation — don't disturb the user
+
+MCP tools that read files or navigate buffers must **not** cause visible screen updates. Two categories:
+
+### Read-only tools (find-definition, find-references, formatter-info, …)
+
+Always wrap the **entire** function body — including `find-file-noselect` — with `(let ((inhibit-redisplay t)) ...)`. If `inhibit-redisplay` is set only *inside* `with-current-buffer`, it is too late: `find-file-noselect` will already have run mode hooks that can cause flicker.
+
+**Wrong** — protection starts after `find-file-noselect`:
+```elisp
+(with-current-buffer (or (find-buffer-visiting file-path)
+                         (find-file-noselect file-path))   ; hooks fire unprotected
+  (let ((inhibit-redisplay t))
+    (save-excursion ...)))
+```
+
+**Correct** — protection wraps everything:
+```elisp
+(let ((inhibit-redisplay t))                               ; blocks hooks & redisplay
+  (with-current-buffer (or (find-buffer-visiting file-path)
+                           (find-file-noselect file-path))
+    (save-excursion ...)))
+```
+
+Also always pair buffer navigation with `save-excursion` so the buffer point is restored after the tool runs.
+
+### Write / navigation tools (goto-file-line, magit-prepare-commit, format-buffer)
+
+These are **intentionally foreground**: they change what the user sees (`find-file` + `recenter`) or open a new buffer (commit editor). Do **not** add `inhibit-redisplay` to these — they need to update the display.
+
 ## Checklist
 
 - File naming: use the domain/function name, not the underlying package (e.g. `+formatting.el` not `+apheleia.el`)
 - Naming: public `claude-code-ide-mcp-{verb}-{noun}`, private helpers `claude-code-ide-mcp--{name}`
 - Wrap every public function body in `condition-case err`
+- Read-only tools: `(let ((inhibit-redisplay t)) ...)` **outside** `with-current-buffer` / `find-file-noselect`
+- Read-only tools: `save-excursion` inside every buffer navigation block
 - Verify parenthesis balance via `mcp__ide__executeCode`: `(with-temp-buffer (insert-file-contents "...") (condition-case e (progn (check-parens) "balanced") (error (error-message-string e))))`
