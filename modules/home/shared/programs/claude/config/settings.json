@@ -6,7 +6,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"import os,json,sys; sys.stdin.read(); e=os.environ.get('INSIDE_EMACS',''); t=os.environ.get('TERM_PROGRAM',''); p=[]; p.append('MANDATORY SESSION START: Emacs detected (INSIDE_EMACS='+e+'). You MUST invoke the /emacs-dev skill before responding to the user.') if (e or t=='emacs') else None; lf=os.path.expanduser('~/.claude/CLAUDE.local.md'); c=open(lf).read().strip() if os.path.exists(lf) else ''; p.append('CLAUDE.local.md:\\n'+c) if c else None; print(json.dumps({'hookSpecificOutput':{'hookEventName':'SessionStart','additionalContext':'\\n\\n'.join(p)}})) if p else None\""
+            "command": "~/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skill-eval.sh"
           }
         ]
       }
@@ -16,13 +26,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mkdir -p ~/.log/claude && jq -r '[\"[\", (now | strftime(\"%Y-%m-%dT%H:%M:%SZ\")), \"] \", .tool_name, \": \", (.tool_input | tostring)] | join(\"\")' >> ~/.log/claude/tool-calls.log 2>/dev/null || true"
+            "command": "~/.claude/hooks/tool-call-log.sh"
           }
         ]
       }
     ]
   },
   "permissions": {
+    "allow": [
+      "Read(/Users/nieel/nix/**)",
+      "Edit(/Users/nieel/nix/**)",
+      "Write(/Users/nieel/nix/**)",
+      "Bash(git -C /Users/nieel/nix*)",
+      "Read(/Users/nieel/.emacs.d/**)",
+      "mcp__emacs-tools__*"
+    ],
     "deny": [
       "Read(**/.env)",
       "Read(**/.env.*)",
