@@ -178,5 +178,27 @@
 :config (global-evil-extra-operator-mode 1)
 )
 
+(with-eval-after-load 'with-editor
+  (evil-ex-define-cmd "wq[!]"
+    (lambda ()
+      (interactive)
+      (call-interactively
+       (if (bound-and-true-p with-editor-mode)
+           #'with-editor-finish
+         #'evil-save-and-close))))
+  (evil-ex-define-cmd "w[rite]"
+    (lambda ()
+      (interactive)
+      (if (bound-and-true-p with-editor-mode)
+          (with-editor-finish nil)
+        (call-interactively #'evil-write))))
+  (evil-ex-define-cmd "q[uit]"
+    (lambda ()
+      (interactive)
+      (call-interactively
+       (if (bound-and-true-p with-editor-mode)
+           #'with-editor-cancel
+         #'evil-quit)))))
+
 (provide '+evil)
 ;;; +evil.el ends here
