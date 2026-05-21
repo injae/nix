@@ -9,13 +9,14 @@
 | Find definition | `lsp-find-definition` (identifier + file_path) | `xref-find-apropos` |
 | Find all implementations of method/interface | `lsp-workspace-symbols` (method_name + file_path) | `xref-find-apropos` |
 | Find implementations (from position) | `lsp-find-implementation` (file_path + line + col) | `lsp-workspace-symbols` |
+| Find all call sites / usages (from position) | `lsp-find-references` (file_path + line + col) | `lsp-workspace-symbols` |
 | Find type | `lsp-find-typeDefinition` (file_path + line + col) | `describe-symbol` |
 | Project-wide symbol search | `lsp-workspace-symbols` (query + file_path) | `xref-find-apropos` |
 | Project-only symbol search (no external noise) | `lsp-project-symbols` (query + file_path) | `lsp-workspace-symbols` |
 | Symbol docs | `describe-symbol` (name) | Read |
 | Diagnostics | `getDiagnostics` | Bash |
 
-> **`lsp-find-references` is removed** — use `lsp-workspace-symbols` to find usages instead.
+> **`lsp-find-references`**: position-based (file_path + line + col), returns all call sites. Use when you already have a location and want all usages. Use `lsp-workspace-symbols` when you only have a name.
 
 ## Chained navigation pipelines
 
@@ -74,6 +75,42 @@ Fall back to `xref-find-apropos` or Bash only if the background buffer approach 
 > **`lsp-workspace-symbols` specifically**: internally uses `eglot--request` directly and
 > searches for an already-open project buffer before ever calling `find-file-noselect`.
 > Pass any open file in the project as `file_path` — the specific file does not need to be open.
+
+## Symbol-to-file lookup (sequential constraint)
+
+Every "where is X defined?" or "what file contains X?" query requires this sequence regardless of language. You must not call `Bash find` or `grep` until you have answered each evaluation question and committed to the path.
+
+---
+
+**Step 1 — Evaluate: What kind of symbol is it?**
+
+| Symbol type | Primary tool | Why |
+|-------------|-------------|-----|
+| Project code (Go, TS, Python…) | `lsp-find-definition(identifier, file_path)` | LSP gives precise cross-file definitions |
+| Unknown / partial name | `xref-find-apropos(pattern)` or `lsp-workspace-symbols(query)` | Pattern search across loaded symbols or workspace |
+
+> **Emacs Lisp symbols** (`.el` files, Emacs internals, elpaca packages): see `elisp.md` — `describe-symbol` is the primary tool there.
+
+Commit out loud before proceeding:
+> "Symbol `[name]` is project code. Primary tool: **lsp-find-definition**."
+
+---
+
+**Step 2 — Evaluate: Did Step 1 return a location?**
+
+- **YES** → commit: "Found at `[path]:[line]`. Next: **file-outline** or **symbol-source**."
+- **NO** (symbol not found / LSP miss) → try `xref-find-apropos` or `lsp-workspace-symbols` as fallback.
+
+---
+
+**Gate check — before calling `Bash find`, `grep`, or `rg`, confirm:**
+1. The appropriate Step 1 tool was called → returned no result
+2. `xref-find-apropos` / `lsp-workspace-symbols` was called → no matches
+3. Only then: Bash is justified
+
+This applies to **all languages**. `describe-symbol` covers every loaded Emacs package; `lsp-find-definition` covers every LSP-supported project file. Neither requires knowing the file path in advance.
+
+---
 
 ## Tool selection efficiency
 

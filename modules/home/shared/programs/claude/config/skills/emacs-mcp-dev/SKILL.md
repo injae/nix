@@ -50,6 +50,18 @@ Update `emacs-dev/SKILL.md`:
 - `max_results` in the ToolSearch query `"emacs-tools"` must be ≥ total number of registered `mcp__emacs-tools__*` tools. Count tools in `+ai.el` and set accordingly.
 - If the new tool is useful for code navigation, add it to the Code navigation table with its signature and fallback.
 
+## LSP navigation tools (`+lsp-navigation.el`)
+
+When adding tools to `+lsp-navigation.el` specifically, read `mcp-tool-patterns.md` (in this skill's directory) first. It documents the three established patterns:
+
+| Pattern | When to use |
+|---------|------------|
+| **A — Position-based** (`--at-position`) | tool takes file + line + col |
+| **B — Identifier-based** (`--with-identifier`) | tool takes a symbol name string |
+| **C — Server-context search** (`server-with-session-context`) | tool queries LSP workspace/symbol |
+
+Pattern C has a known pitfall: one misplaced `)` absorbs the `condition-case` error handler into the macro body, leaving no handler. After writing any Pattern C tool, run the Step 4.5 diagnostic from `emacs-dev/elisp.md`.
+
 ## Background operation — don't disturb the user
 
 MCP tools that read files or navigate buffers must **not** cause visible screen updates. Two categories:

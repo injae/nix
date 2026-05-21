@@ -109,6 +109,23 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
           (eglot--lsp-xref-helper :textDocument/typeDefinition))))
     (error (format "Error finding type definition: %s" (error-message-string err)))))
 
+(defun claude-code-ide-mcp-lsp-find-references (file-path line column)
+  "Find all references to the symbol at FILE-PATH LINE:COLUMN via eglot textDocument/references."
+  (condition-case err
+      (claude-code-ide-mcp--at-position
+       file-path line column
+       (lambda ()
+         (let* ((server (eglot-current-server))
+                (result (eglot--request server :textDocument/references
+                                        (append (claude-code-ide-mcp--textdoc-position-params)
+                                                '(:context (:includeDeclaration :json-false)))))
+                (locations (cond
+                            ((null result) nil)
+                            ((vectorp result) (append result nil))
+                            (t (list result)))))
+           (claude-code-ide-mcp--format-locations "References" locations))))
+    (error (format "Error finding references: %s" (error-message-string err)))))
+
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-definition
     :name "claude-code-ide-mcp-lsp-find-definition"
@@ -139,6 +156,20 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
     :function #'claude-code-ide-mcp-lsp-find-typeDefinition
     :name "claude-code-ide-mcp-lsp-find-typeDefinition"
     :description "Find the type definition of a symbol at a file position using eglot (textDocument/typeDefinition). Useful for tracing the declared type behind a variable or parameter. Provide file path, line (1-based), and column (0-based)."
+    :args '((:name "file_path"
+             :type string
+             :description "Absolute path to the file containing the symbol")
+            (:name "line"
+             :type number
+             :description "Line number (1-based) where the symbol appears")
+            (:name "column"
+             :type number
+             :description "Column number (0-based) where the symbol starts")))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-lsp-find-references
+    :name "claude-code-ide-mcp-lsp-find-references"
+    :description "Find all call sites / references to the symbol at a file position using eglot (textDocument/references). Use this to find every location that uses a function, variable, or type. Provide file path, line (1-based), and column (0-based) pointing to the symbol."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file containing the symbol")
@@ -264,8 +295,8 @@ Like lsp-workspace-symbols but filters out external packages
                                               (not (string-empty-p container)))
                                          (format " [%s]" container)
                                        ""))))
-                         project-symbols "\n"))))))
-    (error (format "Error: %s" (error-message-string err))))))
+                         project-symbols "\n")))))))
+    (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-project-symbols
@@ -278,5 +309,5 @@ Like lsp-workspace-symbols but filters out external packages
              :type string
              :description "Absolute path to any file in the project (used to find the eglot server and project root)")))
 
-(provide '+lsp-key-map)
-;;; +lsp-key-map.el ends here
+(provide '+lsp-navigation)
+;;; +lsp-navigation.el ends here

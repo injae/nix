@@ -14,7 +14,7 @@
     (claude-code-ide-emacs-tools-setup)
     (load-modules-with-list
         (f-join user-emacs-module-directory "mcp")
-        '(describe-symbol find-references callees lsp-key-map call-function buffer-info formatting navigation magit elisp)))
+        '(describe-symbol find-references callees lsp-navigation call-function buffer-info formatting navigation magit elisp)))
 
 (defun +ediff-setup-header ()
   "Show key hints in ediff control buffer header line."
