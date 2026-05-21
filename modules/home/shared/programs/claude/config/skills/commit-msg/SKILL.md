@@ -6,6 +6,7 @@ allowed-tools:
   - Bash(git diff*)
   - Bash(git log*)
   - mcp__emacs-tools__claude-code-ide-mcp-call-function
+  - mcp__emacs-tools__claude-code-ide-mcp-magit-prepare-commit
 ---
 
 # Generate Commit Message
@@ -31,4 +32,7 @@ Generate a one-line conventional commit message for staged changes and copy it t
    - function: `kill-new`
    - args_json: `["<commit message>"]`
 
-4. Show the message to the user.
+4. Open the Magit commit buffer with the message pre-filled via `magit-prepare-commit`.
+   - If it fails with "COMMIT_EDITMSG not found", first call `magit-status` via `call-function`, then retry `magit-prepare-commit`.
+
+5. Show the message to the user and instruct them to press **C-c C-c** to commit.

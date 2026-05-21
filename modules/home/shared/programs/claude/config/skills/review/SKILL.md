@@ -52,6 +52,7 @@ version: 1.0.0
    - **파일 확장자 우선**: `.go` / `.py` / `.ts` `.tsx` `.js` `.jsx` / `.rs` 등 파일 식별자로 먼저 결정한다.
    - **확장자 불명확 시**: 코드 구문(import 스타일, 키워드, 타입 선언 방식 등)을 분석해 판별한다.
 3. **언어 파일 로드**: 아래 매핑에 해당하는 파일이 있으면 Read로 로드한다.
+   - ${Lang} -> `references/lang/${lang}.md` (예: `references/lang/go.md`)
    - Go → `references/lang/go.md`
    - Python → `references/lang/python.md`
    - TypeScript / JavaScript → `references/lang/typescript.md`
