@@ -33,7 +33,11 @@
                      (point-max))))
         (delete-region (point-min) end))
       (goto-char (point-min))
-      (insert msg "\n\n"))))
+      (insert msg "\n\n")
+      ;; git-commit-setup calls (set-buffer-modified-p nil) immediately after
+      ;; this hook, which prevents save-buffer from writing our changes to disk.
+      ;; Write directly to bypass that reset.
+      (write-region (point-min) (point-max) buffer-file-name nil 'silent))))
 
 (add-hook 'git-commit-setup-hook #'claude-code-ide--git-commit-insert-pending)
 
