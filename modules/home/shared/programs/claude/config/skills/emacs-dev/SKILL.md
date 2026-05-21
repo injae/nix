@@ -23,6 +23,7 @@ Then immediately **Read the sub-files** from this skill's base directory (shown 
 | `navigation.md` | Always — read immediately after loading MCP tools |
 | `file-analysis.md` | Always — read immediately after `navigation.md` |
 | `elisp.md` | Only when the file being worked on is `.el` (major-mode `emacs-lisp-mode`) |
+| `testing.md` | When the user asks to validate, test, or evaluate navigation skills |
 
 Read `navigation.md` and `file-analysis.md` in parallel. Reply: "Emacs mode active — MCP tools loaded."
 
