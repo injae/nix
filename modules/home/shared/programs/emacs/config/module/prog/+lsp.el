@@ -33,6 +33,7 @@
     (add-to-list 'eglot-server-programs '((rust-ts-mode rust-mode) . ("rass" "rust")))
     (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("rass" "nix")))
     (add-to-list 'eglot-server-programs '(nix-mode     . ("rass" "nix")))
+    (add-to-list 'eglot-server-programs '(markdown-ts-mode . ("marksman" "server")))
     )
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")

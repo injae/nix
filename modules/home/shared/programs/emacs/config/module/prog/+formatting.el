@@ -13,9 +13,10 @@
 
 (use-package apheleia :after (exec-path-from-shell)
     :config
-    (setf (alist-get 'python-ts-mode   apheleia-mode-alist) '(ruff))
-    (setf (alist-get 'go-ts-mode       apheleia-mode-alist) '(gofmt goimports))
-    (setf (alist-get 'prettier-json apheleia-formatters) '("prettier" "--stdin-filepath" filepath))
+    (setf (alist-get 'python-ts-mode    apheleia-mode-alist) '(ruff))
+    (setf (alist-get 'go-ts-mode        apheleia-mode-alist) '(gofmt goimports))
+    (setf (alist-get 'markdown-mode     apheleia-mode-alist) '(prettier-markdown))
+    (setf (alist-get 'prettier-json     apheleia-formatters) '("prettier" "--stdin-filepath" filepath))
     (apheleia-global-mode +1)
     )
 
