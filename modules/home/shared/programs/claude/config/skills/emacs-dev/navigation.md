@@ -10,6 +10,7 @@
 | Find all implementations of method/interface | `lsp-project-symbols` (method_name + file_path) | `lsp-workspace-symbols` → `xref-find-apropos` |
 | Find implementations (from position) | `lsp-find-implementation` (file_path + line + col) | `lsp-workspace-symbols` |
 | Find all call sites / usages (from position) | `lsp-find-references` (file_path + line + col) | `lsp-workspace-symbols` |
+| Find all call sites / usages (by name, no position needed) | `lsp-find-references-by-name` (identifier + file_path) | `lsp-find-references` with position |
 | Find type | `lsp-find-typeDefinition` (file_path + line + col) | `lsp-find-definition` (identifier) |
 | Project-wide symbol search | `lsp-workspace-symbols` (query + file_path) | `xref-find-apropos` |
 | Project-only symbol search (no external noise) | `lsp-project-symbols` (query + file_path) | `lsp-workspace-symbols` |
@@ -43,12 +44,21 @@ Zero file reads. Complete impact picture before touching any code.
 > **Step 1 tip:** `lsp-find-definition` resolves the identifier in the scope of the context file's package. Pass a file from the **same package where the symbol is defined** — importing the package is not enough. For example, to find `RetryTask`, pass `retry/retry_task.go`, not a file that merely imports the retry package. If you don't know which file to pass, use `lsp-project-symbols(symbol_name)` first to locate the definition file, then pass that file as context.
 
 **Pipeline C — Symbol propagation** ("Where does this field/value flow?")
+
+**Short form** (function or type name known, no position):
 ```
-1. imenu-list-symbols(file)                      → field line + column (declaration position)
-2. lsp-find-references(file, line, col)           → all read/write sites across the project
-3. symbol-source(file, line) [for each site]      → read the context around each usage
+1. lsp-find-references-by-name(identifier, file)  → all call sites in one step
+2. symbol-source(file, line) [for each site]       → read the context around each usage
+```
+
+**Long form** (struct field or positional context needed):
+```
+1. imenu-list-symbols(file)                        → field line + column (declaration position)
+2. lsp-find-references(file, line, col)            → all read/write sites across the project
+3. symbol-source(file, line) [for each site]       → read the context around each usage
 ```
 > **Why not `lsp-workspace-symbols` here:** symbol search returns *declarations*, not *usages*. A field declared once but used in 10 places requires `lsp-find-references` to see all 10 sites. Use `lsp-workspace-symbols` only when you don't yet have a position to anchor from.
+> **`lsp-find-references-by-name`**: preferred for the short form — resolves the definition position internally via workspace/symbol (exact name match, project-local), then calls textDocument/references. Use the long form only when the symbol is a struct field (not returned by workspace/symbol as a standalone name) or when multiple symbols share the same name.
 
 **Finding all implementations of an interface method** (e.g., every type that implements `Flush`):
 

@@ -314,5 +314,91 @@ Like lsp-workspace-symbols but filters out external packages
              :type string
              :description "Absolute path to any file in the project (used to find the eglot server and project root)")))
 
+(defun claude-code-ide-mcp--resolve-symbol-location (identifier file-path)
+  "Return plist (:file :line :col) for IDENTIFIER's definition via workspace/symbol.
+Prefers the symbol in the same directory as FILE-PATH (package-local match),
+then falls back to any project-local exact name match. Returns nil if not found."
+  (let ((inhibit-redisplay t))
+    (claude-code-ide-mcp-server-with-session-context nil
+      (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
+        (let* ((server (eglot-current-server))
+               (preferred-dir (file-name-directory (expand-file-name file-path)))
+               (project-root
+                (when-let* ((proj (project-current
+                                   nil
+                                   (file-name-directory (expand-file-name file-path)))))
+                  (expand-file-name (project-root proj))))
+               (raw (when server
+                      (eglot--request server :workspace/symbol `(:query ,identifier))))
+               (symbols (cond ((vectorp raw) (append raw nil))
+                              ((listp raw) raw)
+                              (t nil)))
+               (project-matches
+                (seq-filter
+                 (lambda (sym)
+                   (when-let* ((loc  (plist-get sym :location))
+                               (uri  (plist-get loc :uri))
+                               (file (string-remove-prefix
+                                      "file://" (url-unhex-string uri))))
+                     (and (string= (plist-get sym :name) identifier)
+                          (or (null project-root)
+                              (string-prefix-p project-root file)))))
+                 symbols))
+               (matched
+                (or (seq-find
+                     (lambda (sym)
+                       (when-let* ((loc  (plist-get sym :location))
+                                   (uri  (plist-get loc :uri))
+                                   (file (string-remove-prefix
+                                          "file://" (url-unhex-string uri))))
+                         (string= (file-name-directory file) preferred-dir)))
+                     project-matches)
+                    (car project-matches))))
+          (when matched
+            (let* ((loc   (plist-get matched :location))
+                   (uri   (plist-get loc :uri))
+                   (range (plist-get loc :range))
+                   (start (plist-get range :start)))
+              (list :file (string-remove-prefix "file://" (url-unhex-string uri))
+                    :line (1+ (plist-get start :line))
+                    :col  (plist-get start :character)))))))))
+
+(defun claude-code-ide-mcp-lsp-find-references-by-name (identifier file-path)
+  "Find all references to IDENTIFIER by name, without needing its file position.
+Resolves the definition via workspace/symbol (project-local, exact name match),
+navigates to the identifier on the definition line, then calls textDocument/references."
+  (condition-case err
+      (let* ((def (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
+        (if (null def)
+            (format "Symbol '%s' not found in project. Try lsp-find-references with an explicit position." identifier)
+          (claude-code-ide-mcp--at-position
+           (plist-get def :file)
+           (plist-get def :line)
+           (plist-get def :col)
+           (lambda ()
+             (let* ((server (eglot-current-server))
+                    (result (eglot--request server :textDocument/references
+                                            (append (claude-code-ide-mcp--textdoc-position-params)
+                                                    '(:context (:includeDeclaration :json-false)))))
+                    (locations (cond
+                                ((null result) nil)
+                                ((vectorp result) (append result nil))
+                                (t (list result)))))
+               (claude-code-ide-mcp--format-locations
+                (format "References to '%s'" identifier)
+                locations))))))
+    (error (format "Error finding references: %s" (error-message-string err)))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-lsp-find-references-by-name
+    :name "claude-code-ide-mcp-lsp-find-references-by-name"
+    :description "Find all references to a symbol by name, without needing its file position. Internally resolves the definition via workspace/symbol (project-local, exact name match), then calls textDocument/references. Use this instead of the two-step lsp-project-symbols → lsp-find-references workflow. Falls back with a clear message if the symbol is not found."
+    :args '((:name "identifier"
+             :type string
+             :description "Exact symbol name to find references for (e.g. \"RetryTask\", \"NewManagedTask\")")
+            (:name "file_path"
+             :type string
+             :description "Absolute path to any file in the project (used to locate the eglot server and project root)")))
+
 (provide '+lsp-navigation)
 ;;; +lsp-navigation.el ends here

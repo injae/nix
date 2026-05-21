@@ -13,7 +13,7 @@ allowed-tools:
 Run: `env | grep -E 'INSIDE_EMACS|TERM_PROGRAM'`
 
 **If `INSIDE_EMACS` is set OR `TERM_PROGRAM=emacs`:** load MCP tool schemas via two parallel ToolSearch calls:
-- `"emacs-tools"` max_results:25
+- `"emacs-tools"` max_results:26
 - `"+ide getDiagnostics"` max_results:3
 
 Then immediately **Read the sub-files** from this skill's base directory (shown above as "Base directory for this skill: ..."):
