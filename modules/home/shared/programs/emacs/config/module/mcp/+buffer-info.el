@@ -54,32 +54,6 @@ Otherwise return all user-visible buffers ordered by recency."
     :description "Return the most recently used buffer that is not an internal buffer or a claude-code buffer. Useful for identifying which file the user was last editing."
     :args '())
 
-(defun claude-code-ide-mcp-file-mode (file-path)
-  "Return major-mode and treesit availability for FILE-PATH.
-Opens the file in the background if not already open as a buffer."
-  (condition-case err
-      (let ((inhibit-redisplay t))
-        (let* ((buf (or (find-buffer-visiting file-path)
-                        (find-file-noselect file-path)))
-               (mode (with-current-buffer buf
-                       (save-excursion (symbol-name major-mode))))
-               (has-treesit (with-current-buffer buf
-                              (save-excursion
-                                (and (fboundp 'treesit-parser-list)
-                                     (not (null (treesit-parser-list))))))))
-          (format "buffer: %s\nmajor-mode: %s\ntreesit: %s"
-                  (buffer-name buf)
-                  mode
-                  (if has-treesit "available" "unavailable"))))
-    (error (format "Error: %s" (error-message-string err)))))
-
-(claude-code-ide-make-tool
-    :function #'claude-code-ide-mcp-file-mode
-    :name "claude-code-ide-mcp-file-mode"
-    :description "Return major-mode and treesit availability for a file path. Opens the file in the background if not already open. Use this as the first step of file analysis to determine whether tree-sitter is available before deciding between imenu-list-symbols and Read."
-    :args '((:name "file_path"
-             :type string
-             :description "Absolute path to the file to inspect.")))
 
 (defun claude-code-ide-mcp--imenu-collect (index prefix)
   "Return list of (LINE . STRING) pairs from imenu INDEX with PREFIX applied."

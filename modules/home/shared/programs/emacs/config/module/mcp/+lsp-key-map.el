@@ -82,22 +82,6 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
                  (format "%s:%d" file line)))
              locations "\n"))))
 
-(defun claude-code-ide-mcp-lsp-find-references (identifier file-path)
-  "Find all references to IDENTIFIER via LSP textDocument/references in FILE-PATH context."
-  (condition-case err
-      (claude-code-ide-mcp--with-identifier
-       file-path identifier
-       (lambda ()
-         (let* ((server (eglot-current-server))
-                (result (eglot--request server :textDocument/references
-                                        (append (claude-code-ide-mcp--textdoc-position-params)
-                                                '(:context (:includeDeclaration :json-false)))))
-                (locations (if (vectorp result) (append result nil) result)))
-           (claude-code-ide-mcp--format-locations
-            (format "References to '%s'" identifier)
-            locations))))
-    (error (format "Error finding references: %s" (error-message-string err)))))
-
 (defun claude-code-ide-mcp-lsp-find-implementation (file-path line column)
   "Find implementations at FILE-PATH LINE:COLUMN via eglot textDocument/implementation."
   (condition-case err
@@ -136,16 +120,6 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
              :type string
              :description "Absolute path to any file in the project (used to initialize the eglot/xref backend)")))
 
-(claude-code-ide-make-tool
-    :function #'claude-code-ide-mcp-lsp-find-references
-    :name "claude-code-ide-mcp-lsp-find-references"
-    :description "Find all references to a symbol using the eglot/LSP xref backend. Prefer this over grep or find — the language server returns precise call sites. Pass the symbol name and any file in the project as context."
-    :args '((:name "identifier"
-             :type string
-             :description "The symbol name to find all references for")
-            (:name "file_path"
-             :type string
-             :description "Absolute path to any file in the project (used to initialize the eglot/xref backend)")))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
@@ -241,6 +215,68 @@ FILE-PATH is any file in the project to locate the eglot server context."
             (:name "file_path"
              :type string
              :description "Absolute path to any file in the project (used to find the eglot server)")))
+
+(defun claude-code-ide-mcp-lsp-project-symbols (query file-path)
+  "Search for symbols matching QUERY within the project root only.
+Like lsp-workspace-symbols but filters out external packages
+(e.g. /go/pkg/mod/, /nix/store/).  FILE-PATH is any file in the project."
+  (condition-case err
+      (claude-code-ide-mcp-server-with-session-context nil
+        (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
+          (let* ((server (eglot-current-server)))
+            (unless server
+              (error "No eglot server running in %s" file-path))
+            (let* ((project-root
+                    (when-let* ((proj (project-current
+                                       nil
+                                       (file-name-directory (expand-file-name file-path)))))
+                      (expand-file-name (project-root proj))))
+                   (result (eglot--request server :workspace/symbol `(:query ,query)))
+                   (symbols (if (vectorp result) (append result nil) result))
+                   (project-symbols
+                    (seq-filter
+                     (lambda (sym)
+                       (when-let* ((loc (plist-get sym :location))
+                                   (uri (plist-get loc :uri))
+                                   (file (string-remove-prefix
+                                          "file://" (url-unhex-string uri))))
+                         (and project-root (string-prefix-p project-root file))))
+                     symbols)))
+              (if (null project-symbols)
+                  (format "No project symbols found for query: %s" query)
+                (format "Project symbols matching '%s' (%d):\n\n%s"
+                        query
+                        (length project-symbols)
+                        (mapconcat
+                         (lambda (sym)
+                           (let* ((name (plist-get sym :name))
+                                  (container (plist-get sym :containerName))
+                                  (loc (plist-get sym :location))
+                                  (uri (plist-get loc :uri))
+                                  (range (plist-get loc :range))
+                                  (line (1+ (plist-get
+                                             (plist-get range :start) :line)))
+                                  (file (string-remove-prefix
+                                         "file://" (url-unhex-string uri))))
+                             (format "%s:%d  %s%s"
+                                     file line name
+                                     (if (and container
+                                              (not (string-empty-p container)))
+                                         (format " [%s]" container)
+                                       ""))))
+                         project-symbols "\n"))))))
+    (error (format "Error: %s" (error-message-string err))))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-lsp-project-symbols
+    :name "claude-code-ide-mcp-lsp-project-symbols"
+    :description "Search for symbols matching a query string within the current project only, using LSP workspace/symbol. Identical to lsp-workspace-symbols but filters out external packages (/go/pkg/mod/, /nix/store/, etc.). Use this when you only care about project-local definitions and want less noise."
+    :args '((:name "query"
+             :type string
+             :description "Symbol name or partial name to search for")
+            (:name "file_path"
+             :type string
+             :description "Absolute path to any file in the project (used to find the eglot server and project root)")))
 
 (provide '+lsp-key-map)
 ;;; +lsp-key-map.el ends here
