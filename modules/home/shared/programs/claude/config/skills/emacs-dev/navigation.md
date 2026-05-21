@@ -7,13 +7,12 @@
 | File analysis: mode + treesit + symbols | `file-outline` (file_path) | — |
 | File analysis: declaration source | `symbol-source` (file_path + line) | Read |
 | Find definition | `lsp-find-definition` (identifier + file_path) | `xref-find-apropos` |
-| Find all implementations of method/interface | `lsp-workspace-symbols` (method_name + file_path) | `xref-find-apropos` |
+| Find all implementations of method/interface | `lsp-project-symbols` (method_name + file_path) | `lsp-workspace-symbols` → `xref-find-apropos` |
 | Find implementations (from position) | `lsp-find-implementation` (file_path + line + col) | `lsp-workspace-symbols` |
 | Find all call sites / usages (from position) | `lsp-find-references` (file_path + line + col) | `lsp-workspace-symbols` |
-| Find type | `lsp-find-typeDefinition` (file_path + line + col) | `describe-symbol` |
+| Find type | `lsp-find-typeDefinition` (file_path + line + col) | `lsp-find-definition` (identifier) |
 | Project-wide symbol search | `lsp-workspace-symbols` (query + file_path) | `xref-find-apropos` |
 | Project-only symbol search (no external noise) | `lsp-project-symbols` (query + file_path) | `lsp-workspace-symbols` |
-| Symbol docs | `describe-symbol` (name) | Read |
 | Diagnostics | `getDiagnostics` | Bash |
 
 > **`lsp-find-references`**: position-based (file_path + line + col), returns all call sites. Use when you already have a location and want all usages. Use `lsp-workspace-symbols` when you only have a name.
@@ -24,30 +23,40 @@ Use these pipelines to minimize context: chain tools so each call's output feeds
 
 **Pipeline A — Interface change impact** ("If I remove method X, what breaks?")
 ```
+0. lsp-project-symbols(interface_name)        → locate interface file (skip if path already known)
 1. imenu-list-symbols(interface_file)         → get method names
-2. lsp-workspace-symbols(method_name)         → all implementors (filter to project paths)
-3. lsp-workspace-symbols(interface_type_name) → all callers/usages of the interface type
+2. lsp-project-symbols(method_name)           → all implementors (no external noise)
+3. lsp-project-symbols(interface_type_name)   → all callers/usages of the interface type
 ```
 Zero file reads. Complete impact picture before touching any code.
+
+> **Precision note:** `lsp-project-symbols(method_name)` returns every type with that method name, including types that happen to share the name but don't implement the interface. For exact implementors only, use `lsp-find-implementation(interface_file, line, col)` at the method's position in the interface definition.
 
 **Pipeline B — Type structure exploration** ("What does this type look like?")
 ```
 1. lsp-find-definition(type_name, any_project_file) → definition file + line
-2. imenu-list-symbols(definition_file)              → all methods of that type
-3. treesit-info(line, col) [only if body needed]    → byte range → Read with tight offset/limit
+   fallback: xref-find-apropos(type_name) if lsp-find-definition returns nothing
+2. file-outline(definition_file)                    → treesit availability + all methods with line numbers
+3. symbol-source(file, line) [only if logic needed] → full method body via tree-sitter
+   fallback: Read with tight offset/limit if symbol-source is insufficient
 ```
+> **Step 1 tip:** pass a file that already references the type as `file_path` — if the type isn't mentioned in the context file, the LSP server may miss it. Reuse paths discovered in earlier pipeline steps when available.
 
 **Pipeline C — Symbol propagation** ("Where does this field/value flow?")
 ```
-1. imenu-list-symbols(file)              → field line number
-2. lsp-workspace-symbols(field_name)     → all symbols with that name (narrow by type if ambiguous)
-3. lsp-find-definition(name, file)       → confirm origin declaration
+1. imenu-list-symbols(file)                      → field line + column (declaration position)
+2. lsp-find-references(file, line, col)           → all read/write sites across the project
+3. symbol-source(file, line) [for each site]      → read the context around each usage
 ```
+> **Why not `lsp-workspace-symbols` here:** symbol search returns *declarations*, not *usages*. A field declared once but used in 10 places requires `lsp-find-references` to see all 10 sites. Use `lsp-workspace-symbols` only when you don't yet have a position to anchor from.
 
 **Finding all implementations of an interface method** (e.g., every type that implements `Flush`):
-Use `lsp-workspace-symbols(query="MethodName", file_path=<any project file>)`. The LSP server returns every symbol in the workspace matching that name with file + line. Filter results to project paths only (ignore `/go/pkg/mod/`, `/nix/store/`, etc.). This is always preferred over `grep` — do NOT reach for Bash grep when you need to find all implementors.
 
-Example: to find all types implementing a `GracefulTask.Flush` method, call `lsp-workspace-symbols(query="Flush")` and look for entries under your project root.
+Use `lsp-project-symbols(query="MethodName", file_path=<any project file>)` — returns project-only results with no external package noise. This is always preferred over `grep` — do NOT reach for Bash grep when you need to find all implementors.
+
+For exact implementors (excludes types that share the method name but don't satisfy the interface), position the cursor on the method in the interface definition and call `lsp-find-implementation(file_path, line, col)`.
+
+Example: to find all types implementing a `Closer` interface's `Close` method, first try `lsp-project-symbols(query="Close")`, then verify with `lsp-find-implementation` if `Close` is common enough to cause false positives.
 
 ## treesit-info
 
@@ -58,6 +67,9 @@ Available if buffer major-mode ends in `-ts-mode` or `(treesit-parser-list)` ret
 ## LSP position tools and eglot
 
 **LSP position tools** (`lsp-find-implementation`, `lsp-find-typeDefinition`): line is 1-based, column is 0-based. Require eglot active.
+
+**`lsp-find-typeDefinition` limitations:**
+- gopls does not support typeDefinition for interface types or struct field declarations — use `lsp-find-definition` as fallback in those cases.
 
 **If eglot is not active** (project not loaded in Emacs): open a background buffer via `call-function` to activate eglot, then retry the LSP tool.
 ```elisp
@@ -108,7 +120,7 @@ Commit out loud before proceeding:
 2. `xref-find-apropos` / `lsp-workspace-symbols` was called → no matches
 3. Only then: Bash is justified
 
-This applies to **all languages**. `describe-symbol` covers every loaded Emacs package; `lsp-find-definition` covers every LSP-supported project file. Neither requires knowing the file path in advance.
+This applies to all LSP-supported languages. `lsp-find-definition` covers every project file without knowing the path in advance. For Emacs Lisp symbols, see `elisp.md` — `describe-symbol` is the primary tool there.
 
 ---
 
@@ -116,7 +128,7 @@ This applies to **all languages**. `describe-symbol` covers every loaded Emacs p
 
 **`lsp-workspace-symbols` noise**
 - Results always include external packages (`/go/pkg/mod/`, `/nix/store/`). Filter to project paths only.
-- If the query is a common name or you only need project-internal symbols, try `xref-find-apropos` first — it returns project-local hits with far less noise.
+- When you only need project-internal symbols, use `lsp-project-symbols` — it filters out external packages automatically and returns far less noise. Fall back to `xref-find-apropos` for partial-name or pattern searches.
 
 **`symbol-source` vs `Read` for small files**
 - `symbol-source` is optimal for a single targeted symbol. When you need 3+ functions from the same small file (< ~300 lines), a single `Read` with `offset`/`limit` is fewer round-trips than repeated `symbol-source` calls.

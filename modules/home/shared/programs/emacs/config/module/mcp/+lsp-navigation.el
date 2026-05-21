@@ -99,14 +99,19 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
     (error (format "Error finding implementation: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-typeDefinition (file-path line column)
-  "Find type definition at FILE-PATH LINE:COLUMN via eglot."
+  "Find type definition at FILE-PATH LINE:COLUMN via eglot textDocument/typeDefinition."
   (condition-case err
       (claude-code-ide-mcp--at-position
        file-path line column
        (lambda ()
-         (claude-code-ide-mcp--format-xrefs
-          "Type definitions"
-          (eglot--lsp-xref-helper :textDocument/typeDefinition))))
+         (let* ((server (eglot-current-server))
+                (result (eglot--request server :textDocument/typeDefinition
+                                        (claude-code-ide-mcp--textdoc-position-params)))
+                (locations (cond
+                            ((null result) nil)
+                            ((vectorp result) (append result nil))
+                            (t (list result)))))
+           (claude-code-ide-mcp--format-locations "Type definitions" locations))))
     (error (format "Error finding type definition: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-references (file-path line column)
