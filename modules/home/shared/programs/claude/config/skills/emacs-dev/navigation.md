@@ -40,7 +40,7 @@ Zero file reads. Complete impact picture before touching any code.
 3. symbol-source(file, line) [only if logic needed] → full method body via tree-sitter
    fallback: Read with tight offset/limit if symbol-source is insufficient
 ```
-> **Step 1 tip:** pass a file that already references the type as `file_path` — if the type isn't mentioned in the context file, the LSP server may miss it. Reuse paths discovered in earlier pipeline steps when available.
+> **Step 1 tip:** `lsp-find-definition` resolves the identifier in the scope of the context file's package. Pass a file from the **same package where the symbol is defined** — importing the package is not enough. For example, to find `RetryTask`, pass `retry/retry_task.go`, not a file that merely imports the retry package. If you don't know which file to pass, use `lsp-project-symbols(symbol_name)` first to locate the definition file, then pass that file as context.
 
 **Pipeline C — Symbol propagation** ("Where does this field/value flow?")
 ```
@@ -126,9 +126,9 @@ This applies to all LSP-supported languages. `lsp-find-definition` covers every 
 
 ## Tool selection efficiency
 
-**`lsp-workspace-symbols` noise**
-- Results always include external packages (`/go/pkg/mod/`, `/nix/store/`). Filter to project paths only.
-- When you only need project-internal symbols, use `lsp-project-symbols` — it filters out external packages automatically and returns far less noise. Fall back to `xref-find-apropos` for partial-name or pattern searches.
+**`lsp-workspace-symbols` and `xref-find-apropos` noise**
+- Both `lsp-workspace-symbols` and `xref-find-apropos` include external packages (`/go/pkg/mod/`, `/nix/store/`) in results. `xref-find-apropos` is NOT a noise-free fallback — it returns just as many external hits.
+- For project-internal symbol search (including partial-name or pattern queries), always prefer `lsp-project-symbols` first — it filters out external packages automatically. Fall back to `xref-find-apropos` only when `lsp-project-symbols` returns no results.
 
 **`symbol-source` vs `Read` for small files**
 - `symbol-source` is optimal for a single targeted symbol. When you need 3+ functions from the same small file (< ~300 lines), a single `Read` with `offset`/`limit` is fewer round-trips than repeated `symbol-source` calls.

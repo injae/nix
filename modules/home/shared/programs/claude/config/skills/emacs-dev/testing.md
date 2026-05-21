@@ -69,7 +69,9 @@ Apply improvements immediately after each scenario, before moving on.
 
 | Tool | Observed behavior | Implication |
 |------|------------------|-------------|
-| `lsp-find-definition` | Miss if `file_path` doesn't reference the symbol | Always pass a file that imports or uses the target |
+| `lsp-find-definition` | Miss if `file_path` is not in the same package as the symbol definition — importing the package is not enough | Pass a file from the symbol's own package; use `lsp-project-symbols` first to find the definition file |
+| `xref-find-apropos` | Includes `/go/pkg/mod/`, `/nix/store/` external hits — same noise level as `lsp-workspace-symbols` | Not a noise-free fallback; prefer `lsp-project-symbols` for project-internal searches |
+| `lsp-find-references` (function) | Returns cross-package and test-file call sites accurately — grep-verified complete | Reliable for function-level usage tracking across package boundaries |
 | `lsp-project-symbols(name)` | Returns declarations only, not usages | Use `lsp-find-references` for usage tracking (Pipeline C) |
 | `lsp-find-typeDefinition` | gopls returns nothing for interface types | Fall back to `lsp-find-definition(identifier)` |
 | `lsp-find-typeDefinition` | Was using `eglot--lsp-xref-helper` → buffer switch (fixed 2026-05-22) | Use direct `eglot--request` for all position-based tools |
