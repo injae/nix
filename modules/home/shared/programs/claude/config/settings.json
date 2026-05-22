@@ -4,30 +4,21 @@
     "SessionStart": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/session-start.sh"
-          }
+          { "type": "command", "command": "python3 ~/.claude/hooks/session-start.py" }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/skill-eval.sh"
-          }
+          { "type": "command", "command": "~/.claude/hooks/skill-eval.sh" }
         ]
       }
     ],
     "PostToolUse": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/tool-call-log.sh"
-          }
+          { "type": "command", "command": "~/.claude/hooks/tool-call-log.sh" }
         ]
       }
     ]
