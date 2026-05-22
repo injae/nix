@@ -2,8 +2,6 @@
   inputs = {
     # Principle inputs (updated by `nix run .#update`)
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.11";
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
