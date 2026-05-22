@@ -100,3 +100,4 @@ These are **intentionally foreground**: they change what the user sees (`find-fi
 - Read-only tools: `(let ((inhibit-redisplay t)) ...)` **outside** `with-current-buffer` / `find-file-noselect`
 - Read-only tools: `save-excursion` inside every buffer navigation block
 - Verify parenthesis balance via `mcp__ide__executeCode`: `(with-temp-buffer (insert-file-contents "...") (condition-case e (progn (check-parens) "balanced") (error (error-message-string e))))`
+- Pattern C tools: run the Step 4.5 diagnostic from `mcp-tool-patterns.md` after writing — one misplaced `)` silently disables the `condition-case` handler

@@ -1,4 +1,6 @@
-# Go 언어 특화 체크리스트
+# Go Language Checklist
+
+> For full Go patterns and anti-patterns, see the `go-development` skill. This file contains only review-specific checklist items (per-stage additions).
 
 공통 Stage 체크리스트에 아래 항목을 추가한다.
 
