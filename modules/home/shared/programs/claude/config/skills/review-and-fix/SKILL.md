@@ -2,7 +2,7 @@
 name: review-and-fix
 description: >
   코드 리뷰 결과를 이슈 단위로 하나씩 안내하며 수정하는 인터랙티브 워크플로우.
-  /review 결과를 입력으로 받아 CRITICAL → HIGH → MEDIUM 순서로 각 이슈를
+  /review 결과가 있다면 입력으로 받아 CRITICAL → HIGH → MEDIUM 순서로 각 이슈를
   Emacs 버퍼에서 직접 보여주고, 사용자 확인 후 수정 → 빌드 검증 → 커밋을 진행한다.
 triggers:
   - "수정해줘"

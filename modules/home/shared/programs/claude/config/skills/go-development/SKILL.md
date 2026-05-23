@@ -5,16 +5,6 @@ description: "Must be used when writing, reviewing, or refactoring Go code. Appl
 
 # Go Development Skill
 
-## Official References
-
-- Effective Go: https://go.dev/doc/effective_go
-- Go Code Review Comments: https://go.dev/wiki/CodeReviewComments
-- Go Style Guide (Google): https://google.github.io/styleguide/go/
-- Uber Go Style Guide: https://github.com/uber-go/guide/blob/master/style.md
-- Go Proverbs: https://go-proverbs.github.io/
-
----
-
 ## Patterns (Do's)
 
 ### Error Handling
@@ -60,7 +50,6 @@ description: "Must be used when writing, reviewing, or refactoring Go code. Appl
 
 | Anti-Pattern | Reason | Correct Alternative |
 |---|---|---|
-| `if err == ErrFoo` | Fails with wrapped errors | `errors.Is(err, ErrFoo)` |
 | `err.Error() == "..."` | String dependency, extremely fragile | Custom error type + `errors.As` |
 | `panic(err)` in production | Crashes entire service | Return error and handle upstream |
 | `_, _ = fn()` ignoring errors | Silent failure, data corruption | Explicit error handling |

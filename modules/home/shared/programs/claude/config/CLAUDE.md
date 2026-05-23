@@ -4,7 +4,7 @@
 
 Environment-specific skills are triggered automatically by the `SessionStart` hook:
 - **Emacs** (`INSIDE_EMACS` set) → `/emacs-dev` skill injected
-- **Nix** (`NIX_CONFIG_DIR` set, or `flake.nix` + `.envrc` in CWD) → `/nix-system` skill injected
+- **Nix** (`NIX_CONFIG_DIR` set) → `/nix-system` skill injected
 - **`~/.claude/CLAUDE.local.md`** exists → its contents are injected as additional instructions
 
 ## Language
