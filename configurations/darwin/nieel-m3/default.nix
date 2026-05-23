@@ -6,8 +6,6 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
-  inherit (pkgs.stdenv.hostPlatform) system;
-  stable = inputs.nixpkgs-stable.legacyPackages.${system};
   exclude = [
     "default.nix"
     "dock.nix"
@@ -34,7 +32,7 @@ in
   # for dockerTools
   nix.linux-builder = {
     enable = true;
-    package = stable.darwin.linux-builder;
+    package = pkgs.darwin.linux-builder;
     ephemeral = true;
     maxJobs = 4;
     systems = [ "aarch64-linux" ];
@@ -53,7 +51,10 @@ in
     NIX_CONFIG_DIR = "${home}/nix";
   };
 
-  local.ollama.enable = false;
+  local.ollama = {
+    enable = true;
+    #models = "ollama/qwen3:30b-a3b-q5_k_m";
+  };
 
   # Enable touch id for sudo
   security.pam.services.sudo_local = {
