@@ -1,6 +1,8 @@
-;;; +call-function.el --- MCP tool: call any Emacs function by name -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-call-function.el --- MCP tool: call any Emacs function by name -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp--json-to-elisp (val)
   "Convert a value returned by `json-parse-string' to an Elisp argument.
@@ -21,8 +23,7 @@ JSON null → nil, JSON true/false → t/nil, arrays → lists, objects → alis
 (defun claude-code-ide-mcp-call-function (name args-json)
   "Call Emacs function NAME with arguments decoded from ARGS-JSON.
 ARGS-JSON must be a JSON array string whose elements become the positional
-arguments to NAME.  Pass \"[]\" or \"\" for zero-argument calls.
-The return value is formatted with `prin1-to-string'."
+arguments to NAME.  Pass \"[]\" or \"\" for zero-argument calls."
   (condition-case err
       (let ((sym (intern-soft name)))
         (cond
@@ -44,16 +45,6 @@ The return value is formatted with `prin1-to-string'."
             (prin1-to-string result)))))
     (error (format "Error calling '%s': %s" name (error-message-string err)))))
 
-(defun claude-code-ide-mcp-check-elisp-parens (file-path)
-  "Return t if FILE-PATH has balanced parentheses, or an error string if not."
-  (condition-case err
-      (with-temp-buffer
-        (insert-file-contents file-path)
-        (emacs-lisp-mode)
-        (check-parens)
-        t)
-    (error (error-message-string err))))
-
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-call-function
     :name "claude-code-ide-mcp-call-function"
@@ -65,5 +56,5 @@ The return value is formatted with `prin1-to-string'."
              :type string
              :description "JSON array of positional arguments, e.g. \"[\\\"my-function\\\"]\" or \"[]\". Strings, numbers, booleans, arrays, and objects are supported.")))
 
-(provide '+call-function)
-;;; +call-function.el ends here
+(provide 'claude-code-ide-extra-call-function)
+;;; claude-code-ide-extra-call-function.el ends here

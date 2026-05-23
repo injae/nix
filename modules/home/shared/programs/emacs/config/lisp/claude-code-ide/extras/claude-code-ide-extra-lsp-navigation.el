@@ -1,6 +1,8 @@
-;;; +lsp-key-map.el --- MCP tools: LSP code navigation -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-lsp-navigation.el --- MCP tools: LSP code navigation -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp--format-xrefs (label xrefs)
   "Format XREFS list into a readable string under LABEL."
@@ -19,9 +21,7 @@
              xrefs "\n"))))
 
 (defun claude-code-ide-mcp--with-identifier (file-path identifier fn)
-  "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN.
-Uses session context and restores cursor position afterward via save-excursion.
-inhibit-redisplay prevents visible cursor jumps in open windows."
+  "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
       (with-current-buffer (or (find-buffer-visiting file-path)
@@ -35,9 +35,7 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
             (format "Identifier '%s' not found in %s" identifier file-path)))))))
 
 (defun claude-code-ide-mcp--at-position (file-path line column fn)
-  "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN.
-Uses session context and restores cursor position afterward via save-excursion.
-inhibit-redisplay prevents visible cursor jumps in open windows."
+  "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
       (with-current-buffer (or (find-buffer-visiting file-path)
@@ -115,7 +113,7 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
     (error (format "Error finding type definition: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-lsp-find-references (file-path line column)
-  "Find all references to the symbol at FILE-PATH LINE:COLUMN via eglot textDocument/references."
+  "Find all references to the symbol at FILE-PATH LINE:COLUMN via eglot."
   (condition-case err
       (claude-code-ide-mcp--at-position
        file-path line column
@@ -141,7 +139,6 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
             (:name "file_path"
              :type string
              :description "Absolute path to any file in the project (used to initialize the eglot/xref backend)")))
-
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
@@ -187,9 +184,7 @@ inhibit-redisplay prevents visible cursor jumps in open windows."
 
 (defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
   "Return a buffer with an active eglot server for FILE-PATH's project.
-Priority: (1) buffer already visiting FILE-PATH, (2) any open buffer in the
-same project root that has eglot active, (3) find-file-noselect as last resort.
-Steps 1-2 avoid opening new files and triggering Emacs hooks."
+Prefers an already-open buffer to avoid triggering Emacs hooks."
   (or (find-buffer-visiting file-path)
       (when-let* ((dir (file-name-directory (expand-file-name file-path)))
                   (proj (ignore-errors (project-current nil dir)))
@@ -208,11 +203,10 @@ FILE-PATH is any file in the project to locate the eglot server context."
   (condition-case err
       (claude-code-ide-mcp-server-with-session-context nil
         (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
-          (let* ((server (eglot-current-server)))
+          (let ((server (eglot-current-server)))
             (unless server
               (error "No eglot server running in %s" file-path))
-            (let* ((result (eglot--request server :workspace/symbol
-                                           `(:query ,query)))
+            (let* ((result (eglot--request server :workspace/symbol `(:query ,query)))
                    (symbols (if (vectorp result) (append result nil) result)))
               (if (null symbols)
                   (format "No symbols found for query: %s" query)
@@ -226,19 +220,14 @@ FILE-PATH is any file in the project to locate the eglot server context."
                                   (location (plist-get sym :location))
                                   (uri (plist-get location :uri))
                                   (range (plist-get location :range))
-                                  (line (1+ (plist-get
-                                             (plist-get range :start) :line)))
-                                  (file (string-remove-prefix
-                                         "file://"
-                                         (url-unhex-string uri))))
+                                  (line (1+ (plist-get (plist-get range :start) :line)))
+                                  (file (string-remove-prefix "file://" (url-unhex-string uri))))
                              (format "%s:%d  %s%s"
                                      file line name
-                                     (if (and container
-                                              (not (string-empty-p container)))
+                                     (if (and container (not (string-empty-p container)))
                                          (format " [%s]" container)
                                        ""))))
-                         symbols
-                         "\n")))))))
+                         symbols "\n")))))))
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
@@ -254,12 +243,11 @@ FILE-PATH is any file in the project to locate the eglot server context."
 
 (defun claude-code-ide-mcp-lsp-project-symbols (query file-path)
   "Search for symbols matching QUERY within the project root only.
-Like lsp-workspace-symbols but filters out external packages
-(e.g. /go/pkg/mod/, /nix/store/).  FILE-PATH is any file in the project."
+Filters out external packages (/go/pkg/mod/, /nix/store/)."
   (condition-case err
       (claude-code-ide-mcp-server-with-session-context nil
         (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
-          (let* ((server (eglot-current-server)))
+          (let ((server (eglot-current-server)))
             (unless server
               (error "No eglot server running in %s" file-path))
             (let* ((project-root
@@ -274,8 +262,7 @@ Like lsp-workspace-symbols but filters out external packages
                      (lambda (sym)
                        (when-let* ((loc (plist-get sym :location))
                                    (uri (plist-get loc :uri))
-                                   (file (string-remove-prefix
-                                          "file://" (url-unhex-string uri))))
+                                   (file (string-remove-prefix "file://" (url-unhex-string uri))))
                          (and project-root (string-prefix-p project-root file))))
                      symbols)))
               (if (null project-symbols)
@@ -290,14 +277,11 @@ Like lsp-workspace-symbols but filters out external packages
                                   (loc (plist-get sym :location))
                                   (uri (plist-get loc :uri))
                                   (range (plist-get loc :range))
-                                  (line (1+ (plist-get
-                                             (plist-get range :start) :line)))
-                                  (file (string-remove-prefix
-                                         "file://" (url-unhex-string uri))))
+                                  (line (1+ (plist-get (plist-get range :start) :line)))
+                                  (file (string-remove-prefix "file://" (url-unhex-string uri))))
                              (format "%s:%d  %s%s"
                                      file line name
-                                     (if (and container
-                                              (not (string-empty-p container)))
+                                     (if (and container (not (string-empty-p container)))
                                          (format " [%s]" container)
                                        ""))))
                          project-symbols "\n")))))))
@@ -316,8 +300,7 @@ Like lsp-workspace-symbols but filters out external packages
 
 (defun claude-code-ide-mcp--resolve-symbol-location (identifier file-path)
   "Return plist (:file :line :col) for IDENTIFIER's definition via workspace/symbol.
-Prefers the symbol in the same directory as FILE-PATH (package-local match),
-then falls back to any project-local exact name match. Returns nil if not found."
+Prefers the symbol in the same directory as FILE-PATH, then any project-local match."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
       (with-current-buffer (claude-code-ide-mcp--eglot-buffer-for-project file-path)
@@ -338,8 +321,7 @@ then falls back to any project-local exact name match. Returns nil if not found.
                  (lambda (sym)
                    (when-let* ((loc  (plist-get sym :location))
                                (uri  (plist-get loc :uri))
-                               (file (string-remove-prefix
-                                      "file://" (url-unhex-string uri))))
+                               (file (string-remove-prefix "file://" (url-unhex-string uri))))
                      (and (string= (plist-get sym :name) identifier)
                           (or (null project-root)
                               (string-prefix-p project-root file)))))
@@ -349,8 +331,7 @@ then falls back to any project-local exact name match. Returns nil if not found.
                      (lambda (sym)
                        (when-let* ((loc  (plist-get sym :location))
                                    (uri  (plist-get loc :uri))
-                                   (file (string-remove-prefix
-                                          "file://" (url-unhex-string uri))))
+                                   (file (string-remove-prefix "file://" (url-unhex-string uri))))
                          (string= (file-name-directory file) preferred-dir)))
                      project-matches)
                     (car project-matches))))
@@ -365,10 +346,9 @@ then falls back to any project-local exact name match. Returns nil if not found.
 
 (defun claude-code-ide-mcp-lsp-find-references-by-name (identifier file-path)
   "Find all references to IDENTIFIER by name, without needing its file position.
-Resolves the definition via workspace/symbol (project-local, exact name match),
-navigates to the identifier on the definition line, then calls textDocument/references."
+Resolves definition via workspace/symbol then calls textDocument/references."
   (condition-case err
-      (let* ((def (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
+      (let ((def (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
         (if (null def)
             (format "Symbol '%s' not found in project. Try lsp-find-references with an explicit position." identifier)
           (claude-code-ide-mcp--at-position
@@ -400,5 +380,5 @@ navigates to the identifier on the definition line, then calls textDocument/refe
              :type string
              :description "Absolute path to any file in the project (used to locate the eglot server and project root)")))
 
-(provide '+lsp-navigation)
-;;; +lsp-navigation.el ends here
+(provide 'claude-code-ide-extra-lsp-navigation)
+;;; claude-code-ide-extra-lsp-navigation.el ends here

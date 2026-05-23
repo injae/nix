@@ -1,6 +1,8 @@
-;;; +describe-symbol.el --- MCP tool: describe Emacs symbol -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-describe-symbol.el --- MCP tool: describe Emacs symbol -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp--function-source (sym)
   "Return source code string for SYM, or nil if unavailable."
@@ -70,6 +72,7 @@
               (let ((start (point)))
                 (forward-sexp 1)
                 (buffer-substring-no-properties start (point))))))))))
+
 (defun claude-code-ide-mcp--describe-variable-part (sym name)
   "Return variable documentation string for SYM (named NAME)."
   (let* ((doc (documentation-property sym 'variable-documentation t))
@@ -81,15 +84,13 @@
          (local-p (local-variable-p sym))
          (custom-p (custom-variable-p sym))
          (custom-type (get sym 'custom-type))
-         (standard-val (ignore-errors
-                         (car (get sym 'standard-value))))
+         (standard-val (ignore-errors (car (get sym 'standard-value))))
          (standard-str (when standard-val
                          (let ((s (format "%S" (eval standard-val))))
                            (if (> (length s) 200)
                                (concat (substring s 0 200) " ...")
                              s))))
-         (file (ignore-errors
-                 (find-lisp-object-file-name sym 'defvar)))
+         (file (ignore-errors (find-lisp-object-file-name sym 'defvar)))
          (source (claude-code-ide-mcp--variable-source sym)))
     (concat
      (format "%s is a%s variable"
@@ -130,10 +131,9 @@
     :function #'claude-code-ide-mcp-describe-symbol
     :name "claude-code-ide-mcp-describe-symbol"
     :description "Get full documentation for any Emacs symbol. If the symbol is a function/command, returns docstring, argument list, type (built-in/macro/command/function), source file, key bindings, autoload/native-compile status, and source code. If it is a variable, returns docstring, current value, default value, custom type, buffer-local status, source file, and source code. Shows both if the symbol is both a function and a variable."
-    :args '((
-        :name "name"
-        :type string
-        :description "The name of the Emacs symbol to describe")))
+    :args '((:name "name"
+             :type string
+             :description "The name of the Emacs symbol to describe")))
 
-(provide '+describe-symbol)
-;;; +describe-symbol.el ends here
+(provide 'claude-code-ide-extra-describe-symbol)
+;;; claude-code-ide-extra-describe-symbol.el ends here

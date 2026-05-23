@@ -1,9 +1,11 @@
-;;; +magit.el --- MCP tools: magit git operations -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-magit.el --- MCP tools: magit git operations -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
+(require 'claude-code-ide-mcp-server)
+
 (defun claude-code-ide-mcp-magit-stage (file-path)
-  "Stage FILE-PATH using git add via magit. Refreshes open magit buffers."
+  "Stage FILE-PATH using git add via magit."
   (condition-case err
       (let ((default-directory (or (magit-toplevel) default-directory)))
         (magit-run-git "add" "--" file-path)
@@ -34,16 +36,14 @@
         (delete-region (point-min) end))
       (goto-char (point-min))
       (insert msg "\n\n")
-      ;; git-commit-setup calls (set-buffer-modified-p nil) immediately after
-      ;; this hook, which prevents save-buffer from writing our changes to disk.
-      ;; Write directly to bypass that reset.
+      ;; git-commit-setup resets modified state immediately after this hook,
+      ;; so write directly to avoid the buffer being treated as unmodified.
       (write-region (point-min) (point-max) buffer-file-name nil 'silent))))
 
 (add-hook 'git-commit-setup-hook #'claude-code-ide--git-commit-insert-pending)
 
 (defun claude-code-ide-mcp-magit-prepare-commit (message)
-  "Open magit commit buffer and pre-fill MESSAGE. Does not finish the commit.
-The user reviews the message and presses C-c C-c to commit manually."
+  "Open magit commit buffer and pre-fill MESSAGE without finishing the commit."
   (condition-case err
       (progn
         (setq claude-code-ide--pending-commit-message message)
@@ -81,5 +81,5 @@ The user reviews the message and presses C-c C-c to commit manually."
              :type string
              :description "The commit message")))
 
-(provide '+magit)
-;;; +magit.el ends here
+(provide 'claude-code-ide-extra-magit)
+;;; claude-code-ide-extra-magit.el ends here

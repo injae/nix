@@ -1,6 +1,8 @@
-;;; +formatting.el --- MCP tools: apheleia formatter -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-formatting.el --- MCP tools: apheleia formatter -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp--apheleia-with-buffer (file-path fn)
   "Visit FILE-PATH buffer and call FN with it current."
@@ -23,8 +25,7 @@
             (t nil))))))
 
 (defun claude-code-ide-mcp-formatter-info (file-path)
-  "Return formatter configuration for FILE-PATH.
-Shows mode, active formatter names, and their command definitions."
+  "Return formatter configuration for FILE-PATH."
   (condition-case err
       (claude-code-ide-mcp--apheleia-with-buffer file-path
         (lambda ()
@@ -61,8 +62,7 @@ Shows mode, active formatter names, and their command definitions."
     (error (format "Error: %s" (error-message-string err)))))
 
 (defun claude-code-ide-mcp-format-buffer (file-path)
-  "Run apheleia formatter on FILE-PATH.
-Returns the formatter names triggered, or an error if none configured."
+  "Run apheleia formatter on FILE-PATH."
   (condition-case err
       (claude-code-ide-mcp--apheleia-with-buffer file-path
         (lambda ()
@@ -79,7 +79,7 @@ Returns the formatter names triggered, or an error if none configured."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-formatter-info
     :name "claude-code-ide-mcp-formatter-info"
-    :description "Get formatter configuration for a file: shows the major mode, which formatters are active, and their command definitions. Use this to understand what formatter will run on a given file before or after editing."
+    :description "Get formatter configuration for a file: shows the major mode, which formatters are active, and their command definitions."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file to inspect")))
@@ -93,10 +93,10 @@ Returns the formatter names triggered, or an error if none configured."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-format-buffer
     :name "claude-code-ide-mcp-format-buffer"
-    :description "Run the apheleia formatter on a specific file. Opens the file if not already open and triggers formatting asynchronously. Returns the formatter names used or an error if no formatter is configured."
+    :description "Run the apheleia formatter on a specific file. Opens the file if not already open and triggers formatting asynchronously."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file to format")))
 
-(provide '+formatting)
-;;; +formatting.el ends here
+(provide 'claude-code-ide-extra-formatting)
+;;; claude-code-ide-extra-formatting.el ends here

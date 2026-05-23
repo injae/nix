@@ -1,6 +1,8 @@
-;;; +buffer-info.el --- MCP tool: buffer name and major mode -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-buffer-info.el --- MCP tools: buffer info and file outline -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp-buffer-info (&optional buffer-name)
   "Return name and major-mode for buffers.
@@ -54,7 +56,6 @@ Otherwise return all user-visible buffers ordered by recency."
     :description "Return the most recently used buffer that is not an internal buffer or a claude-code buffer. Useful for identifying which file the user was last editing."
     :args '())
 
-
 (defun claude-code-ide-mcp--imenu-collect (index prefix)
   "Return list of (LINE . STRING) pairs from imenu INDEX with PREFIX applied."
   (let (pairs)
@@ -79,8 +80,7 @@ Otherwise return all user-visible buffers ordered by recency."
 
 (defun claude-code-ide-mcp-file-outline (file-path)
   "Return major-mode, treesit availability, and symbol list for FILE-PATH.
-Opens the file in the background if not already open.
-Combines file-mode and imenu-list-symbols into a single call."
+Opens the file in the background if not already open."
   (condition-case err
       (let ((inhibit-redisplay t))
         (with-current-buffer (or (find-buffer-visiting file-path)
@@ -111,9 +111,7 @@ Combines file-mode and imenu-list-symbols into a single call."
 
 (defun claude-code-ide-mcp-symbol-source (file-path line)
   "Return source code of the declaration at LINE in FILE-PATH.
-Uses tree-sitter to find exact declaration bounds when available;
-falls back to a fixed window otherwise.
-Replaces separate treesit-info + Read calls."
+Uses tree-sitter to find exact declaration bounds when available."
   (condition-case err
       (let ((inhibit-redisplay t))
         (with-current-buffer (or (find-buffer-visiting file-path)
@@ -152,5 +150,5 @@ Replaces separate treesit-info + Read calls."
              :type number
              :description "1-based line number of the target symbol (from file-outline).")))
 
-(provide '+buffer-info)
-;;; +buffer-info.el ends here
+(provide 'claude-code-ide-extra-buffer-info)
+;;; claude-code-ide-extra-buffer-info.el ends here

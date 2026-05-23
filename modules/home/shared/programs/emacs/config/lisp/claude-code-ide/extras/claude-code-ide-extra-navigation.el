@@ -1,11 +1,11 @@
-;;; +navigation.el --- MCP tools: file and line navigation -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-navigation.el --- MCP tools: file and line navigation -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
+(require 'claude-code-ide-mcp-server)
+
 (defun claude-code-ide-mcp-goto-file-line (file-path line)
-  "Open FILE-PATH at LINE in the primary code window.
-Targets the most recently used non-claude, non-magit, non-special window.
-Scrolls so the target line appears near the top (5 lines from top)."
+  "Open FILE-PATH at LINE in the primary code window (non-claude, non-magit)."
   (condition-case err
       (let* ((code-window
               (or (seq-find
@@ -41,5 +41,5 @@ Scrolls so the target line appears near the top (5 lines from top)."
              :type number
              :description "Line number to navigate to (1-based)")))
 
-(provide '+navigation)
-;;; +navigation.el ends here
+(provide 'claude-code-ide-extra-navigation)
+;;; claude-code-ide-extra-navigation.el ends here
