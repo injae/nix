@@ -99,13 +99,11 @@ python3 ~/.claude/hooks/elisp-check-parens.py /path/to/file.el
 - `"balanced"` → Step 5 진행
 - error 메시지 (line/column 포함) → 해당 위치 수정 후 Step 4 반복
 
-> Note: Emacs built-in `check-parens` has false positives. The Python script is more accurate.
-
 ---
 
 ## Step 4.5 — Verify condition-case structure (when wrapping a macro call)
 
-`check-parens` only verifies paren balance — it cannot catch structural errors. When `condition-case` wraps a macro call, a single misplaced `)` can absorb the error handler into the macro body, leaving `condition-case` with no handlers. The file still reports "balanced".
+The Python script only verifies paren balance — it cannot catch structural errors. When `condition-case` wraps a macro call, a single misplaced `)` can absorb the error handler into the macro body, leaving `condition-case` with no handlers. The file still reports "balanced".
 
 **Trigger**: edited any function where `condition-case` wraps a macro call.
 
@@ -146,7 +144,7 @@ After fixing, re-run the diagnostic to confirm `error` appears in `handler-condi
 
 ## Step 5 — Format buffer
 
-Call `mcp__emacs-tools__format-buffer` with `file_path` to reformat the file via apheleia before loading.
+Call `format-buffer` with `file_path` to reformat the file via apheleia before loading.
 
 This ensures the loaded code has correct indentation and the file on disk matches what Emacs shows.
 
@@ -154,7 +152,7 @@ This ensures the loaded code has correct indentation and the file on disk matche
 
 ## Step 6 — Test interactively (if applicable)
 
-Call `mcp__emacs-tools__elisp-load` with `file_path` to reload the entire file into the running Emacs session.
+Call `elisp-load` with `file_path` to reload the entire file into the running Emacs session.
 
 ---
 

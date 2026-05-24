@@ -46,7 +46,7 @@ Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-{verb}-{noun}
-    :name "claude-code-ide-mcp-{verb}-{noun}"
+    :name "{verb}-{noun}"
     :description "..."
     :args '((:name "arg" :type string :description "...")))
 
@@ -56,7 +56,7 @@ Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 
 ## Tool `:name` convention
 
-Use short **snake_case** names — not the full `claude-code-ide-mcp-` prefix. Examples:
+Use short **hyphen-case** names — not the full `claude-code-ide-mcp-` prefix. Examples:
 
 | Elisp function | `:name` |
 |----------------|---------|
@@ -65,6 +65,8 @@ Use short **snake_case** names — not the full `claude-code-ide-mcp-` prefix. E
 | `claude-code-ide-mcp-format-buffer` | `"format-buffer"` |
 
 The Elisp function name keeps the full prefix; only the MCP `:name` (what Claude sees) is shortened.
+
+When referencing emacs-tools in skill documents, always use the shorthand name (e.g., `` `goto-line` ``, `` `format-buffer` ``) — never the full `mcp__emacs-tools__` prefix. The exception is `allowed-tools` frontmatter, where the full identifier is required by the Claude Code permission system.
 
 ## Force-reload (runtime update without restart)
 
@@ -129,5 +131,5 @@ These are **intentionally foreground**: they change what the user sees (`find-fi
 - Wrap every public function body in `condition-case err`
 - Read-only tools: `(let ((inhibit-redisplay t)) ...)` **outside** `with-current-buffer` / `find-file-noselect`
 - Read-only tools: `save-excursion` inside every buffer navigation block
-- Verify parenthesis balance via `mcp__emacs-tools__claude-code-ide-mcp-elisp-check-parens` with the file path
+- Verify parenthesis balance via Bash: `python3 ~/.claude/hooks/elisp-check-parens.py <file_path>`
 - Pattern C tools: run the Step 4.5 diagnostic from `mcp-tool-patterns.md` after writing — one misplaced `)` silently disables the `condition-case` handler

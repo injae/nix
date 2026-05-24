@@ -48,3 +48,4 @@ user-invocable: true   # add if the skill can be called directly via /skill-name
 - Make examples concrete: real file paths, real values, real error messages
 - Make every branch explicit: "If YES → X, if NO → Y"
 - Put shared content in SKILL.md; put variant-specific detail in separate files
+- When referencing emacs-tools MCP tools, use the shorthand name (e.g., `` `goto-line` ``, `` `lsp-def` ``) — never the full `mcp__emacs-tools__` prefix. Exception: `allowed-tools` frontmatter requires the full identifier.

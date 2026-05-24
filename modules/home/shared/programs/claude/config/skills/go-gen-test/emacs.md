@@ -3,7 +3,7 @@
 ## Step 1 — Navigate to the target file
 
 ```
-mcp__emacs-tools__goto-line(file_path, line=1)
+goto-line(file_path, line=1)
 ```
 
 ## Step 2 — Run go-gen-test-all in the background
