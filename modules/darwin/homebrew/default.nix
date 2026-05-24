@@ -18,6 +18,7 @@
       "bazelisk"
       "bash"
       "ksops"
+      "opencode"
     ];
     casks = pkgs.callPackage ./casks.nix { };
 

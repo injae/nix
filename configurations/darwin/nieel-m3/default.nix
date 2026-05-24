@@ -53,7 +53,17 @@ in
 
   local.ollama = {
     enable = true;
-    #models = "ollama/qwen3:30b-a3b-q5_k_m";
+    environmentVariables.OLLAMA_KEEP_ALIVE = "-1";
+    modelFiles.qwen3-coder = ''
+      FROM SimonPu/Qwen3-Coder:30B-Instruct_Q4_K_XL
+
+      PARAMETER num_ctx 32768
+      PARAMETER temperature 0.7
+      PARAMETER top_p 0.8
+      PARAMETER top_k 20
+      PARAMETER repeat_penalty 1.05
+    '';
+    preloadModels = [ "qwen3-coder" ];
   };
 
   # Enable touch id for sudo

@@ -28,6 +28,5 @@
 
     copilot-language-server
     litecli
-
   ];
 }

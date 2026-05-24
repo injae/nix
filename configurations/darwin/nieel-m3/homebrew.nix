@@ -2,7 +2,9 @@
 {
   homebrew = {
     taps = [ ];
-    brews = [ ];
+    brews = [
+      "andyyyy64/whichllm/whichllm"
+    ];
     casks = [ ];
 
     # $ nix shell nixpkgs#mas
