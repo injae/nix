@@ -10,7 +10,7 @@ allowed-tools:
 # Emacs MCP Setup
 
 Load MCP tool schemas via two parallel ToolSearch calls:
-- `"emacs-tools"` max_results:26
+- `"emacs-tools"` max_results:31
 - `"+ide getDiagnostics"` max_results:3
 
 Then immediately **Read the sub-files** from this skill's base directory (shown above as "Base directory for this skill: ..."):

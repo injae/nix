@@ -8,7 +8,7 @@ When the current file's major-mode is `emacs-lisp-mode` (`.el` extension), follo
 
 Call `file-outline` with the absolute file path. Returns the full symbol list with line numbers.
 
-`emacs-lisp-mode` always has tree-sitter available — skip the treesit check.
+`emacs-lisp-mode` does not use tree-sitter — there is no `emacs-lisp-ts-mode`. `file_outline` always reports `treesit: unavailable`, and `symbol_source` always uses the 30-line fallback read. Skip the treesit check and proceed directly to Step 2.
 
 Commit out loud before proceeding:
 > "Target `[symbol]` is at line [N]. Next tool: **symbol-source** at line [N]."
@@ -30,10 +30,10 @@ Additional tools available for elisp-specific navigation:
 
 | Task | Tool | Fallback |
 |------|------|----------|
-| Find where a symbol is defined | `describe-symbol` | `lsp-find-definition`, then `xref-find-apropos` |
-| Find all call sites | `xref-find-references` | `elisp-find-references` |
-| Understand a built-in / package function | `describe-symbol` | — |
-| List callees of a function | `elisp-callees` | — |
+| Find where a symbol is defined | `describe_symbol` | `lsp_def`, then `xref-find-apropos` |
+| Find all call sites | `xref-find-references` | `elisp_refs` |
+| Understand a built-in / package function | `describe_symbol` | — |
+| List callees of a function | `elisp_callees` | — |
 
 ### Elisp symbol-to-file lookup (sequential constraint)
 
@@ -41,7 +41,7 @@ Every "where is Elisp symbol X defined?" query — whether for a project `.el` f
 
 **Step 1 — Evaluate: Is the exact symbol name known?**
 
-Call `describe-symbol(name)`. Returns `Defined in: /path/to/file.el` for any loaded symbol, including elpaca, straight, nix-store, and built-in packages.
+Call `describe_symbol(name)`. Returns `Defined in: /path/to/file.el` for any loaded symbol, including elpaca, straight, nix-store, and built-in packages.
 
 Answer YES or NO:
 - **YES** (symbol found) → commit out loud:
@@ -53,7 +53,7 @@ Answer YES or NO:
 Call `xref-find-apropos(pattern)`. Returns all matching loaded symbols with file locations.
 
 Commit out loud:
-> "Best match: `[symbol]` at `[path]`. Proceeding with **describe-symbol** to confirm."
+> "Best match: `[symbol]` at `[path]`. Proceeding with **describe_symbol** to confirm."
 
 **Gate check — before `Bash find` or `grep` on `.el` files, confirm:**
 1. `describe-symbol` was called → symbol not found or not loaded
@@ -68,14 +68,38 @@ Commit out loud:
 
 Apply the change with the `Edit` tool.
 
+### Preventing paren mistakes
+
+**When restructuring (adding/removing wrappers) — think in delta, not absolute count**
+
+Before writing `new_string`, calculate explicitly:
+- Levels removed: -N
+- Levels added: +M
+- delta = M - N → if delta = 0, the closing paren count on the last line does not change
+
+**Before writing closing parens — list open forms in reverse order**
+
+```
+; e.g. with-selected-window → cond-clause → cond → let → if → dolist → unless → defun
+; = 8 forms → ))))))))
+```
+
+**Split structural changes from content changes** — don't combine wrapper reorganization and body edits in a single `Edit` call.
+
 ---
 
 ## Step 4 — Verify parenthesis balance
 
-Call `mcp__emacs-tools__claude-code-ide-mcp-elisp-check-parens` with `file_path`.
+Run the Python script directly via Bash:
+
+```bash
+python3 ~/.claude/hooks/elisp-check-parens.py /path/to/file.el
+```
 
 - `"balanced"` → Step 5 진행
-- error 메시지 (mismatch 위치 포함) → 해당 위치 수정 후 Step 4 반복
+- error 메시지 (line/column 포함) → 해당 위치 수정 후 Step 4 반복
+
+> Note: Emacs built-in `check-parens` has false positives. The Python script is more accurate.
 
 ---
 
@@ -120,18 +144,26 @@ After fixing, re-run the diagnostic to confirm `error` appears in `handler-condi
 
 ---
 
-## Step 5 — Test interactively (if applicable)
+## Step 5 — Format buffer
 
-Call `mcp__emacs-tools__claude-code-ide-mcp-elisp-load-file` with `file_path`으로 전체 파일 재로드.
+Call `mcp__emacs-tools__format_buffer` with `file_path` to reformat the file via apheleia before loading.
+
+This ensures the loaded code has correct indentation and the file on disk matches what Emacs shows.
+
+---
+
+## Step 6 — Test interactively (if applicable)
+
+Call `mcp__emacs-tools__elisp_load` with `file_path` to reload the entire file into the running Emacs session.
 
 ---
 
 ## Creating new MCP tools
 
 When adding a new tool to the claude-code-ide setup, follow the `emacs-mcp-dev` skill conventions:
-- File: `config/module/mcp/+{name}.el`
+- File: `config/lisp/claude-code-ide/extras/claude-code-ide-extra-{domain}.el` — append to the matching domain file (or create a new one + add `require` to the aggregator)
 - Public functions: `claude-code-ide-mcp-{verb}-{noun}`, private helpers `claude-code-ide-mcp--{name}`
 - Every public function body wrapped in `condition-case err`
 - Read-only tools: `(let ((inhibit-redisplay t)) ...)` outside `with-current-buffer`
-- Register in `config/module/+ai.el` `load-modules-with-list`
+- No registration step — file is already `require`d from `config/module/+ai.el`
 - After adding: update `emacs-dev/navigation.md` tool table and `max_results` count in `SKILL.md`

@@ -1,19 +1,39 @@
 ---
 name: emacs-mcp-dev
-description: "Guide for adding new Emacs MCP tools to the claude-code-ide setup. Use when asked to create, modify, or debug MCP tools in config/module/mcp/."
+description: "Guide for adding new Emacs MCP tools to the claude-code-ide setup. Use when asked to create, modify, or debug MCP tools in config/lisp/claude-code-ide/extras/."
 user-invocable: true
 ---
 
 # Adding New Emacs MCP Tools
 
-Tools live in `config/module/mcp/+{name}.el` and are registered in `config/module/+ai.el`.
+Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 
-## File structure
+| File | Domain |
+|------|--------|
+| `claude-code-ide-extra-buffer-info.el` | buffer info, file outline, symbol source |
+| `claude-code-ide-extra-call-function.el` | call any Elisp function by name |
+| `claude-code-ide-extra-describe-symbol.el` | describe function/variable |
+| `claude-code-ide-extra-elisp.el` | callees, load-file, find-references |
+| `claude-code-ide-extra-formatting.el` | apheleia formatter |
+| `claude-code-ide-extra-lsp-nav-position.el` | LSP position-based navigation (def, refs, impl, type) |
+| `claude-code-ide-extra-lsp-nav-workspace.el` | LSP workspace/symbol navigation |
+| `claude-code-ide-extra-magit.el` | magit git operations |
+| `claude-code-ide-extra-navigation.el` | goto-file-line |
+
+`claude-code-ide-emacs-tools-extra.el` is the aggregator — it adds `extras/` to `load-path` and `require`s each file. No registration step needed beyond adding to the right file.
+
+## Adding a tool
+
+**To an existing domain**: append the function and `claude-code-ide-make-tool` call to the matching `extras/` file.
+
+**New domain**: create `extras/claude-code-ide-extra-{domain}.el` and add a `require` line to `claude-code-ide-emacs-tools-extra.el`.
 
 ```elisp
-;;; +{name}.el --- MCP tools: {description} -*- lexical-binding: t; -*-
+;;; claude-code-ide-extra-{domain}.el --- MCP tools: {description} -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
+
+(require 'claude-code-ide-mcp-server)
 
 ;; private helpers use double-dash: claude-code-ide-mcp--{name}
 ;; public tools use single-dash:   claude-code-ide-mcp-{verb}-{noun}
@@ -30,19 +50,29 @@ Tools live in `config/module/mcp/+{name}.el` and are registered in `config/modul
     :description "..."
     :args '((:name "arg" :type string :description "...")))
 
-(provide '+{name})
-;;; +{name}.el ends here
+(provide 'claude-code-ide-extra-{domain})
+;;; claude-code-ide-extra-{domain}.el ends here
 ```
 
-## Registering the tool
+## Tool `:name` convention
 
-Add the symbol to the list in `config/module/+ai.el`:
+Use short **snake_case** names — not the full `claude-code-ide-mcp-` prefix. Examples:
 
-```elisp
-(load-modules-with-list
-    (f-join user-emacs-module-directory "mcp")
-    '(... existing ... {name}))
-```
+| Elisp function | `:name` |
+|----------------|---------|
+| `claude-code-ide-mcp-lsp-find-definition` | `"lsp_def"` |
+| `claude-code-ide-mcp-goto-file-line` | `"goto_line"` |
+| `claude-code-ide-mcp-format-buffer` | `"format_buffer"` |
+
+The Elisp function name keeps the full prefix; only the MCP `:name` (what Claude sees) is shortened.
+
+## Force-reload (runtime update without restart)
+
+After editing an extras file, call `M-x claude-code-ide-reload-mcp-tools` to apply changes immediately. This resets `claude-code-ide-mcp-server-tools` and force-reloads every extras file via `load-file`, bypassing `require` caching.
+
+> **Why `require` alone is not enough**: `require` is a no-op if the feature symbol is already provided. `load-file` always re-evaluates the file, re-running `claude-code-ide-make-tool` calls with updated `:name` values.
+
+Claude Code's ToolSearch reflects session-start state — new names only appear after starting a new session. The tools themselves work immediately after reload.
 
 ## After adding a tool
 
@@ -50,9 +80,9 @@ Update `emacs-dev/SKILL.md`:
 - `max_results` in the ToolSearch query `"emacs-tools"` must be ≥ total number of registered `mcp__emacs-tools__*` tools. Count tools in `+ai.el` and set accordingly.
 - If the new tool is useful for code navigation, add it to the Code navigation table with its signature and fallback.
 
-## LSP navigation tools (`+lsp-navigation.el`)
+## LSP navigation tools
 
-When adding tools to `+lsp-navigation.el` specifically, read `mcp-tool-patterns.md` (in this skill's directory) first. It documents the three established patterns:
+When adding LSP navigation tools, read `mcp-tool-patterns.md` (in this skill's directory) first. It documents the three established patterns:
 
 | Pattern | When to use |
 |---------|------------|
@@ -94,10 +124,10 @@ These are **intentionally foreground**: they change what the user sees (`find-fi
 
 ## Checklist
 
-- File naming: use the domain/function name, not the underlying package (e.g. `+formatting.el` not `+apheleia.el`)
+- Add to the matching `extras/claude-code-ide-extra-{domain}.el` (or create a new file + `require` in the aggregator)
 - Naming: public `claude-code-ide-mcp-{verb}-{noun}`, private helpers `claude-code-ide-mcp--{name}`
 - Wrap every public function body in `condition-case err`
 - Read-only tools: `(let ((inhibit-redisplay t)) ...)` **outside** `with-current-buffer` / `find-file-noselect`
 - Read-only tools: `save-excursion` inside every buffer navigation block
-- Verify parenthesis balance via `mcp__ide__executeCode`: `(with-temp-buffer (insert-file-contents "...") (condition-case e (progn (check-parens) "balanced") (error (error-message-string e))))`
+- Verify parenthesis balance via `mcp__emacs-tools__claude-code-ide-mcp-elisp-check-parens` with the file path
 - Pattern C tools: run the Step 4.5 diagnostic from `mcp-tool-patterns.md` after writing — one misplaced `)` silently disables the `condition-case` handler

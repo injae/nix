@@ -35,17 +35,17 @@ Apply improvements immediately after each scenario, before moving on.
 ### Pipelines
 
 - [ ] **Pipeline A — Interface change impact**
-  - Target: any interface (e.g. `Task`, `GracefulTask`)
+  - Target: any interface in the current project
   - Verify: step 0 (locate file), step 1 (imenu), step 2/3 (lsp-project-symbols)
   - Check: precision note — compare `lsp-project-symbols` vs `lsp-find-implementation` result counts
 
 - [ ] **Pipeline B — Type structure exploration**
-  - Target: any concrete type (e.g. `ManagedTask`, `RetryTask`)
+  - Target: any concrete type in the current project
   - Verify: `lsp-find-definition` with correct context file, `file-outline`, `symbol-source`
   - Check: Step 1 tip — does using a file that references the type avoid LSP miss?
 
 - [ ] **Pipeline C — Symbol propagation**
-  - Target: a struct field (e.g. `limitTime`, `retryDelay`)
+  - Target: any struct field in the current project
   - Verify: `imenu-list-symbols` → `lsp-find-references` → `symbol-source` per site
   - Check: confirm `lsp-project-symbols` returns only declaration (not usages) — this is the known pitfall
 
@@ -78,3 +78,6 @@ Apply improvements immediately after each scenario, before moving on.
 | `lsp-workspace-symbols(name)` | Returns 100 results including `/nix/store/`, `/go/pkg/mod/` | Prefer `lsp-project-symbols` for project-only searches |
 | `treesit-info` on keyword | Returns leaf node (`func`, `type`) | Retry with `include_ancestors: true` to get declaration node |
 | `describe-symbol` | Emacs Lisp symbols only — Go symbols not found | See `elisp.md` |
+| `lsp_proj_symbols` with common method name | Returns all types with that method name, not just interface implementors | Use `lsp_impl` for exact implementors; `lsp_proj_symbols` count will be higher |
+| `lsp_type_def` at non-variable position | gopls: "no enclosing expression has a type" | Only valid at variable/parameter positions; fall back to `lsp_def` for function names |
+| `symbol_source` on `emacs-lisp-mode` file | treesit parser not active → 30-line fallback read | Expected — `emacs-lisp-mode` has no tree-sitter mode; result is still correct |

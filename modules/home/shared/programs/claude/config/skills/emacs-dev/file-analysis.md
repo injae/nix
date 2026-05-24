@@ -6,7 +6,7 @@ Every file analysis requires an explicit evaluate → commit → execute sequenc
 
 ## Step 1 — Evaluate: Is tree-sitter available?
 
-Call `file-outline` with the absolute file path. Returns `major-mode`, `treesit` availability, and the full symbol list with line numbers in one call. Opens the file in the background if needed.
+Call `file_outline` with the absolute file path. Returns `major-mode`, `treesit` availability, and the full symbol list with line numbers in one call. Opens the file in the background if needed.
 
 Answer YES or NO:
 - **YES** if `treesit: available`
@@ -24,7 +24,7 @@ The symbol list from Step 1 contains line numbers. Identify the target symbol an
 Commit out loud before proceeding:
 > "Target `[symbol]` is at line [N]. Next tool: **symbol-source** at line [N]."
 
-**The line numbers from `file-outline` are inputs to `symbol-source`. They are NOT permission to call `Read`.**
+**The line numbers from `file_outline` are inputs to `symbol_source`. They are NOT permission to call `Read`.**
 
 ---
 
@@ -46,8 +46,8 @@ Call `Read` with a specific line range. Do not read the whole file unless the ra
 ---
 
 **Gate check — before calling `Read`, you must confirm:**
-1. `file-outline` was called for this file → structure obtained
-2. If tree-sitter available: `symbol-source` was called → result was insufficient
+1. `file_outline` was called for this file → structure obtained
+2. If tree-sitter available: `symbol_source` was called → result was insufficient
 3. Only then: `Read` is justified
 
 If you cannot confirm steps 1–2, you must go back and complete them first.
