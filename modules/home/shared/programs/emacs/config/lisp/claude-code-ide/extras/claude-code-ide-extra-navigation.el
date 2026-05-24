@@ -32,7 +32,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-goto-file-line
-    :name "goto_line"
+    :name "goto-line"
     :description "Open a source file at a specific line in the primary code window (non-claude, non-magit). Scrolls so the target line is near the top. Use this before explaining an issue to focus the user's view."
     :args '((:name "file_path"
              :type string

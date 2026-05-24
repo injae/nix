@@ -8,7 +8,7 @@ When the current file's major-mode is `emacs-lisp-mode` (`.el` extension), follo
 
 Call `file-outline` with the absolute file path. Returns the full symbol list with line numbers.
 
-`emacs-lisp-mode` does not use tree-sitter — there is no `emacs-lisp-ts-mode`. `file_outline` always reports `treesit: unavailable`, and `symbol_source` always uses the 30-line fallback read. Skip the treesit check and proceed directly to Step 2.
+`emacs-lisp-mode` does not use tree-sitter — there is no `emacs-lisp-ts-mode`. `file-outline` always reports `treesit: unavailable`, and `symbol-source` always uses the 30-line fallback read. Skip the treesit check and proceed directly to Step 2.
 
 Commit out loud before proceeding:
 > "Target `[symbol]` is at line [N]. Next tool: **symbol-source** at line [N]."
@@ -30,10 +30,10 @@ Additional tools available for elisp-specific navigation:
 
 | Task | Tool | Fallback |
 |------|------|----------|
-| Find where a symbol is defined | `describe_symbol` | `lsp_def`, then `xref-find-apropos` |
-| Find all call sites | `xref-find-references` | `elisp_refs` |
-| Understand a built-in / package function | `describe_symbol` | — |
-| List callees of a function | `elisp_callees` | — |
+| Find where a symbol is defined | `describe-symbol` | `lsp-def`, then `xref-apropos` |
+| Find all call sites | `xref-refs` | `elisp-refs` |
+| Understand a built-in / package function | `describe-symbol` | — |
+| List callees of a function | `elisp-callees` | — |
 
 ### Elisp symbol-to-file lookup (sequential constraint)
 
@@ -41,7 +41,7 @@ Every "where is Elisp symbol X defined?" query — whether for a project `.el` f
 
 **Step 1 — Evaluate: Is the exact symbol name known?**
 
-Call `describe_symbol(name)`. Returns `Defined in: /path/to/file.el` for any loaded symbol, including elpaca, straight, nix-store, and built-in packages.
+Call `describe-symbol(name)`. Returns `Defined in: /path/to/file.el` for any loaded symbol, including elpaca, straight, nix-store, and built-in packages.
 
 Answer YES or NO:
 - **YES** (symbol found) → commit out loud:
@@ -50,14 +50,14 @@ Answer YES or NO:
 
 **Step 2 — Evaluate: Is a partial name known?**
 
-Call `xref-find-apropos(pattern)`. Returns all matching loaded symbols with file locations.
+Call `xref-apropos(pattern)`. Returns all matching loaded symbols with file locations.
 
 Commit out loud:
-> "Best match: `[symbol]` at `[path]`. Proceeding with **describe_symbol** to confirm."
+> "Best match: `[symbol]` at `[path]`. Proceeding with **describe-symbol** to confirm."
 
 **Gate check — before `Bash find` or `grep` on `.el` files, confirm:**
 1. `describe-symbol` was called → symbol not found or not loaded
-2. `xref-find-apropos` was called → no matches
+2. `xref-apropos` was called → no matches
 3. Only then: Bash is justified
 
 `describe-symbol` covers **all loaded Emacs packages** (elpaca/straight/nix-store/built-in). `find *.el` is never faster or more accurate when the symbol name is known.
@@ -146,7 +146,7 @@ After fixing, re-run the diagnostic to confirm `error` appears in `handler-condi
 
 ## Step 5 — Format buffer
 
-Call `mcp__emacs-tools__format_buffer` with `file_path` to reformat the file via apheleia before loading.
+Call `mcp__emacs-tools__format-buffer` with `file_path` to reformat the file via apheleia before loading.
 
 This ensures the loaded code has correct indentation and the file on disk matches what Emacs shows.
 
@@ -154,7 +154,7 @@ This ensures the loaded code has correct indentation and the file on disk matche
 
 ## Step 6 — Test interactively (if applicable)
 
-Call `mcp__emacs-tools__elisp_load` with `file_path` to reload the entire file into the running Emacs session.
+Call `mcp__emacs-tools__elisp-load` with `file_path` to reload the entire file into the running Emacs session.
 
 ---
 

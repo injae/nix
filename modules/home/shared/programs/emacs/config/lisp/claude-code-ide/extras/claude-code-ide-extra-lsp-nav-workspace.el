@@ -56,7 +56,7 @@ FILE-PATH is any file in the project to locate the eglot server context."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-workspace-symbols
-    :name "lsp_ws_symbols"
+    :name "lsp-ws-symbols"
     :description "Project-wide symbol search via LSP (workspace/symbol). Includes external packages. Use lsp_proj_symbols to exclude them."
     :args '((:name "query"
              :type string
@@ -113,7 +113,7 @@ Filters out external packages (/go/pkg/mod/, /nix/store/)."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-project-symbols
-    :name "lsp_proj_symbols"
+    :name "lsp-proj-symbols"
     :description "Project-only symbol search via LSP (no external package noise). Prefer over lsp_ws_symbols for project-internal searches."
     :args '((:name "query"
              :type string
@@ -195,7 +195,7 @@ Resolves definition via workspace/symbol then calls textDocument/references."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references-by-name
-    :name "lsp_refs_by_name"
+    :name "lsp-refs-by-name"
     :description "Find all references to a symbol by name (no position needed). Use for functions/types; use lsp_refs for struct fields. Falls back with a message if not found."
     :args '((:name "identifier"
              :type string
@@ -218,7 +218,7 @@ Combines symbol resolution + symbol_source in one call."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-def-source
-    :name "def_source"
+    :name "def-source"
     :description "Find a symbol's definition and return its full source in one call (lsp_def + symbol_source). Use instead of the two-step pipeline when you want the source of a known symbol."
     :args '((:name "identifier"
              :type string

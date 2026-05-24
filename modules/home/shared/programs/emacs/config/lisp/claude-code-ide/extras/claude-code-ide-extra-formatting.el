@@ -80,7 +80,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-formatter-info
-    :name "formatter_info"
+    :name "formatter-info"
     :description "Get formatter configuration for a file: shows the major mode, which formatters are active, and their command definitions."
     :args '((:name "file_path"
                 :type string
@@ -88,13 +88,13 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-list-formatters
-    :name "list_formatters"
+    :name "list-formatters"
     :description "List all mode-to-formatter mappings configured in apheleia-mode-alist. Shows every mode and which formatter(s) are assigned to it."
     :args '())
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-format-buffer
-    :name "format_buffer"
+    :name "format-buffer"
     :description "Run the apheleia formatter on a specific file. Opens the file if not already open and triggers formatting asynchronously."
     :args '((:name "file_path"
                 :type string

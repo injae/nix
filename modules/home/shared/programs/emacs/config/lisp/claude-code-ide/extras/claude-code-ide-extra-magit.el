@@ -14,7 +14,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-stage
-    :name "git_stage"
+    :name "git-stage"
     :description "Stage a file for the next commit using git add. Refreshes any open magit buffers."
     :args '((:name "file_path"
              :type string
@@ -60,7 +60,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-prepare-commit
-    :name "git_prepare_commit"
+    :name "git-prepare-commit"
     :description "Open the magit commit buffer and pre-fill the commit message. Does NOT finish the commit — the user reviews and presses C-c C-c manually."
     :args '((:name "message"
              :type string
@@ -76,7 +76,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-commit
-    :name "git_commit"
+    :name "git-commit"
     :description "Create a git commit immediately with the given message from all staged changes. Use magit-prepare-commit instead if the user should review the message first."
     :args '((:name "message"
              :type string

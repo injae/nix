@@ -26,7 +26,7 @@ version: 1.0.0
 
 이 스킬을 실행하기 전에 `/emacs-dev` 스킬이 이미 실행되어 있어야 한다.
 `/emacs-dev`가 ToolSearch로 `mcp__emacs-tools__*` 도구를 일괄 로드하므로,
-`mcp__emacs-tools__claude-code-ide-mcp-goto-file-line`도 이미 사용 가능한 상태다.
+`mcp__emacs-tools__goto-line`도 이미 사용 가능한 상태다.
 
 ---
 
@@ -49,7 +49,7 @@ version: 1.0.0
 
 #### 3-1. Emacs 네비게이션 (Emacs 모드일 때)
 
-`mcp__emacs-tools__claude-code-ide-mcp-goto-file-line` 도구를 호출한다:
+`mcp__emacs-tools__goto-line` 도구를 호출한다:
 
 ```
 file_path: /절대/경로/파일.go
@@ -110,10 +110,10 @@ line: 문제 코드의 첫 번째 라인 (1-based)
 
 관련된 이슈 수정이 쌓이면 (또는 사용자가 커밋을 요청하면) 아래 순서로 진행한다.
 
-1. 파일 스테이징 — `mcp__emacs-tools__claude-code-ide-mcp-magit-stage`를 파일마다 호출:
+1. 파일 스테이징 — `mcp__emacs-tools__git-stage`를 파일마다 호출:
    - `file_path`: 스테이징할 파일의 경로
 
-2. 커밋 버퍼 준비 — `mcp__emacs-tools__claude-code-ide-mcp-magit-prepare-commit` 호출:
+2. 커밋 버퍼 준비 — `mcp__emacs-tools__git-prepare-commit` 호출:
    - `message`: 커밋 메시지 (`fix(패키지): 변경 내용 요약` 형식)
    - 이 도구는 커밋 버퍼를 열고 메시지를 채우기만 한다. 커밋을 완료하지 않는다.
 

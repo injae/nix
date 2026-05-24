@@ -348,7 +348,7 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
   ;; Register xref tools
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-xref-find-references
-   :name "claude-code-ide-mcp-xref-find-references"
+   :name "xref-refs"
    :description "Find where a function, variable, or class is used throughout your codebase. Perfect for understanding code dependencies and impact analysis"
    :args '((:name "identifier"
                   :type string
@@ -359,7 +359,7 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
 
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-xref-find-apropos
-   :name "claude-code-ide-mcp-xref-find-apropos"
+   :name "xref-apropos"
    :description "Search for functions, variables, or classes by name pattern across your project. Helps you discover code elements when you know part of the name"
    :args '((:name "pattern"
                   :type string
@@ -371,14 +371,14 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
   ;; Register project info tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-project-info
-   :name "claude-code-ide-mcp-project-info"
+   :name "project-info"
    :description "Get quick overview of your current project context including directory, active file, and project size"
    :args nil)
 
   ;; Register imenu tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-imenu-list-symbols
-   :name "claude-code-ide-mcp-imenu-list-symbols"
+   :name "imenu-symbols"
    :description "Navigate and explore a file's structure by listing all its functions, classes, and variables with their locations"
    :args '((:name "file_path"
                   :type string
@@ -387,7 +387,7 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
   ;; Register tree-sitter tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-treesit-info
-   :name "claude-code-ide-mcp-treesit-info"
+   :name "treesit-info"
    :description "Get tree-sitter syntax tree information for a file, including node types, ranges, and hierarchical structure. Useful for understanding code structure and AST analysis"
    :args '((:name "file_path"
                   :type string

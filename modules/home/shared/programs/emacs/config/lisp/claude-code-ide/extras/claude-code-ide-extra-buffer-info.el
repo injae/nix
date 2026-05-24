@@ -29,7 +29,7 @@ Otherwise return all user-visible buffers ordered by recency."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-buffer-info
-    :name "buffer_info"
+    :name "buffer-info"
     :description "Return buffer name and major-mode. With no argument, lists all user-visible buffers ordered by recency (most recently used first). Pass a buffer name to get info for that specific buffer only."
      :args '((:name "buffer_name"
               :type string
@@ -53,7 +53,7 @@ Otherwise return all user-visible buffers ordered by recency."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-last-user-buffer
-    :name "last_buffer"
+    :name "last-buffer"
     :description "Return the most recently used buffer that is not an internal buffer or a claude-code buffer. Useful for identifying which file the user was last editing."
     :args '())
 
@@ -104,7 +104,7 @@ Opens the file in the background if not already open."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-file-outline
-    :name "file_outline"
+    :name "file-outline"
     :description "Return major-mode, treesit availability, and all symbols with line numbers for a file. Opens in background if needed."
     :args '((:name "file_path"
              :type string
@@ -142,7 +142,7 @@ Uses tree-sitter to find exact declaration bounds when available."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-symbol-source
-    :name "symbol_source"
+    :name "symbol-source"
     :description "Return source of declaration at a line number (from file_outline) using tree-sitter bounds. Falls back to 30-line read for modes without tree-sitter."
     :args '((:name "file_path"
              :type string

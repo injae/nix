@@ -61,8 +61,8 @@ matrix more clearly than prose:
 ```markdown
 | Task | Tool | Fallback |
 |------|------|----------|
-| Find definition | `lsp-find-definition` | `xref-find-apropos` |
-| Search symbols | `lsp-workspace-symbols` | `xref-find-apropos` |
+| Find definition | `lsp-def` | `xref-apropos` |
+| Search symbols | `lsp-ws-symbols` | `xref-apropos` |
 | Read declaration | `symbol-source` | `Read` with offset/limit |
 ```
 

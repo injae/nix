@@ -18,7 +18,7 @@ Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 | `claude-code-ide-extra-lsp-nav-position.el` | LSP position-based navigation (def, refs, impl, type) |
 | `claude-code-ide-extra-lsp-nav-workspace.el` | LSP workspace/symbol navigation |
 | `claude-code-ide-extra-magit.el` | magit git operations |
-| `claude-code-ide-extra-navigation.el` | goto-file-line |
+| `claude-code-ide-extra-navigation.el` | goto-line |
 
 `claude-code-ide-emacs-tools-extra.el` is the aggregator — it adds `extras/` to `load-path` and `require`s each file. No registration step needed beyond adding to the right file.
 
@@ -60,9 +60,9 @@ Use short **snake_case** names — not the full `claude-code-ide-mcp-` prefix. E
 
 | Elisp function | `:name` |
 |----------------|---------|
-| `claude-code-ide-mcp-lsp-find-definition` | `"lsp_def"` |
-| `claude-code-ide-mcp-goto-file-line` | `"goto_line"` |
-| `claude-code-ide-mcp-format-buffer` | `"format_buffer"` |
+| `claude-code-ide-mcp-lsp-find-definition` | `"lsp-def"` |
+| `claude-code-ide-mcp-goto-file-line` | `"goto-line"` |
+| `claude-code-ide-mcp-format-buffer` | `"format-buffer"` |
 
 The Elisp function name keeps the full prefix; only the MCP `:name` (what Claude sees) is shortened.
 
@@ -118,7 +118,7 @@ Always wrap the **entire** function body — including `find-file-noselect` — 
 
 Also always pair buffer navigation with `save-excursion` so the buffer point is restored after the tool runs.
 
-### Write / navigation tools (goto-file-line, magit-prepare-commit, format-buffer)
+### Write / navigation tools (goto-line, git-prepare-commit, format-buffer)
 
 These are **intentionally foreground**: they change what the user sees (`find-file` + `recenter`) or open a new buffer (commit editor). Do **not** add `inhibit-redisplay` to these — they need to update the display.
 

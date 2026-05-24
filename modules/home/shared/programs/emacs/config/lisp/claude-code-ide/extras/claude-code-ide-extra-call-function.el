@@ -52,7 +52,7 @@ commands are refused."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-call-function
-    :name "call_fn"
+    :name "call-fn"
     :description "Call any Emacs Lisp function by name with positional arguments. Use this instead of registering a dedicated MCP tool for every function. The return value is printed with prin1-to-string. Useful for calling utilities, querying state, or invoking helper functions defined in the Emacs config."
     :args '((:name "name"
              :type string

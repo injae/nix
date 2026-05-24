@@ -39,7 +39,7 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-callees
-    :name "elisp_callees"
+    :name "elisp-callees"
     :description "List all functions called by a given Elisp function. Performs macro-expansion before analysis, so indirect calls via macros are included. Equivalent to helpful's 'Functions used by' section. Only works with Elisp symbols."
     :args '((:name "name"
              :type string
@@ -56,7 +56,7 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-load-file
-    :name "elisp_load"
+    :name "elisp-load"
     :description "Load an Emacs Lisp file into the running Emacs session via load-file. Use after editing a .el file to test changes interactively."
     :args '((:name "file_path"
              :type string
@@ -117,7 +117,7 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-find-references
-    :name "elisp_refs"
+    :name "elisp-refs"
     :description "Find all call-sites for an Elisp function across all loaded files. Returns file paths and the surrounding lines for each reference. Equivalent to helpful's 'Find all references' button. Only works with Elisp symbols."
     :args '((:name "name"
              :type string

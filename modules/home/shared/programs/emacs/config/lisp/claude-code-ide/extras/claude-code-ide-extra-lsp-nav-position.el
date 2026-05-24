@@ -82,7 +82,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-definition
-    :name "lsp_def"
+    :name "lsp-def"
     :description "Find definition(s) of a symbol via LSP. Pass any project file as file_path to initialize the backend."
     :args '((:name "identifier"
              :type string
@@ -109,7 +109,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
-    :name "lsp_impl"
+    :name "lsp-impl"
     :description "Find exact implementations of an interface method at a position (textDocument/implementation). More precise than lsp_proj_symbols. Line 1-based, column 0-based."
     :args '((:name "file_path"
              :type string
@@ -139,7 +139,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-typeDefinition
-    :name "lsp_type_def"
+    :name "lsp-type-def"
     :description "Find type definition at a position (textDocument/typeDefinition). Use on variable/parameter positions. Line 1-based, column 0-based. Fall back to lsp_def if gopls returns nothing."
     :args '((:name "file_path"
              :type string
@@ -170,7 +170,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references
-    :name "lsp_refs"
+    :name "lsp-refs"
     :description "Find all references at a position (textDocument/references). Line 1-based, column 0-based. Use lsp_refs_by_name when you only have a name."
     :args '((:name "file_path"
              :type string
