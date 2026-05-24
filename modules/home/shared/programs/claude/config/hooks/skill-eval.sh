@@ -17,13 +17,5 @@ Only after Step 2 is complete, proceed with implementation.
 CRITICAL: You MUST call Skill() tool in Step 2. Do NOT skip to implementation.
 The evaluation (Step 1) is WORTHLESS unless you ACTIVATE (Step 2) the skills.
 
-Example of correct sequence:
-- emacs-dev: YES - running inside Emacs (INSIDE_EMACS is set)
-- update-config: NO - not a settings change task
-- review: NO - not a code review task
-
-[Then IMMEDIATELY use Skill() tool:]
-> Skill(emacs-dev)
-
 [THEN and ONLY THEN start implementation]
 EOF
