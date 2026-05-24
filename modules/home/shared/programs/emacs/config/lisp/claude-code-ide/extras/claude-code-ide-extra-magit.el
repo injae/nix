@@ -7,14 +7,14 @@
 (defun claude-code-ide-mcp-magit-stage (file-path)
   "Stage FILE-PATH using git add via magit."
   (condition-case err
-      (let ((default-directory (or (magit-toplevel) default-directory)))
+      (let ((default-directory (or (ignore-errors (require 'magit nil 'noerror) (magit-toplevel)) default-directory)))
         (magit-run-git "add" "--" file-path)
         (format "Staged: %s" file-path))
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-stage
-    :name "claude-code-ide-mcp-magit-stage"
+    :name "git_stage"
     :description "Stage a file for the next commit using git add. Refreshes any open magit buffers."
     :args '((:name "file_path"
              :type string
@@ -46,6 +46,7 @@
   "Open magit commit buffer and pre-fill MESSAGE without finishing the commit."
   (condition-case err
       (progn
+        (require 'magit nil 'noerror)
         (setq claude-code-ide--pending-commit-message message)
         (let ((magit-win (seq-find
                           (lambda (w)
@@ -59,7 +60,7 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-prepare-commit
-    :name "claude-code-ide-mcp-magit-prepare-commit"
+    :name "git_prepare_commit"
     :description "Open the magit commit buffer and pre-fill the commit message. Does NOT finish the commit — the user reviews and presses C-c C-c manually."
     :args '((:name "message"
              :type string
@@ -68,14 +69,14 @@
 (defun claude-code-ide-mcp-magit-commit (message)
   "Create a git commit with MESSAGE from currently staged changes immediately."
   (condition-case err
-      (let ((default-directory (or (magit-toplevel) default-directory)))
+      (let ((default-directory (or (ignore-errors (require 'magit nil 'noerror) (magit-toplevel)) default-directory)))
         (magit-run-git "commit" "-m" message)
         (format "Committed: %s" (substring message 0 (min 60 (length message)))))
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-commit
-    :name "claude-code-ide-mcp-magit-commit"
+    :name "git_commit"
     :description "Create a git commit immediately with the given message from all staged changes. Use magit-prepare-commit instead if the user should review the message first."
     :args '((:name "message"
              :type string

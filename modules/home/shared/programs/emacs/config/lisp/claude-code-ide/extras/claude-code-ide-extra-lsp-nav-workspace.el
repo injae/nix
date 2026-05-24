@@ -4,6 +4,7 @@
 
 (require 'claude-code-ide-mcp-server)
 (require 'claude-code-ide-extra-lsp-nav-position)
+(require 'claude-code-ide-extra-buffer-info)
 
 (defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
   "Return a buffer with an active eglot server for FILE-PATH's project.
@@ -55,8 +56,8 @@ FILE-PATH is any file in the project to locate the eglot server context."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-workspace-symbols
-    :name "claude-code-ide-mcp-lsp-workspace-symbols"
-    :description "Search for symbols matching a query string across the entire project using LSP workspace/symbol. Equivalent to consult-eglot-symbol but non-interactive. Use this INSTEAD of grep/find/rg whenever you need to locate a symbol, type, function, or variable by name."
+    :name "lsp_ws_symbols"
+    :description "Project-wide symbol search via LSP (workspace/symbol). Includes external packages. Use lsp_proj_symbols to exclude them."
     :args '((:name "query"
              :type string
              :description "Symbol name or partial name to search for")
@@ -112,8 +113,8 @@ Filters out external packages (/go/pkg/mod/, /nix/store/)."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-project-symbols
-    :name "claude-code-ide-mcp-lsp-project-symbols"
-    :description "Search for symbols matching a query string within the current project only, using LSP workspace/symbol. Identical to lsp-workspace-symbols but filters out external packages (/go/pkg/mod/, /nix/store/, etc.). Use this when you only care about project-local definitions and want less noise."
+    :name "lsp_proj_symbols"
+    :description "Project-only symbol search via LSP (no external package noise). Prefer over lsp_ws_symbols for project-internal searches."
     :args '((:name "query"
              :type string
              :description "Symbol name or partial name to search for")
@@ -194,14 +195,37 @@ Resolves definition via workspace/symbol then calls textDocument/references."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references-by-name
-    :name "claude-code-ide-mcp-lsp-find-references-by-name"
-    :description "Find all references to a symbol by name, without needing its file position. Internally resolves the definition via workspace/symbol (project-local, exact name match), then calls textDocument/references. Use this instead of the two-step lsp-project-symbols → lsp-find-references workflow. Falls back with a clear message if the symbol is not found."
+    :name "lsp_refs_by_name"
+    :description "Find all references to a symbol by name (no position needed). Use for functions/types; use lsp_refs for struct fields. Falls back with a message if not found."
     :args '((:name "identifier"
              :type string
-             :description "Exact symbol name to find references for (e.g. \"RetryTask\", \"NewManagedTask\")")
+             :description "Exact symbol name to find references for")
             (:name "file_path"
              :type string
              :description "Absolute path to any file in the project (used to locate the eglot server and project root)")))
+
+(defun claude-code-ide-mcp-def-source (identifier file-path)
+  "Find IDENTIFIER's definition via workspace/symbol and return its full source.
+Combines symbol resolution + symbol_source in one call."
+  (condition-case err
+      (let ((def (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
+        (if (null def)
+            (format "Symbol '%s' not found in project." identifier)
+          (claude-code-ide-mcp-symbol-source
+           (plist-get def :file)
+           (plist-get def :line))))
+    (error (format "Error: %s" (error-message-string err)))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-def-source
+    :name "def_source"
+    :description "Find a symbol's definition and return its full source in one call (lsp_def + symbol_source). Use instead of the two-step pipeline when you want the source of a known symbol."
+    :args '((:name "identifier"
+             :type string
+             :description "Symbol name to look up")
+            (:name "file_path"
+             :type string
+             :description "Absolute path to any file in the project")))
 
 (provide 'claude-code-ide-extra-lsp-nav-workspace)
 ;;; claude-code-ide-extra-lsp-nav-workspace.el ends here

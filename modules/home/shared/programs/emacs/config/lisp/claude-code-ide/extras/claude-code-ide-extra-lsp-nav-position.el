@@ -82,8 +82,8 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-definition
-    :name "claude-code-ide-mcp-lsp-find-definition"
-    :description "Find the definition(s) of a symbol using the eglot/LSP xref backend. Prefer this over grep or find — the language server returns precise results including cross-file definitions. Pass the symbol name and any file in the project as context to initialize the backend."
+    :name "lsp_def"
+    :description "Find definition(s) of a symbol via LSP. Pass any project file as file_path to initialize the backend."
     :args '((:name "identifier"
              :type string
              :description "The symbol name to find the definition for")
@@ -109,8 +109,8 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
-    :name "claude-code-ide-mcp-lsp-find-implementation"
-    :description "Find implementations of an interface or abstract symbol at a file position using eglot (textDocument/implementation). Position the cursor on the symbol by providing file path, line (1-based), and column (0-based)."
+    :name "lsp_impl"
+    :description "Find exact implementations of an interface method at a position (textDocument/implementation). More precise than lsp_proj_symbols. Line 1-based, column 0-based."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file containing the symbol")
@@ -139,8 +139,8 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-typeDefinition
-    :name "claude-code-ide-mcp-lsp-find-typeDefinition"
-    :description "Find the type definition of a symbol at a file position using eglot (textDocument/typeDefinition). Useful for tracing the declared type behind a variable or parameter. Provide file path, line (1-based), and column (0-based)."
+    :name "lsp_type_def"
+    :description "Find type definition at a position (textDocument/typeDefinition). Use on variable/parameter positions. Line 1-based, column 0-based. Fall back to lsp_def if gopls returns nothing."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file containing the symbol")
@@ -170,8 +170,8 @@
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references
-    :name "claude-code-ide-mcp-lsp-find-references"
-    :description "Find all call sites / references to the symbol at a file position using eglot (textDocument/references). Use this to find every location that uses a function, variable, or type. Provide file path, line (1-based), and column (0-based) pointing to the symbol."
+    :name "lsp_refs"
+    :description "Find all references at a position (textDocument/references). Line 1-based, column 0-based. Use lsp_refs_by_name when you only have a name."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file containing the symbol")

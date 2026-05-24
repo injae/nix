@@ -4,6 +4,10 @@
 
 (require 'claude-code-ide-mcp-server)
 
+(defvar claude-code-ide-mcp--blocked-functions
+  '(kill-emacs save-buffers-kill-emacs save-buffers-kill-terminal)
+  "Functions that `claude-code-ide-mcp-call-function' refuses to invoke.")
+
 (defun claude-code-ide-mcp--json-to-elisp (val)
   "Convert a value returned by `json-parse-string' to an Elisp argument.
 JSON null → nil, JSON true/false → t/nil, arrays → lists, objects → alists."
@@ -20,10 +24,13 @@ JSON null → nil, JSON true/false → t/nil, arrays → lists, objects → alis
       (nreverse result)))
    (t val)))
 
-(defun claude-code-ide-mcp-call-function (name args-json)
-  "Call Emacs function NAME with arguments decoded from ARGS-JSON.
-ARGS-JSON must be a JSON array string whose elements become the positional
-arguments to NAME.  Pass \"[]\" or \"\" for zero-argument calls."
+(defun claude-code-ide-mcp-call-function (name args)
+  "Call Emacs function NAME with positional ARGS.
+ARGS is a vector decoded from the JSON array by the MCP server.
+Each element is converted to Elisp via `claude-code-ide-mcp--json-to-elisp'.
+Omit ARGS for zero-argument calls.
+Functions in `claude-code-ide-mcp--blocked-functions' and interactive
+commands are refused."
   (condition-case err
       (let ((sym (intern-soft name)))
         (cond
@@ -31,30 +38,29 @@ arguments to NAME.  Pass \"[]\" or \"\" for zero-argument calls."
           (format "Symbol '%s' not found." name))
          ((not (fboundp sym))
           (format "'%s' is not a function." name))
+         ((memq sym claude-code-ide-mcp--blocked-functions)
+          (format "'%s' is blocked for security reasons." name))
+         ((commandp sym)
+          (format "'%s' is an interactive command and cannot be called via call-function." name))
          (t
-          (let* ((args
-                  (if (or (null args-json) (string-empty-p (string-trim args-json)))
-                      nil
-                    (mapcar #'claude-code-ide-mcp--json-to-elisp
-                            (seq-into
-                             (json-parse-string args-json
-                                               :null-object :null
-                                               :false-object :false)
-                             'list))))
-                 (result (apply sym args)))
+          (let* ((arg-list (when args
+                             (mapcar #'claude-code-ide-mcp--json-to-elisp
+                                     (seq-into args 'list))))
+                 (result (apply sym arg-list)))
             (prin1-to-string result)))))
     (error (format "Error calling '%s': %s" name (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-call-function
-    :name "claude-code-ide-mcp-call-function"
-    :description "Call any Emacs Lisp function by name with JSON-encoded arguments. Use this instead of registering a dedicated MCP tool for every function. Pass the function name as a string and its positional arguments as a JSON array (e.g. \"[\\\"hello\\\", 42, true]\"). Pass \"[]\" for zero-argument calls. The return value is printed with prin1-to-string. Useful for calling utilities, querying state, or invoking helper functions defined in the Emacs config."
+    :name "call_fn"
+    :description "Call any Emacs Lisp function by name with positional arguments. Use this instead of registering a dedicated MCP tool for every function. The return value is printed with prin1-to-string. Useful for calling utilities, querying state, or invoking helper functions defined in the Emacs config."
     :args '((:name "name"
              :type string
              :description "The name of the Emacs Lisp function to call (e.g. \"buffer-list\", \"claude-code-ide-mcp--function-source\")")
-            (:name "args_json"
-             :type string
-             :description "JSON array of positional arguments, e.g. \"[\\\"my-function\\\"]\" or \"[]\". Strings, numbers, booleans, arrays, and objects are supported.")))
+            (:name "args"
+             :type array
+             :optional t
+             :description "Positional arguments as a JSON array, e.g. [\"hello\", 42, true]. Omit for zero-argument calls.")))
 
 (provide 'claude-code-ide-extra-call-function)
 ;;; claude-code-ide-extra-call-function.el ends here

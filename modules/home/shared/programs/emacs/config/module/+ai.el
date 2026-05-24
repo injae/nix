@@ -11,7 +11,7 @@
     (claude-code-ide-open-in-new-frame t)
     (claude-code-ide-enable-mcp-server t)
     (claude-code-ide-terminal-backend 'vterm)
-    (claude-code-ide-vterm-anti-flicker nil)
+    (claude-code-ide-vterm-anti-flicker t)
     (claude-code-ide-focus-claude-after-ediff nil)
     ;; (claude-code-ide-backend 'opencode)   ;; switch to opencode
     ;; (claude-code-ide-open-code-model "anthropic/claude-sonnet-4-20250514")

@@ -355,15 +355,19 @@ a more stable viewing experience when working with multiple windows."
 
 ;;; Opencode MCP Config Management
 
-(defvar claude-code-ide--opencode-mcp-entry nil
-  "MCP config entry we added to opencode.jsonc, or nil.")
+(defvar claude-code-ide--opencode-mcp-content nil
+  "MCP config JSON content to pass via OPENCODE_CONFIG_CONTENT.")
+
+(defvar claude-code-ide--opencode-buffer-hooks nil
+  "Alist of (session-id . hook-fn) for opencode active-buffer tracking cleanup.")
 
 (defun claude-code-ide--opencode-config-path ()
   "Return the path to opencode.jsonc."
   (expand-file-name "~/.config/opencode/opencode.jsonc"))
 
 (defun claude-code-ide--jsonc-read-file (filename)
-  "Read a JSONC file, stripping comments."
+  "Read a JSONC file, stripping comments.
+Returns a hash table with symbol keys."
   (with-temp-buffer
     (insert-file-contents filename)
     ;; Strip single-line comments
@@ -374,54 +378,54 @@ a more stable viewing experience when working with multiple windows."
     (goto-char (point-min))
     (while (re-search-forward "/\\*.*?\\*/" nil t)
       (replace-match ""))
-    ;; Parse JSON
-    (json-read)))
+    ;; Parse JSON as hash-table with symbol keys for consistent gethash/puthash/remhash usage
+    (let ((json-object-type 'hash-table)
+          (json-key-type 'symbol))
+        (json-read))
+      ))
 
-(defun claude-code-ide--opencode-add-mcp (port)
-  "Register the Emacs MCP server in opencode.jsonc.
-Writes the MCP server URL pointing to localhost:PORT."
-  (let* ((config-path (claude-code-ide--opencode-config-path))
-         (config (if (file-exists-p config-path)
-                     (condition-case nil
-                         (claude-code-ide--jsonc-read-file config-path)
-                       (error (make-hash-table :test 'equal)))
-                   (make-hash-table :test 'equal)))
-         (mcp (or (and (hash-table-p config)
-                       (gethash 'mcp config))
-                  (make-hash-table :test 'equal)))
-         (entry (make-hash-table :test 'equal)))
+(defun claude-code-ide--opencode-add-mcp (port session-id)
+  "Build MCP config JSON for opencode, stored for OPENCODE_CONFIG_CONTENT.
+The config is passed via environment variable instead of writing to
+opencode.jsonc, so that opencode.jsonc can be Nix-managed."
+  (let ((mcp (make-hash-table :test 'equal))
+        (entry (make-hash-table :test 'equal)))
     (puthash 'type "remote" entry)
-    (puthash 'url (format "http://localhost:%d/mcp/opencode" port) entry)
+    (puthash 'url (format "http://localhost:%d/mcp/%s" port session-id) entry)
     (puthash 'enabled t entry)
-    (puthash 'emacs-tools mcp entry)
-    (puthash 'mcp config mcp)
-    ;; Write back
-    (with-temp-buffer
-      (insert (json-encode config))
-      (write-region (point-min) (point-max) config-path nil 'silent))
-    ;; Remember what we added for cleanup
-    (setq claude-code-ide--opencode-mcp-entry entry)))
+    (puthash 'emacs-tools entry mcp)
+    (let ((config (make-hash-table :test 'equal)))
+      (puthash 'mcp mcp config)
+      (setq claude-code-ide--opencode-mcp-content (json-encode config)))))
 
 (defun claude-code-ide--opencode-remove-mcp ()
-  "Remove the Emacs MCP entry from opencode.jsonc."
-  (when claude-code-ide--opencode-mcp-entry
-    (let* ((config-path (claude-code-ide--opencode-config-path))
-           (config (condition-case nil
-                       (claude-code-ide--jsonc-read-file config-path)
-                     (error (progn
-                              (setq claude-code-ide--opencode-mcp-entry nil)
-                              nil)))))
-      (when (and config (hash-table-p config))
-        (let ((mcp (gethash 'mcp config)))
-          (when (hash-table-p mcp)
-            (remhash 'emacs-tools mcp)
-            (if (= (hash-table-size mcp) 0)
-                (remhash 'mcp config)
-              (puthash 'mcp mcp config))
-            (with-temp-buffer
-              (insert (json-encode config))
-              (write-region (point-min) (point-max) config-path nil 'silent)))))
-      (setq claude-code-ide--opencode-mcp-entry nil))))
+  "Clear the stored MCP config (opencode.jsonc is Nix-managed)."
+  (setq claude-code-ide--opencode-mcp-content nil))
+
+(defun claude-code-ide--setup-opencode-buffer-tracking (session-id)
+  "Set up active-buffer tracking for opencode SESSION-ID.
+Adds a `buffer-list-update-hook' that calls
+`claude-code-ide-mcp-server-update-last-active-buffer' whenever the
+user switches to a file-visiting buffer, so MCP tools execute in the
+correct file context."
+  (let ((hook-fn (lambda ()
+                   (let ((buf (current-buffer)))
+                     (when (and (buffer-file-name buf)
+                                (not (claude-code-ide--session-buffer-p buf)))
+                       (claude-code-ide-mcp-server-update-last-active-buffer
+                        session-id buf))))))
+    (push (cons session-id hook-fn) claude-code-ide--opencode-buffer-hooks)
+    (add-hook 'buffer-list-update-hook hook-fn)))
+
+(defun claude-code-ide--teardown-opencode-buffer-tracking (session-id)
+  "Remove active-buffer tracking hook for opencode SESSION-ID."
+  (when-let ((hook-fn (alist-get session-id claude-code-ide--opencode-buffer-hooks
+                                  nil nil #'equal)))
+    (remove-hook 'buffer-list-update-hook hook-fn)
+    (setq claude-code-ide--opencode-buffer-hooks
+          (cl-remove session-id claude-code-ide--opencode-buffer-hooks
+              :key #'car :test #'equal))
+      ))
 
 ;;; Vterm Rendering Optimization
 
@@ -497,7 +501,14 @@ INPUT contains the terminal output stream."
                                      (when (buffer-live-p buf)
                                        (with-current-buffer buf
                                          (when claude-code-ide--vterm-render-queue
-                                           (let* ((inhibit-redisplay t)
+                                           (let* ((copy-mode-p (bound-and-true-p vterm-copy-mode))
+                                                  ;; Preserve scroll position in copy-mode
+                                                  (saved-windows
+                                                   (when copy-mode-p
+                                                     (mapcar (lambda (w)
+                                                               (list w (window-start w) (window-point w)))
+                                                             (get-buffer-window-list buf nil t))))
+                                                  (inhibit-redisplay t)
                                                   (queue claude-code-ide--vterm-render-queue)
                                                   ;; Join list in correct order
                                                   (data (apply #'concat (nreverse queue))))
@@ -507,7 +518,13 @@ INPUT contains the terminal output stream."
                                              ;; Execute queued rendering
                                              (funcall orig-fun
                                                       (get-buffer-process buf)
-                                                      data))))))
+                                                      data)
+                                             ;; Restore scroll position after flush
+                                             (when copy-mode-p
+                                               (dolist (win-info saved-windows)
+                                                 (when (window-live-p (nth 0 win-info))
+                                                   (set-window-start (nth 0 win-info) (nth 1 win-info))
+                                                   (set-window-point (nth 0 win-info) (nth 2 win-info))))))))))
                                    (current-buffer))))
             ;; Standard processing for regular output
             (funcall orig-fun process input)))))))
@@ -700,6 +717,20 @@ width has actually changed, working around the scrolling glitch."
      ;; No width change - suppress reflow
      (t nil))))
 
+(defun claude-code-ide--window-size-change-hook (frame)
+  "Sync terminal dimensions for Opencode windows in FRAME on resize.
+This runs independently of the reflow filter, ensuring opencode terminal
+processes always have correct dimensions. Only applies to opencode buffers
+since the same sync for claude-code would trigger the scrolling glitch."
+  (dolist (win (window-list frame))
+    (when-let* ((buf (window-buffer win))
+                (name (buffer-name buf))
+                ((string-prefix-p "*opencode[" name))
+                (proc (get-buffer-process buf)))
+      (set-process-window-size proc
+                               (window-body-height win)
+                               (window-body-width win)))))
+
 
 ;;; Helper Functions
 
@@ -729,11 +760,15 @@ If DIRECTORY is not provided, use the current working directory."
 (defun claude-code-ide--set-process (process &optional directory)
   "Set the Claude Code PROCESS for DIRECTORY or current working directory."
   ;; Check if this is the first session starting
-  (when (and claude-code-ide-prevent-reflow-glitch
-             (= (hash-table-count claude-code-ide--processes) 0))
-    ;; Apply advice globally for the first session
-    (advice-add (claude-code-ide--terminal-resize-handler)
-                :around #'claude-code-ide--terminal-reflow-filter))
+  (when (= (hash-table-count claude-code-ide--processes) 0)
+    ;; Register window-size hook for opencode to keep terminal dims in sync
+    ;; even when the reflow filter suppresses height-only resize signals
+    (when (claude-code-ide--opencode-p)
+      (add-hook 'window-size-change-functions #'claude-code-ide--window-size-change-hook))
+    ;; Apply reflow-glitch prevention advice for the first session
+    (when claude-code-ide-prevent-reflow-glitch
+      (advice-add (claude-code-ide--terminal-resize-handler)
+                  :around #'claude-code-ide--terminal-reflow-filter)))
   (puthash (or directory (claude-code-ide--get-working-directory))
            process
            claude-code-ide--processes))
@@ -815,16 +850,24 @@ If `claude-code-ide-focus-on-open' is non-nil, the window is selected."
           ;; Remove from process table
           (remhash directory claude-code-ide--processes)
           ;; Check if this was the last session
-          (when (and claude-code-ide-prevent-reflow-glitch
-                     (= (hash-table-count claude-code-ide--processes) 0))
-            ;; Remove advice globally when no sessions remain
-            (advice-remove (claude-code-ide--terminal-resize-handler)
-                           #'claude-code-ide--terminal-reflow-filter))
+          (when (= (hash-table-count claude-code-ide--processes) 0)
+            ;; Remove window-size hook (opencode only)
+            (when (claude-code-ide--opencode-p)
+              (remove-hook 'window-size-change-functions
+                           #'claude-code-ide--window-size-change-hook))
+            ;; Remove reflow-glitch prevention advice
+            (when claude-code-ide-prevent-reflow-glitch
+              (advice-remove (claude-code-ide--terminal-resize-handler)
+                             #'claude-code-ide--terminal-reflow-filter)))
           ;; Remove vterm rendering optimization if no sessions remain
           (when (and (eq claude-code-ide-terminal-backend 'vterm)
                      claude-code-ide-vterm-anti-flicker
                      (= (hash-table-count claude-code-ide--processes) 0))
             (advice-remove 'vterm--filter #'claude-code-ide--vterm-smart-renderer))
+          ;; Clean up opencode buffer tracking hook (no-op for claude backend)
+          (when (claude-code-ide--opencode-p)
+            (claude-code-ide--teardown-opencode-buffer-tracking
+             (gethash directory claude-code-ide--session-ids)))
           ;; Restore opencode.jsonc (no-op for claude backend)
           (claude-code-ide--opencode-remove-mcp)
           ;; Stop WebSocket MCP server (claude only)
@@ -945,10 +988,10 @@ Additional flags from `claude-code-ide-cli-extra-flags' are also included."
               (setq claude-cmd (concat claude-cmd " --allowedTools " allowed-tools)))))))
     claude-cmd))
 
-(defun claude-code-ide--build-opencode-command (&optional continue _session-id)
+(defun claude-code-ide--build-opencode-command (&optional continue session-id)
   "Build the opencode command with optional flags.
 If CONTINUE is non-nil, add the -c flag.
-SESSION-ID is unused (opencode uses its own config).
+SESSION-ID is used to register the MCP endpoint with the correct session path.
 Additional flags from `claude-code-ide-cli-extra-flags' are also included."
   (let ((cmd "opencode"))
     ;; Add continue flag if requested
@@ -968,8 +1011,9 @@ Additional flags from `claude-code-ide-cli-extra-flags' are also included."
     (when (claude-code-ide-mcp-server-ensure-server)
       (let ((port (claude-code-ide-mcp-server-get-port)))
         (when port
-          (claude-code-ide--opencode-add-mcp port)
-          (claude-code-ide-debug "Registered Emacs MCP server in opencode.jsonc on port %d" port))))
+          (claude-code-ide--opencode-add-mcp port session-id)
+          (claude-code-ide-debug "Registered Emacs MCP server in opencode.jsonc on port %d session %s"
+                                 port session-id))))
     cmd))
 
 (defun claude-code-ide--terminal-position-keeper (window-list)
@@ -977,12 +1021,12 @@ Additional flags from `claude-code-ide-cli-extra-flags' are also included."
 WINDOW-LIST contains windows requiring position synchronization.
 Implements intelligent scroll management to preserve user context
 when navigating between terminal and other buffers."
-  (dolist (win window-list)
-    (if (eq win 'buffer)
-        ;; Direct buffer point update
-        (goto-char (eat-term-display-cursor eat-terminal))
-      ;; Window-specific position management
-      (unless buffer-read-only  ; Skip when terminal is in navigation mode
+  (unless (claude-code-ide--terminal-scroll-mode-active-p)
+    (dolist (win window-list)
+      (if (eq win 'buffer)
+          ;; Direct buffer point update
+          (goto-char (eat-term-display-cursor eat-terminal))
+        ;; Window-specific position management
         (let ((terminal-point (eat-term-display-cursor eat-terminal)))
           ;; Update window point to match terminal state
           (set-window-point win terminal-point)
@@ -1026,7 +1070,10 @@ Signals an error if terminal fails to initialize."
                    (claude-code-ide--build-claude-command continue resume session-id)))
          (default-directory working-dir)
          (env-vars (if (claude-code-ide--opencode-p)
-                       (list "TERM_PROGRAM=emacs")
+                        (append (list "TERM_PROGRAM=emacs")
+                                (when claude-code-ide--opencode-mcp-content
+                                  (list (concat "OPENCODE_CONFIG_CONTENT="
+                                                claude-code-ide--opencode-mcp-content))))
                      (append (list (format "CLAUDE_CODE_SSE_PORT=%d" port)
                                    "TERM_PROGRAM=emacs"
                                    "FORCE_CODE_TERMINAL=true")
@@ -1142,6 +1189,9 @@ This function handles:
                      (process (cdr buffer-and-process)))
                 ;; Notify MCP tools server about new session with session info
                 (claude-code-ide-mcp-server-session-started session-id working-dir buffer)
+                ;; For opencode: track active buffer via hook (WebSocket server not available)
+                (when (claude-code-ide--opencode-p)
+                  (claude-code-ide--setup-opencode-buffer-tracking session-id))
                 (claude-code-ide--set-process process working-dir)
                 ;; Store session ID for cleanup
                 (puthash working-dir session-id claude-code-ide--session-ids)

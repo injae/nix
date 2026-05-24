@@ -39,6 +39,8 @@
 
 (defvar claude-code-ide-mcp-server--current-session-id)
 
+(define-error 'json-rpc-error "JSON-RPC error" 'error)
+
 ;; Require web-server at runtime to avoid batch mode issues
 (unless (featurep 'web-server)
   (condition-case err
@@ -150,16 +152,23 @@ with the appropriate session context."
               ;; Still close the connection for HTTP transport
               (claude-code-ide-mcp-http-server--send-empty-response request))
           ;; Process the request with session context
-          (let* ((claude-code-ide-mcp-server--current-session-id url-session-id)
-                 (result (claude-code-ide-mcp-http-server--dispatch method params)))
-            (claude-code-ide-debug "MCP response result computed")
-            ;; Send response
-            (claude-code-ide-mcp-http-server--send-json-response
-             request 200
-             `((jsonrpc . "2.0")
-               (id . ,id)
-               (result . ,result)))
-            (claude-code-ide-debug "MCP response sent"))))
+          (condition-case rpc-err
+              (let* ((claude-code-ide-mcp-server--current-session-id url-session-id)
+                     (result (claude-code-ide-mcp-http-server--dispatch method params)))
+                (claude-code-ide-debug "MCP response result computed")
+                ;; Send response
+                (claude-code-ide-mcp-http-server--send-json-response
+                 request 200
+                 `((jsonrpc . "2.0")
+                   (id . ,id)
+                   (result . ,result)))
+                (claude-code-ide-debug "MCP response sent"))
+            (json-rpc-error
+             (let* ((data (cdr rpc-err))
+                    (code (car data))
+                    (msg (cadr data)))
+               (claude-code-ide-debug "MCP RPC error: %d %s" code msg)
+               (claude-code-ide-mcp-http-server--send-json-error request id code msg))))))
 
     (json-parse-error
      (claude-code-ide-mcp-http-server--send-json-error
@@ -189,8 +198,11 @@ PARAMS is the parameters alist."
      (claude-code-ide-mcp-http-server--handle-tools-list params))
     ("tools/call"
      (claude-code-ide-mcp-http-server--handle-tools-call params))
+    ("ping"
+     (make-hash-table :test 'equal))
     (_
-     (signal 'json-rpc-error (list -32601 "Method not found")))))
+     (claude-code-ide-debug "MCP method not found: %s" method)
+     (signal 'json-rpc-error (list -32601 (format "Method not found: %s" method))))))
 
 (defun claude-code-ide-mcp-http-server--handle-initialize (_params)
   "Handle the initialize method."

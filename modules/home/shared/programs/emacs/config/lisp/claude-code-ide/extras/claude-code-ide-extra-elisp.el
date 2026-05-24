@@ -8,7 +8,8 @@
   "Return all functions called by the Elisp function NAME.
 Uses macro-expansion so indirect calls via macros are included."
   (condition-case err
-      (let ((sym (intern-soft name)))
+      (let ((sym (intern-soft name))
+            (_ (require 'helpful nil 'noerror)))
         (cond
          ((not sym)
           (format "Symbol '%s' not found." name))
@@ -38,29 +39,12 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-callees
-    :name "claude-code-ide-mcp-elisp-callees"
+    :name "elisp_callees"
     :description "List all functions called by a given Elisp function. Performs macro-expansion before analysis, so indirect calls via macros are included. Equivalent to helpful's 'Functions used by' section. Only works with Elisp symbols."
     :args '((:name "name"
              :type string
              :description "The name of the Elisp function to inspect")))
 
-(defun claude-code-ide-mcp-elisp-check-parens (file-path)
-  "Check parenthesis balance of FILE-PATH using check-parens."
-  (condition-case err
-      (with-temp-buffer
-        (insert-file-contents file-path)
-        (condition-case e
-            (progn (check-parens) "balanced")
-          (error (error-message-string e))))
-    (error (format "Error: %s" (error-message-string err)))))
-
-(claude-code-ide-make-tool
-    :function #'claude-code-ide-mcp-elisp-check-parens
-    :name "claude-code-ide-mcp-elisp-check-parens"
-    :description "Check parenthesis balance of an Emacs Lisp file using check-parens. Returns \"balanced\" or an error message with the mismatch location. Call after every edit to a .el file."
-    :args '((:name "file_path"
-             :type string
-             :description "Absolute path to the .el file to check")))
 
 (defun claude-code-ide-mcp-elisp-load-file (file-path)
   "Load FILE-PATH into the running Emacs session."
@@ -72,7 +56,7 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-load-file
-    :name "claude-code-ide-mcp-elisp-load-file"
+    :name "elisp_load"
     :description "Load an Emacs Lisp file into the running Emacs session via load-file. Use after editing a .el file to test changes interactively."
     :args '((:name "file_path"
              :type string
@@ -103,8 +87,9 @@ Uses macro-expansion so indirect calls via macros are included."
          ((not (fboundp sym))
           (format "'%s' is not a function." name))
          (t
-          (let* ((loaded-src-bufs (mapcar #'elisp-refs--contents-buffer
-                                          (elisp-refs--loaded-paths)))
+          (let* ((_ (require 'elisp-refs nil 'noerror))
+                 (loaded-src-bufs (mapcar #'elisp-refs--contents-buffer
+                                           (elisp-refs--loaded-paths)))
                  (extracted
                   (unwind-protect
                       (claude-code-ide-mcp--elisp-refs-extract
@@ -132,7 +117,7 @@ Uses macro-expansion so indirect calls via macros are included."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-find-references
-    :name "claude-code-ide-mcp-elisp-find-references"
+    :name "elisp_refs"
     :description "Find all call-sites for an Elisp function across all loaded files. Returns file paths and the surrounding lines for each reference. Equivalent to helpful's 'Find all references' button. Only works with Elisp symbols."
     :args '((:name "name"
              :type string

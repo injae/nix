@@ -29,11 +29,12 @@ Otherwise return all user-visible buffers ordered by recency."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-buffer-info
-    :name "claude-code-ide-mcp-buffer-info"
+    :name "buffer_info"
     :description "Return buffer name and major-mode. With no argument, lists all user-visible buffers ordered by recency (most recently used first). Pass a buffer name to get info for that specific buffer only."
-    :args '((:name "buffer_name"
-             :type string
-             :description "Optional buffer name. Omit to list all user-visible buffers.")))
+     :args '((:name "buffer_name"
+              :type string
+              :optional t
+              :description "Optional buffer name. Omit to list all user-visible buffers.")))
 
 (defun claude-code-ide-mcp-last-user-buffer ()
   "Return the most recently used buffer that is not internal or a claude-code buffer."
@@ -52,7 +53,7 @@ Otherwise return all user-visible buffers ordered by recency."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-last-user-buffer
-    :name "claude-code-ide-mcp-last-user-buffer"
+    :name "last_buffer"
     :description "Return the most recently used buffer that is not an internal buffer or a claude-code buffer. Useful for identifying which file the user was last editing."
     :args '())
 
@@ -103,8 +104,8 @@ Opens the file in the background if not already open."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-file-outline
-    :name "claude-code-ide-mcp-file-outline"
-    :description "Return major-mode, treesit availability, and imenu symbol list for a file path in one call. Opens the file in the background if not already open. Replaces separate file-mode + imenu-list-symbols calls — use this as Step 1+2 of file analysis."
+    :name "file_outline"
+    :description "Return major-mode, treesit availability, and all symbols with line numbers for a file. Opens in background if needed."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file to inspect.")))
@@ -141,8 +142,8 @@ Uses tree-sitter to find exact declaration bounds when available."
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-symbol-source
-    :name "claude-code-ide-mcp-symbol-source"
-    :description "Return the source code of the declaration at a given line using tree-sitter to find exact bounds. Takes a file path and line number (from file-outline). Replaces separate treesit-info + Read calls — use this as Step 3+4 of file analysis."
+    :name "symbol_source"
+    :description "Return source of declaration at a line number (from file_outline) using tree-sitter bounds. Falls back to 30-line read for modes without tree-sitter."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to the file.")

@@ -7,6 +7,13 @@
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
+    ;; Match vterm-color-black background to Emacs default background.
+    ;; Opencode/Claude Code use ANSI black (#0) as background for UI
+    ;; elements; without this, it renders as gray and clashes with the
+    ;; Emacs theme.
+    (let ((bg (face-background 'default nil t)))
+      (set-face-background 'vterm-color-black bg)
+      (set-face-foreground 'vterm-color-black bg))
 )
 
 
@@ -49,7 +56,7 @@
     :config
     (setq vterm-toggle-fullscreen-p nil)
     (add-to-list 'vterm-toggle-togglable-buffer-functions
-                 (lambda (buf) (not (string-match-p "\\*claude-code" (buffer-name buf)))))
+                 (lambda (buf) (not (string-match-p "\\*\\(?:claude-code\\|opencode\\)\\[" (buffer-name buf)))))
     (add-to-list 'display-buffer-alist
                 '((lambda (buffer-or-name _)
                     (let ((buffer (get-buffer buffer-or-name)))

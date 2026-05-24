@@ -2,18 +2,39 @@
 ;;; Commentary:
 ;;; Code:
 
+(defvar claude-code-ide--extras-files
+  '("claude-code-ide-extra-buffer-info"
+    "claude-code-ide-extra-call-function"
+    "claude-code-ide-extra-describe-symbol"
+    "claude-code-ide-extra-elisp"
+    "claude-code-ide-extra-formatting"
+    "claude-code-ide-extra-lsp-nav-position"
+    "claude-code-ide-extra-lsp-nav-workspace"
+    "claude-code-ide-extra-magit"
+    "claude-code-ide-extra-navigation")
+  "Extras files loaded by `claude-code-ide-reload-mcp-tools'.")
+
 (let ((extras-dir (expand-file-name "extras" (file-name-directory
                                               (or load-file-name buffer-file-name)))))
   (add-to-list 'load-path extras-dir))
 
-(require 'claude-code-ide-extra-buffer-info)
-(require 'claude-code-ide-extra-call-function)
-(require 'claude-code-ide-extra-describe-symbol)
-(require 'claude-code-ide-extra-elisp)
-(require 'claude-code-ide-extra-formatting)
-(require 'claude-code-ide-extra-lsp-navigation)
-(require 'claude-code-ide-extra-magit)
-(require 'claude-code-ide-extra-navigation)
+(dolist (f claude-code-ide--extras-files)
+  (require (intern f)))
+
+(defun claude-code-ide-reload-mcp-tools ()
+  "Reset the MCP tool registry and force-reload all extras files.
+Use this after `just switch' to apply tool changes without restarting Emacs.
+Bypasses `require' caching by calling `load-file' directly."
+  (interactive)
+  (setq claude-code-ide-mcp-server-tools nil)
+  (let ((dir (expand-file-name
+              "extras"
+              (file-name-directory
+               (locate-library "claude-code-ide-emacs-tools-extra")))))
+    (dolist (f claude-code-ide--extras-files)
+      (load-file (expand-file-name (concat f ".el") dir))))
+  (message "MCP tools reloaded: %d tools registered"
+           (length claude-code-ide-mcp-server-tools)))
 
 (provide 'claude-code-ide-emacs-tools-extra)
 ;;; claude-code-ide-emacs-tools-extra.el ends here
