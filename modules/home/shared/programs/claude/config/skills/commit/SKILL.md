@@ -1,9 +1,9 @@
 ---
-name: commit-msg
-description: "Generate a conventional commit message for staged changes and copy it to the Emacs clipboard. Use when the user asks for a commit message or wants to commit staged files."
+name: commit
+description: "Generate a conventional commit message for already-staged changes and open the Magit commit buffer with it pre-filled. Use when the user asks for a commit message or wants to commit already-staged files."
 user-invocable: true
 allowed-tools:
-  - Bash(git diff*)
+  - Bash(git diff --cached*)
   - Bash(git log*)
   - mcp__emacs-tools__call-fn
   - mcp__emacs-tools__git-prepare-commit
@@ -11,14 +11,14 @@ allowed-tools:
 
 # Generate Commit Message
 
-Generate a one-line conventional commit message for staged changes, copy to the Emacs clipboard, and open the Magit commit buffer.
+Generate a one-line conventional commit message from staged changes, copy it to the Emacs clipboard, and open the Magit commit buffer with it pre-filled.
 
 ---
 
 ## Step 1 — Gather staged changes
 
 Run in parallel:
-- `git diff --cached --stat` — overview of what's staged
+- `git diff --cached --stat` — overview of staged files
 - `git diff --cached` — full diff content
 - `git log --oneline -5` — recent commit style to match
 
@@ -30,50 +30,24 @@ Answer YES or NO:
 - **YES** if `git diff --cached --stat` returned file changes
 - **NO** if the output is empty
 
-Commit out loud before proceeding:
-> "Staged changes: **[present / none]**. Next: **[generate message / inform user]**."
+If NO → tell the user nothing is staged and stop.
 
 ---
 
-## Step 2 (staged = NO) — Nothing to commit
-
-Tell the user nothing is staged and stop.
-
----
-
-## Step 3 (staged = YES) — Generate commit message
+## Step 3 — Generate commit message
 
 Analyze the diff and write a one-line message:
 - Format: `type(scope): message` ([Conventional Commits](https://www.conventionalcommits.org/))
 - Types: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `test`
 - Scope: affected module or area (`emacs`, `darwin`, `claude`, `home`, etc.)
-- Message: concise, imperative, lowercase, no trailing period
-- One line only — always in English
+- One line, English, lowercase, no trailing period
 
 ---
 
-## Step 4 — Copy to Emacs clipboard
+## Step 4 — Copy to clipboard and open Magit commit buffer
 
-Call `call-fn`:
-- `name`: `kill-new`
-- `args`: `["<the commit message>"]`
+Run in parallel:
+- `call-fn` — `name`: `kill-new`, `args`: `["<the commit message>"]`
+- `git-prepare-commit` — with the message pre-filled
 
----
-
-## Step 5 — Open Magit commit buffer
-
-Call `git-prepare-commit` with the message.
-
-Answer YES or NO — did it succeed?
-- **YES** → tell the user to press **C-c C-c** to commit
-- **NO** (error: "COMMIT_EDITMSG not found") → Step 5b
-
----
-
-## Step 5b (prepare-commit = NO) — Open Magit status first
-
-Call `call-fn`:
-- `name`: `magit-status`
-- `args`: `[]`
-
-Then retry `git-prepare-commit`. Tell the user to press **C-c C-c** to commit.
+Tell the user to press **C-c C-c** to commit.

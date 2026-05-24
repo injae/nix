@@ -1,52 +1,51 @@
 ---
 name: structured-commit
-description: "Analyze current changes, divide into logical commit units, and commit each unit with a conventional commit message. Use when the user wants to split changes into multiple organized commits, or asks for 'structured commit', 'multi-commit', or 'commit by unit'."
+description: "Analyze current changes, divide into logical commit units, and commit each unit manually via Magit. Use when the user wants to split changes into multiple organized commits, or asks for 'structured commit', 'multi-commit', or 'commit by unit'."
 user-invocable: true
 allowed-tools:
   - Bash(git diff*)
   - Bash(git log*)
   - Bash(git status*)
   - Bash(git add*)
-  - Bash(git restore --staged*)
   - mcp__emacs-tools__call-fn
-  - mcp__emacs-tools__git-commit
+  - mcp__emacs-tools__git-prepare-commit
 ---
 
 # Structured Commit
 
-현재 변경사항을 논리적 커밋 단위로 분류하고 각 단위를 순차적으로 커밋한다.
+Analyze all current changes, group them into logical commit units, and commit each unit sequentially via Magit.
 
 ---
 
-## Step 1 — 변경사항 수집
+## Step 1 — Gather changes
 
 Run in parallel:
-- `git status --short` — staged/unstaged 파일 목록
-- `git diff HEAD` — 전체 diff 내용
-- `git log --oneline -5` — 최근 커밋 스타일 참고
+- `git status --short` — staged/unstaged file list
+- `git diff HEAD` — full diff content
+- `git log --oneline -5` — recent commit style to match
 
 ---
 
-## Step 2 — 변경사항 있는지 확인
+## Step 2 — Evaluate: Are there changes?
 
 Answer YES or NO:
 - **YES** if `git status --short` returned file changes
 - **NO** if the output is empty
 
-If NO → 변경사항이 없다고 알리고 종료.
+If NO → tell the user there are no changes and stop.
 
 ---
 
-## Step 3 — 커밋 단위 제안
+## Step 3 — Propose commit groups
 
-diff를 분석해 논리적으로 묶을 수 있는 커밋 단위를 나눈다.
+Analyze the diff and divide changes into logical groups.
 
-**그룹 기준:**
-- 같은 기능/버그/모듈에 속하는 파일끼리 묶기
-- 독립적으로 리뷰/롤백 가능한 단위로 분리
-- 하나의 변경이 여러 파일에 걸쳐 있으면 같은 그룹
+**Grouping criteria:**
+- Files belonging to the same feature, fix, or module go in the same group
+- Each group should be independently reviewable and revertable
+- Changes spanning multiple files for the same purpose stay together
 
-**출력 형식:**
+**Output format:**
 ```
 Group 1: feat(claude): add structured-commit skill
   - modules/home/shared/programs/claude/config/skills/structured-commit/SKILL.md
@@ -56,52 +55,44 @@ Group 2: fix(emacs): update navigation tool fallbacks
   - modules/home/shared/programs/emacs/config/module/+lsp.el
 ```
 
-각 그룹에 Conventional Commit 메시지 포함:
-- Format: `type(scope): message`
-- Types: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `test`
-- 한 줄, 영어, 소문자, 마침표 없음
-
-사용자에게 그룹 확인 요청: "이 순서로 커밋할까요? 수정이 필요하면 알려주세요."
+Ask the user: "Commit in this order? Let me know if you'd like to adjust."
 
 ---
 
-## Step 4 — 사용자 확인 대기
+## Step 4 — Evaluate: User approved?
 
 Answer YES or NO:
-- **YES** if 사용자가 승인하거나 별도 수정 없이 진행 의사 표시
-- **NO** if 사용자가 그룹 수정을 요청
+- **YES** if the user approves or signals to proceed
+- **NO** if the user requests changes
 
-If NO → 피드백 반영해 그룹 재구성 후 Step 3으로 돌아가 재확인.
+If NO → incorporate feedback, rebuild groups, return to Step 3.
 
 ---
 
-## Step 5 — 그룹별 순차 커밋
+## Step 5 — Commit each group sequentially
 
-각 그룹을 순서대로 처리한다. 그룹 간 순서는 중요하므로 병렬 실행하지 않는다.
+Process groups in order. Wait for the user to complete each Magit commit before proceeding to the next.
 
-**그룹마다:**
+**For each group:**
 
-1. 해당 그룹 파일만 스테이징 (모든 파일을 하나의 `git add` 명령으로):
+1. Stage only that group's files in a single `git add` call:
    ```
    git add <file1> <file2> ...
    ```
 
-2. `git-commit` MCP 툴로 즉시 커밋:
-   - `message`: 해당 그룹의 커밋 메시지
+2. Follow **commit Steps 3–4**: generate the commit message for this group's diff, then run `kill-new` + `git-prepare-commit` in parallel.
 
-3. 커밋 성공 시 진행 상황 출력:
+3. Tell the user:
    ```
-   ✓ Group 1/3: feat(claude): add structured-commit skill
+   [Group N/M] <commit message>
+   Press C-c C-c in Magit to commit, then continue here.
    ```
 
-**Gate check — 다음 그룹으로 넘어가기 전 확인:**
-- `git-commit` 가 에러 없이 완료됐는가?
-- NO → 에러 내용 보고 후 중단, 사용자에게 상황 알림
+4. When the user responds → proceed to the next group.
 
 ---
 
-## Step 6 — 완료
+## Step 6 — Done
 
-모든 그룹 커밋 완료 후:
-- 완료된 커밋 목록 요약 출력
-- `call-fn` 으로 Magit status 열기: `name`: `magit-status`, `args`: `[]`
+- Print a summary of all committed groups
+- Open Magit status: `call-fn` — `name`: `magit-status`, `args`: `[]`
