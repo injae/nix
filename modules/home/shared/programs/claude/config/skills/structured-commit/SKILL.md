@@ -26,6 +26,18 @@ Run in parallel:
 
 ---
 
+## Step 1b — Reset staging index
+
+If **any** files show a non-blank first column in `git status --short` (i.e., already staged), run:
+
+```
+git restore --staged .
+```
+
+This gives a clean index before group-by-group staging. Worktree files are untouched.
+
+---
+
 ## Step 2 — Evaluate: Are there changes?
 
 Answer YES or NO:
