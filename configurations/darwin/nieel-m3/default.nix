@@ -51,19 +51,21 @@ in
     NIX_CONFIG_DIR = "${home}/nix";
   };
 
-  local.ollama = {
-    enable = true;
-    environmentVariables.OLLAMA_KEEP_ALIVE = "-1";
-    modelFiles.qwen3-coder = ''
-      FROM SimonPu/Qwen3-Coder:30B-Instruct_Q4_K_XL
+  local.ollama.enable = false;
 
-      PARAMETER num_ctx 32768
-      PARAMETER temperature 0.7
-      PARAMETER top_p 0.8
-      PARAMETER top_k 20
-      PARAMETER repeat_penalty 1.05
-    '';
-    preloadModels = [ "qwen3-coder" ];
+  local.llama-cpp = {
+    enable = true;
+    modelsDir = "/Users/${flake.config.people.myself}/.local/share/llama-cpp/models";
+    models = [
+      {
+        name = "qwen3-coder";
+        filename = "qwen3-coder-30b-q4_k_xl.gguf";
+        url = "https://huggingface.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF/resolve/main/Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf";
+      }
+    ];
+    serve = "qwen3-coder";
+    gpuLayers = 99;
+    ctxSize = 32768;
   };
 
   # Enable touch id for sudo
