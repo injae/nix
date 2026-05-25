@@ -9,6 +9,16 @@
             "command": "python3 ~/.claude/hooks/session-start.py"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/hooks/caveman-activate.js",
+            "timeout": 5,
+            "statusMessage": "Loading caveman mode..."
+          }
+        ]
       }
     ],
     "Stop": [
@@ -34,18 +44,30 @@
     "UserPromptSubmit": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/emacs-buffer-context.py"
+          },
           { "type": "command", "command": "~/.claude/hooks/skill-eval.sh" }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/hooks/caveman-mode-tracker.js",
+            "timeout": 5,
+            "statusMessage": "Tracking caveman mode..."
+          }
         ]
       }
     ]
   },
   "permissions": {
     "allow": [
-      "Read(/Users/nieel/nix/**)",
-      "Edit(/Users/nieel/nix/**)",
-      "Write(/Users/nieel/nix/**)",
-      "Bash(git -C /Users/nieel/nix*)",
-      "Read(/Users/nieel/.emacs.d/**)",
+      "Read(~/nix/**)",
+      "Bash(git -C ~/nix*)",
+      "Read(~/.emacs.d/**)",
       "mcp__emacs-tools__*"
     ],
     "deny": [
@@ -61,8 +83,8 @@
       "Read(**/.ssh/**)",
       "Read(**/.aws/credentials)",
       "Read(**/secrets/**)",
-      "Read(./.config/sops/**)",
-      "Read(./.config/sops-nix/**)",
+      "Read(~/.config/sops/**)",
+      "Read(~/.config/sops-nix/**)",
       "Bash(rm -rf /:*)"
     ]
   },
@@ -73,6 +95,19 @@
     "skill-creator@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "caveman@caveman": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"~/.claude/hooks/caveman-statusline.sh\""
   }
 }
