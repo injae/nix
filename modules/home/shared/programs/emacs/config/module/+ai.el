@@ -15,6 +15,8 @@
     (claude-code-ide-focus-claude-after-ediff nil)
     ;; (claude-code-ide-backend 'opencode)   ;; switch to opencode
     ;; (claude-code-ide-open-code-model "anthropic/claude-sonnet-4-20250514")
+    ;; (claude-code-ide-backend 'pi)          ;; switch to pi
+    ;; (claude-code-ide-pi-model "anthropic/claude-sonnet-4")
     :config
     (claude-code-ide-emacs-tools-setup)
     (require 'claude-code-ide-emacs-tools-extra))

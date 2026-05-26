@@ -62,7 +62,6 @@
 (require 'project)
 (require 'claude-code-ide-debug)
 (require 'claude-code-ide-mcp)
-(require 'claude-code-ide-transient)
 (require 'claude-code-ide-mcp-server)
 (require 'claude-code-ide-emacs-tools)
 (require 'json)
@@ -92,7 +91,7 @@
 ;;; Customization
 
 (defgroup claude-code-ide nil
-  "AI CLI integration for Emacs (Claude Code / Opencode)."
+  "AI CLI integration for Emacs (Claude Code / Opencode / Pi)."
   :group 'tools
   :prefix "claude-code-ide-")
 
@@ -101,12 +100,18 @@
   :type 'string
   :group 'claude-code-ide)
 
+(defcustom claude-code-ide-pi-cli-path "pi"
+  "Path to the Pi CLI executable."
+  :type 'string
+  :group 'claude-code-ide)
+
 (defcustom claude-code-ide-backend 'claude
   "AI backend for terminal sessions.
-'claude runs Claude Code, 'opencode runs Opencode.
+'claude runs Claude Code, 'opencode runs Opencode, 'pi runs Pi.
 Changes CLI path, buffer naming, and MCP configuration."
   :type '(choice (const :tag "Claude Code" claude)
-                 (const :tag "Opencode" opencode))
+                 (const :tag "Opencode" opencode)
+                 (const :tag "Pi" pi))
   :group 'claude-code-ide)
 
 (defcustom claude-code-ide-buffer-name-function #'claude-code-ide--default-buffer-name
@@ -141,6 +146,13 @@ If nil, uses opencode's default agent."
                  (string :tag "Agent name"))
   :group 'claude-code-ide)
 
+(defcustom claude-code-ide-pi-model nil
+  "Model to use with pi (--model flag).
+If nil, uses pi's default model."
+  :type '(choice (const :tag "Default" nil)
+                 (string :tag "Model name (e.g. anthropic/claude-sonnet-4)"))
+  :group 'claude-code-ide)
+
 (defcustom claude-code-ide-system-prompt nil
   "System prompt to append to Claude's default system prompt.
 When non-nil, the --append-system-prompt flag will be added with this value.
@@ -153,9 +165,13 @@ Set to nil to disable (default)."
   "Configuration for allowed MCP tools when MCP server is enabled.
 Can be one of:
   'auto - Automatically allow all configured emacs-tools (default)
-  nil - Disable the --allowedTools flag
-  A string - Custom pattern/tools passed directly to --allowedTools
-  A list of strings - List of specific tool names to allow"
+  nil - Disable tool allowlist flag
+  A string - Custom pattern/tools passed to backend tool flag
+  A list of strings - List of specific tool names to allow
+
+Backend mapping:
+  claude -> --allowedTools
+  pi     -> (no tool allowlist flag; keep CLI defaults)"
   :type '(choice (const :tag "Auto (all emacs-tools)" auto)
                  (const :tag "Disabled" nil)
                  (string :tag "Custom pattern")
@@ -335,23 +351,30 @@ a more stable viewing experience when working with multiple windows."
   "Return non-nil if the current backend is opencode."
   (eq claude-code-ide-backend 'opencode))
 
+(defun claude-code-ide--pi-p ()
+  "Return non-nil if the current backend is pi."
+  (eq claude-code-ide-backend 'pi))
+
 (defun claude-code-ide--backend-cli-path ()
   "Return the CLI path for the current backend."
-  (if (claude-code-ide--opencode-p)
-      "opencode"
-    claude-code-ide-cli-path))
+  (cond
+   ((claude-code-ide--opencode-p) "opencode")
+   ((claude-code-ide--pi-p) claude-code-ide-pi-cli-path)
+   (t claude-code-ide-cli-path)))
 
 (defun claude-code-ide--backend-buffer-prefix ()
   "Return the buffer name prefix for the current backend."
-  (if (claude-code-ide--opencode-p)
-      "*opencode["
-    "*claude-code["))
+  (cond
+   ((claude-code-ide--opencode-p) "*opencode[")
+   ((claude-code-ide--pi-p) "*pi[")
+   (t "*claude-code[")))
 
 (defun claude-code-ide--backend-name ()
   "Return the display name for the current backend."
-  (if (claude-code-ide--opencode-p)
-      "Opencode"
-    "Claude Code"))
+  (cond
+   ((claude-code-ide--opencode-p) "Opencode")
+   ((claude-code-ide--pi-p) "Pi")
+   (t "Claude Code")))
 
 ;;; Opencode MCP Config Management
 
@@ -681,11 +704,20 @@ This function binds:
     ('eat (not (bound-and-true-p eat--semi-char-mode)))
     (_ nil)))
 
-(defun claude-code-ide--session-buffer-p (buffer)
-  "Check if BUFFER belongs to a claude-code-ide session."
+(defconst claude-code-ide--session-buffer-prefixes
+  '("*claude-code[" "*opencode[" "*pi[")
+  "Buffer name prefixes used by claude-code-ide backends.")
+
+(defun claude-code-ide-session-buffer-p (buffer)
+  "Return non-nil if BUFFER belongs to any claude-code-ide backend session."
   (when-let ((name (if (stringp buffer) buffer (buffer-name buffer))))
-    (or (string-prefix-p "*claude-code[" name)
-        (string-prefix-p "*opencode[" name))))
+    (cl-some (lambda (prefix)
+               (string-prefix-p prefix name))
+             claude-code-ide--session-buffer-prefixes)))
+
+(defun claude-code-ide--session-buffer-p (buffer)
+  "Backward-compatible alias for `claude-code-ide-session-buffer-p'."
+  (claude-code-ide-session-buffer-p buffer))
 
 (defun claude-code-ide--terminal-reflow-filter (original-fn &rest args)
   "Filter terminal reflows to prevent height-only resize triggers.
@@ -988,6 +1020,59 @@ Additional flags from `claude-code-ide-cli-extra-flags' are also included."
               (setq claude-cmd (concat claude-cmd " --allowedTools " allowed-tools)))))))
     claude-cmd))
 
+(defun claude-code-ide--write-mcp-config-temp-file (config)
+  "Write MCP CONFIG JSON to a temp file and return its path."
+  (let ((file (make-temp-file "claude-code-ide-mcp-" nil ".json"))
+        (json-str (json-encode config)))
+    (with-temp-file file
+      (insert json-str))
+    file))
+
+(defun claude-code-ide--build-pi-command (&optional continue resume session-id)
+  "Build the pi command with optional flags.
+If CONTINUE is non-nil, add the -c flag.
+If RESUME is non-nil, add the -r flag.
+If SESSION-ID is provided, it's included in the MCP server URL path.
+If `claude-code-ide-pi-model' is non-nil, add the --model flag.
+If `claude-code-ide-system-prompt' is non-nil, add the --append-system-prompt flag.
+Additional flags from `claude-code-ide-cli-extra-flags' are also included."
+  (let ((cmd (claude-code-ide--backend-cli-path)))
+    ;; Add resume flag if requested
+    (when resume
+      (setq cmd (concat cmd " -r")))
+    ;; Add continue flag if requested
+    (when continue
+      (setq cmd (concat cmd " -c")))
+    ;; Add model if configured
+    (when claude-code-ide-pi-model
+      (setq cmd (concat cmd " --model " (shell-quote-argument claude-code-ide-pi-model))))
+    ;; Add append-system-prompt flag with Emacs context
+    (let ((emacs-prompt "IMPORTANT: Connected to Emacs via claude-code-ide.el integration. Emacs uses mixed coordinates: Lines: 1-based (line 1 = first line), Columns: 0-based (column 0 = first column). Example: First character in file is at line 1, column 0. Available: xref (LSP), tree-sitter, imenu, project.el, flycheck/flymake diagnostics. Context-aware with automatic project/file/selection tracking. For edits to existing files, prefer showing an `openDiff` review first, then apply `edit`/`write` after confirmation.")
+          (combined-prompt nil))
+      (setq combined-prompt emacs-prompt)
+      (when claude-code-ide-system-prompt
+        (setq combined-prompt (concat combined-prompt "\n\n" claude-code-ide-system-prompt)))
+      (setq cmd (concat cmd " --append-system-prompt "
+                        (shell-quote-argument combined-prompt))))
+    ;; Add any extra flags
+    (when (and claude-code-ide-cli-extra-flags
+               (not (string-empty-p claude-code-ide-cli-extra-flags)))
+      (setq cmd (concat cmd " " claude-code-ide-cli-extra-flags)))
+    ;; Add MCP config if enabled
+    (when (claude-code-ide-mcp-server-ensure-server)
+      (when-let ((config (claude-code-ide-mcp-server-get-config session-id)))
+        (let* ((json-str (json-encode config))
+               (config-path (claude-code-ide--write-mcp-config-temp-file config)))
+          (claude-code-ide-debug "MCP tools config JSON (pi): %s" json-str)
+          (claude-code-ide-debug "MCP config path (pi): %s" config-path)
+          ;; pi expects --mcp-config PATH (not inline JSON).
+          (setq cmd (concat cmd " --mcp-config " (shell-quote-argument config-path)))
+          ;; NOTE: Do not pass tool allowlist flags to pi.
+          ;; pi's --tools is global allowlist; passing MCP-only names can
+          ;; hide built-in tools (read/bash/edit/write). Keep CLI defaults.
+          )))
+    cmd))
+
 (defun claude-code-ide--build-opencode-command (&optional continue session-id)
   "Build the opencode command with optional flags.
 If CONTINUE is non-nil, add the -c flag.
@@ -1065,20 +1150,28 @@ Returns a cons cell of (buffer . process) on success.
 Signals an error if terminal fails to initialize."
   ;; Ensure terminal backend is available before proceeding
   (claude-code-ide--terminal-ensure-backend)
-  (let* ((ai-cmd (if (claude-code-ide--opencode-p)
-                     (claude-code-ide--build-opencode-command continue session-id)
-                   (claude-code-ide--build-claude-command continue resume session-id)))
+  (let* ((ai-cmd (cond
+                  ((claude-code-ide--opencode-p)
+                   (claude-code-ide--build-opencode-command continue session-id))
+                  ((claude-code-ide--pi-p)
+                   (claude-code-ide--build-pi-command continue resume session-id))
+                  (t
+                   (claude-code-ide--build-claude-command continue resume session-id))))
          (default-directory working-dir)
-         (env-vars (if (claude-code-ide--opencode-p)
-                        (append (list "TERM_PROGRAM=emacs")
-                                (when claude-code-ide--opencode-mcp-content
-                                  (list (concat "OPENCODE_CONFIG_CONTENT="
-                                                claude-code-ide--opencode-mcp-content))))
+         (env-vars (cond
+                    ((claude-code-ide--opencode-p)
+                     (append (list "TERM_PROGRAM=emacs")
+                             (when claude-code-ide--opencode-mcp-content
+                               (list (concat "OPENCODE_CONFIG_CONTENT="
+                                             claude-code-ide--opencode-mcp-content)))))
+                    ((claude-code-ide--pi-p)
+                     (list "TERM_PROGRAM=emacs"))
+                    (t
                      (append (list (format "CLAUDE_CODE_SSE_PORT=%d" port)
                                    "TERM_PROGRAM=emacs"
                                    "FORCE_CODE_TERMINAL=true")
                              (when claude-code-ide-no-flicker
-                               (list "CLAUDE_CODE_NO_FLICKER=1"))))))
+                               (list "CLAUDE_CODE_NO_FLICKER=1")))))))
     ;; Log the command for debugging
     (claude-code-ide-debug "Starting %s with command: %s" (claude-code-ide--backend-name) ai-cmd)
     (claude-code-ide-debug "Working directory: %s" working-dir)
@@ -1175,7 +1268,10 @@ This function handles:
             (session-id (format "%s-%s-%s"
                                 (file-name-nondirectory (directory-file-name working-dir))
                                 (format-time-string "%Y%m%d-%H%M%S")
-                                (if (claude-code-ide--opencode-p) "open" "claude"))))
+                                (cond
+                                 ((claude-code-ide--opencode-p) "open")
+                                 ((claude-code-ide--pi-p) "pi")
+                                 (t "claude")))))
         (condition-case err
             (progn
               ;; Start MCP server (WebSocket IDE server for Claude, skip for opencode)
@@ -1260,7 +1356,7 @@ This function handles:
 ;;;###autoload
 (defun claude-code-ide-resume ()
   "Resume the AI CLI for the current project or directory.
-For claude: starts with -r (resume) flag.
+For claude/pi: starts with -r (resume) flag.
 For opencode: starts with -c (continue) flag."
   (interactive)
   (if (claude-code-ide--opencode-p)
@@ -1270,8 +1366,7 @@ For opencode: starts with -c (continue) flag."
 ;;;###autoload
 (defun claude-code-ide-continue ()
   "Continue the most recent conversation in the current directory.
-For claude: starts with -c (continue) flag.
-For opencode: starts with -c (continue) flag."
+For claude/pi/opencode: starts with -c (continue) flag."
   (interactive)
   (claude-code-ide--start-session t))
 
@@ -1457,6 +1552,8 @@ If none are visible, show the most recently accessed one."
      ;; No recent session available
      (t
       (user-error "No recent %s session to toggle" (claude-code-ide--backend-name))))))
+
+(require 'claude-code-ide-transient)
 
 (provide 'claude-code-ide)
 

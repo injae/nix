@@ -71,6 +71,7 @@
 (defvar claude-code-ide-backend)
 (defvar claude-code-ide-open-code-model)
 (defvar claude-code-ide-open-code-agent)
+(defvar claude-code-ide-pi-model)
 ;; Declare functions
 (declare-function claude-code-ide--backend-name "claude-code-ide" ())
 (declare-function claude-code-ide--opencode-p "claude-code-ide" ())
@@ -232,11 +233,14 @@ Otherwise, if multiple sessions exist, prompt for selection."
   (claude-code-ide-log "Window height set to %d" height))
 
 (transient-define-suffix claude-code-ide--set-backend ()
-  "Toggle backend between Claude Code and Opencode."
-  :description (lambda () (format "Backend: %s" (if (eq claude-code-ide-backend 'opencode) "Opencode" "Claude Code")))
+  "Cycle backend between Claude Code, Opencode, and Pi."
+  :description (lambda () (format "Backend: %s" (claude-code-ide--backend-name)))
   (interactive)
   (setq claude-code-ide-backend
-        (if (eq claude-code-ide-backend 'claude) 'opencode 'claude))
+        (pcase claude-code-ide-backend
+          ('claude 'opencode)
+          ('opencode 'pi)
+          (_ 'claude)))
   (claude-code-ide-log "Backend switched to %s" (claude-code-ide--backend-name)))
 
 (transient-define-suffix claude-code-ide--set-open-code-model (model)
@@ -254,6 +258,14 @@ Otherwise, if multiple sessions exist, prompt for selection."
                                    (or claude-code-ide-open-code-agent ""))))
   (setq claude-code-ide-open-code-agent (if (string-empty-p agent) nil agent))
   (claude-code-ide-log "Opencode agent set to %s" (or claude-code-ide-open-code-agent "default")))
+
+(transient-define-suffix claude-code-ide--set-pi-model (model)
+  "Set pi model."
+  :description "Set pi model"
+  (interactive (list (read-string "Pi model (leave empty for default): "
+                                   (or claude-code-ide-pi-model ""))))
+  (setq claude-code-ide-pi-model (if (string-empty-p model) nil model))
+  (claude-code-ide-log "Pi model set to %s" (or claude-code-ide-pi-model "default")))
 
 (transient-define-suffix claude-code-ide--set-cli-path (path)
   "Set CLI path."
@@ -330,6 +342,7 @@ Otherwise, if multiple sessions exist, prompt for selection."
   "Save current configuration to custom file."
   (interactive)
   (customize-save-variable 'claude-code-ide-window-side claude-code-ide-window-side)
+  (customize-save-variable 'claude-code-ide-backend claude-code-ide-backend)
   (customize-save-variable 'claude-code-ide-window-width claude-code-ide-window-width)
   (customize-save-variable 'claude-code-ide-window-height claude-code-ide-window-height)
   (customize-save-variable 'claude-code-ide-focus-on-open claude-code-ide-focus-on-open)
@@ -340,6 +353,9 @@ Otherwise, if multiple sessions exist, prompt for selection."
   (customize-save-variable 'claude-code-ide-use-side-window claude-code-ide-use-side-window)
   (customize-save-variable 'claude-code-ide-cli-path claude-code-ide-cli-path)
   (customize-save-variable 'claude-code-ide-cli-extra-flags claude-code-ide-cli-extra-flags)
+  (customize-save-variable 'claude-code-ide-open-code-model claude-code-ide-open-code-model)
+  (customize-save-variable 'claude-code-ide-open-code-agent claude-code-ide-open-code-agent)
+  (customize-save-variable 'claude-code-ide-pi-model claude-code-ide-pi-model)
   (customize-save-variable 'claude-code-ide-system-prompt claude-code-ide-system-prompt)
   (claude-code-ide-log "Configuration saved to custom file"))
 
@@ -399,7 +415,7 @@ Otherwise, if multiple sessions exist, prompt for selection."
      :description (lambda () (format "Switch backend (current: %s)" (claude-code-ide--backend-name))))
     ("M" "Set opencode model" claude-code-ide--set-open-code-model)
     ("A" "Set opencode agent" claude-code-ide--set-open-code-agent)
-    ]
+    ("P" "Set pi model" claude-code-ide--set-pi-model)]
    ["CLI Settings"
     ("p" "Set CLI path" claude-code-ide--set-cli-path)
     ("x" "Set extra CLI flags" claude-code-ide--set-cli-extra-flags)

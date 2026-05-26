@@ -433,7 +433,8 @@ have completed before cleanup.  Waits up to 5 seconds."
   (let ((test-prompt "Test prompt from minibuffer")
         (prompted-string nil)
         (sent-string nil)
-        (sent-return nil))
+        (sent-return nil)
+        (claude-code-ide-backend 'claude))
     ;; Mock read-string to return our test prompt
     (cl-letf (((symbol-function 'read-string)
                (lambda (prompt &rest _)
@@ -450,7 +451,8 @@ have completed before cleanup.  Waits up to 5 seconds."
       (with-temp-buffer
         (rename-buffer "*test-claude-buffer*")
         (claude-code-ide-send-prompt)
-        (should (equal prompted-string "Claude prompt: "))
+        (should (equal prompted-string
+                       (format "%s prompt: " (claude-code-ide--backend-name))))
         (should (equal sent-string test-prompt))
         (should sent-return))
 
@@ -867,6 +869,99 @@ have completed before cleanup.  Waits up to 5 seconds."
     (should (string-match "-d.*-c" (claude-code-ide--build-claude-command t)))
     (should (string-match "-d.*-r" (claude-code-ide--build-claude-command nil t)))))
 
+(ert-deftest claude-code-ide-test-pi-backend-helpers ()
+  "Test backend helpers when `claude-code-ide-backend' is pi."
+  (let ((claude-code-ide-backend 'pi)
+        (claude-code-ide-pi-cli-path "pi-custom"))
+    (should (claude-code-ide--pi-p))
+    (should (equal (claude-code-ide--backend-name) "Pi"))
+    (should (equal (claude-code-ide--backend-buffer-prefix) "*pi["))
+    (should (equal (claude-code-ide--backend-cli-path) "pi-custom"))))
+
+(ert-deftest claude-code-ide-test-session-buffer-p-backends ()
+  "Test session buffer detection across all supported backends."
+  (dolist (name '("*claude-code[proj]*"
+                  "*opencode[proj]*"
+                  "*pi[proj]*"))
+    (should (claude-code-ide-session-buffer-p name))
+    (should (claude-code-ide--session-buffer-p name)))
+  (should-not (claude-code-ide-session-buffer-p "*vterm*"))
+  (should-not (claude-code-ide--session-buffer-p "*scratch*")))
+
+(ert-deftest claude-code-ide-test-build-pi-command-flags ()
+  "Test that pi command includes model/prompt/extra flags and resume/continue."
+  (let ((claude-code-ide-backend 'pi)
+        (claude-code-ide-pi-cli-path "pi")
+        (claude-code-ide-pi-model "anthropic/claude-sonnet-4")
+        (claude-code-ide-system-prompt "You are a helpful assistant")
+        (claude-code-ide-cli-extra-flags "--thinking high"))
+    (cl-letf (((symbol-function 'claude-code-ide-mcp-server-ensure-server)
+               (lambda () nil)))
+      (let ((cmd (claude-code-ide--build-pi-command t t "sid-1")))
+        (should (string-match-p "^pi " cmd))
+        (should (string-match-p " -c" cmd))
+        (should (string-match-p " -r" cmd))
+        (should (string-match-p "--model anthropic/claude-sonnet-4" cmd))
+        (should (string-match-p "--append-system-prompt" cmd))
+        (should (string-match-p "openDiff" cmd))
+        (should (string-match-p "--thinking high" cmd))))))
+
+(ert-deftest claude-code-ide-test-build-pi-command-with-mcp-config ()
+  "Test that pi command passes --mcp-config as a file path when MCP is enabled.
+Do not add --tools allowlist for pi; keep default tool set."
+  (let ((claude-code-ide-backend 'pi)
+        (claude-code-ide-pi-cli-path "pi")
+        (claude-code-ide-pi-model nil)
+        (claude-code-ide-system-prompt nil)
+        (claude-code-ide-cli-extra-flags ""))
+    (cl-letf (((symbol-function 'claude-code-ide-mcp-server-ensure-server)
+               (lambda () t))
+              ((symbol-function 'claude-code-ide-mcp-server-get-config)
+               (lambda (_session-id)
+                 (let ((cfg (make-hash-table :test 'equal))
+                       (servers (make-hash-table :test 'equal))
+                       (entry (make-hash-table :test 'equal)))
+                   (puthash 'type "http" entry)
+                   (puthash 'url "http://localhost:4567/mcp/sid-2" entry)
+                   (puthash 'emacs-tools entry servers)
+                   (puthash 'mcpServers servers cfg)
+                   cfg)))
+              ((symbol-function 'claude-code-ide--write-mcp-config-temp-file)
+               (lambda (_config) "/tmp/claude-code-ide-mcp-test.json"))
+              ((symbol-function 'claude-code-ide-mcp-server-get-tool-names)
+               (lambda (_prefix) '("mcp__emacs-tools__openFile" "mcp__emacs-tools__getDiagnostics"))))
+      (let ((cmd (claude-code-ide--build-pi-command nil nil "sid-2")))
+        (should (string-match-p "--mcp-config" cmd))
+        (should (string-match-p "/tmp/claude-code-ide-mcp-test.json" cmd))
+        (should-not (string-match-p "--tools" cmd))
+        (should-not (string-match-p "--allowedTools" cmd))))))
+
+(ert-deftest claude-code-ide-test-build-pi-command-with-mcp-config-and-custom-allowed-tools ()
+  "Test pi command ignores tool allowlist settings and keeps defaults."
+  (let ((claude-code-ide-backend 'pi)
+        (claude-code-ide-pi-cli-path "pi")
+        (claude-code-ide-pi-model nil)
+        (claude-code-ide-system-prompt nil)
+        (claude-code-ide-cli-extra-flags ""))
+    (cl-letf (((symbol-function 'claude-code-ide-mcp-server-ensure-server)
+               (lambda () t))
+              ((symbol-function 'claude-code-ide-mcp-server-get-config)
+               (lambda (_session-id)
+                 '((mcpServers . ((emacs-tools . ((type . "http")
+                                                  (url . "http://localhost:4567/mcp/sid-3"))))))))
+              ((symbol-function 'claude-code-ide--write-mcp-config-temp-file)
+               (lambda (_config) "/tmp/claude-code-ide-mcp-test.json")))
+      (let ((claude-code-ide-mcp-allowed-tools '("mcp__emacs-tools__openFile" "mcp__emacs-tools__lsp-def")))
+        (let ((cmd (claude-code-ide--build-pi-command nil nil "sid-3")))
+          (should-not (string-match-p "--tools" cmd))
+          (should-not (string-match-p "--allowedTools" cmd))))
+      (let ((claude-code-ide-mcp-allowed-tools "mcp__emacs-tools__.*"))
+        (let ((cmd (claude-code-ide--build-pi-command nil nil "sid-3")))
+          (should-not (string-match-p "--tools" cmd))))
+      (let ((claude-code-ide-mcp-allowed-tools nil))
+        (let ((cmd (claude-code-ide--build-pi-command nil nil "sid-3")))
+          (should-not (string-match-p "--tools" cmd)))))))
+
 (ert-deftest claude-code-ide-test-build-command-with-system-prompt ()
   "Test building command with append-system-prompt flag."
   ;; Test with user system prompt
@@ -1067,28 +1162,37 @@ have completed before cleanup.  Waits up to 5 seconds."
 (ert-deftest claude-code-ide-test-mcp-open-file ()
   "Test the openFile tool implementation."
   ;; Test successful file open
-  (claude-code-ide-mcp-tests--with-temp-file test-file "Line 1\nLine 2\nLine 3\nLine 4"
-                                             (let ((result (claude-code-ide-mcp-handle-open-file `((filePath . ,test-file)))))
-                                               (should (listp result))
-                                               (let ((first-item (car result)))
-                                                 (should (equal (alist-get 'type first-item) "text"))
-                                                 (should (equal (alist-get 'text first-item) "FILE_OPENED")))
-                                               (should (equal (buffer-file-name) test-file))
-                                               (kill-buffer)))
+  (claude-code-ide-mcp-tests--with-temp-file
+      test-file "Line 1\nLine 2\nLine 3\nLine 4"
+    (let ((result (claude-code-ide-mcp-handle-open-file
+                   `((filePath . ,test-file)))))
+      (should (listp result))
+      (let ((first-item (car result))
+            (opened-buffer (get-file-buffer test-file)))
+        (should (equal (alist-get 'type first-item) "text"))
+        (should (equal (alist-get 'text first-item) "FILE_OPENED"))
+        (should (buffer-live-p opened-buffer))
+        (with-current-buffer opened-buffer
+          (should (equal (buffer-file-name) test-file)))
+        (kill-buffer opened-buffer))))
 
   ;; Test with selection
-  (claude-code-ide-mcp-tests--with-temp-file test-file "Line 1\nLine 2\nLine 3\nLine 4"
-                                             (let ((result (claude-code-ide-mcp-handle-open-file
-                                                            `((filePath . ,test-file)
-                                                              (startLine . 2)
-                                                              (endLine . 3)))))
-                                               (should (listp result))
-                                               (let ((first-item (car result)))
-                                                 (should (equal (alist-get 'type first-item) "text"))
-                                                 (should (equal (alist-get 'text first-item) "FILE_OPENED")))
-                                               (should (use-region-p))
-                                               (should (= (line-number-at-pos (region-beginning)) 2))
-                                               (kill-buffer)))
+  (claude-code-ide-mcp-tests--with-temp-file
+      test-file "Line 1\nLine 2\nLine 3\nLine 4"
+    (let ((result (claude-code-ide-mcp-handle-open-file
+                   `((filePath . ,test-file)
+                     (startLine . 2)
+                     (endLine . 3)))))
+      (should (listp result))
+      (let ((first-item (car result))
+            (opened-buffer (get-file-buffer test-file)))
+        (should (equal (alist-get 'type first-item) "text"))
+        (should (equal (alist-get 'text first-item) "FILE_OPENED"))
+        (should (buffer-live-p opened-buffer))
+        (with-current-buffer opened-buffer
+          (should (use-region-p))
+          (should (= (line-number-at-pos (region-beginning)) 2)))
+        (kill-buffer opened-buffer))))
 
   ;; Test missing filePath parameter
   (should-error (claude-code-ide-mcp-handle-open-file '())

@@ -2,6 +2,8 @@
 ;;; Commentary:
 ;;; Code:
 
+(declare-function claude-code-ide-session-buffer-p "claude-code-ide" (buffer))
+
 (use-package vterm :after (evil-collection exec-path-from-shell)
 ;:custom (vterm-always-compile-module t)
 :config
@@ -56,7 +58,10 @@
     :config
     (setq vterm-toggle-fullscreen-p nil)
     (add-to-list 'vterm-toggle-togglable-buffer-functions
-                 (lambda (buf) (not (string-match-p "\\*\\(?:claude-code\\|opencode\\)\\[" (buffer-name buf)))))
+                 (lambda (buf)
+                   (if (fboundp 'claude-code-ide-session-buffer-p)
+                       (not (claude-code-ide-session-buffer-p buf))
+                     t)))
     (add-to-list 'display-buffer-alist
                 '((lambda (buffer-or-name _)
                     (let ((buffer (get-buffer buffer-or-name)))
