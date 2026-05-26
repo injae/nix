@@ -13,16 +13,6 @@
             "command": "~/.claude/hooks/skill-eval.sh"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/hooks/caveman-activate.js",
-            "timeout": 5,
-            "statusMessage": "Loading caveman mode..."
-          }
-        ]
       }
     ],
     "Stop": [
@@ -51,16 +41,6 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/emacs-buffer-context.py"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/hooks/caveman-mode-tracker.js",
-            "timeout": 5,
-            "statusMessage": "Tracking caveman mode..."
           }
         ]
       },
