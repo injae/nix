@@ -1,6 +1,6 @@
 ---
 name: emacs-dev
-description: "Use when the task requires code navigation (LSP, xref, imenu), symbol lookup, file structure analysis, or Emacs Lisp development. Do NOT use for simple file edits, nix/config changes, or text questions."
+description: "Use for code navigation, symbol/reference lookup, structural analysis, or Emacs Lisp development. Do not use for simple edits, nix/config changes, or text-only questions."
 user-invocable: false
 allowed-tools:
   - ToolSearch
@@ -13,13 +13,13 @@ Load MCP tool schemas via two parallel ToolSearch calls:
 - `"emacs-tools"` max_results:29
 - `"+ide getDiagnostics"` max_results:3
 
-Then immediately **Read the sub-files** from this skill's base directory (shown above as "Base directory for this skill: ..."):
+Then read sub-files from this skill base directory:
 
 | File | When to Read |
 |------|-------------|
-| `navigation.md` | When task involves code navigation, LSP queries, symbol lookup, or cross-file analysis |
-| `file-analysis.md` | Always — read immediately after loading MCP tools |
-| `elisp.md` | When the task involves `.el` files or Emacs Lisp code — regardless of which file is currently open in the IDE |
-| `testing.md` | When the user asks to validate, test, or evaluate navigation skills |
+| `navigation.md` | Code navigation, LSP queries, symbol lookup, cross-file analysis |
+| `file-analysis.md` | Always — read right after MCP tool load |
+| `elisp.md` | Any `.el`/Emacs Lisp task, regardless of active IDE file |
+| `testing.md` | When user asks to validate/test/evaluate navigation skills |
 
-Read only the relevant sub-files based on the task. Reply: "Emacs mode active — MCP tools loaded."
+Read only task-relevant sub-files. Reply: "Emacs mode active — MCP tools loaded."

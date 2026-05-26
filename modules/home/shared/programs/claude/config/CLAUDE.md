@@ -1,11 +1,11 @@
-# Global Claude Code Instructions
+# Global Claude Instructions
 
 ## Session start
 
-Environment-specific skills are triggered automatically by the `SessionStart` hook:
-- **Emacs** (`INSIDE_EMACS` set) → `/emacs-dev` skill injected
-- **Nix** (`NIX_CONFIG_DIR` set) → `/nix-system` skill injected
-- **`~/.claude/CLAUDE.local.md`** exists → its contents are injected as additional instructions
+`SessionStart` hook injects env-specific skill/instructions:
+- `INSIDE_EMACS` set → `/emacs-dev`
+- `NIX_CONFIG_DIR` set → `/nix-system`
+- `~/.claude/CLAUDE.local.md` exists → inject file content
 
 ## Language
 
@@ -13,4 +13,4 @@ Always respond in Korean.
 
 ## Work style
 
-Before starting any task, always explain the planned steps first, then proceed.
+Before starting any task, present a brief plan first, then execute.

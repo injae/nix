@@ -1,6 +1,6 @@
 ---
 name: go-gen-test
-description: "Generate tests for a Go file. Runs Emacs go-gen-test-all in the background to create stubs, then fills in meaningful test cases. Time-related tests use testing/synctest. Use this skill whenever the user asks to write or generate tests for a Go file."
+description: "Generate tests for Go files: create stubs first, then fill meaningful cases. Use Emacs go-gen-test-all when available; otherwise use manual template flow. Use testing/synctest for time-related tests."
 user-invocable: true
 ---
 
@@ -8,39 +8,39 @@ user-invocable: true
 
 ## Step 1 — Detect mode
 
-Check: is `INSIDE_EMACS` set or `mcp__ide__executeCode` available?
+Check whether `INSIDE_EMACS` is set or `mcp__ide__executeCode` is available.
 
-Answer YES or NO:
-- **YES** — Emacs is active
+Answer YES/NO:
+- **YES** — Emacs active
 - **NO** — standard environment
 
-Commit out loud before proceeding:
+Before proceeding, state:
 > "Emacs is **[active / not active]**. Reading: **[emacs.md / manual.md]**."
 
-Both guides produce the same output format. Continue with Steps 2–4 below after generating the stubs.
+Both paths produce the same output format. Continue to Step 2 after stubs are generated.
 
 ---
 
 ## Step 1 (Emacs = YES) — Generate stubs via go-gen-test-all
 
-Read `emacs.md` and follow its steps.
+Read `emacs.md` and follow it.
 
 ---
 
 ## Step 1 (Emacs = NO) — Generate stubs from template
 
-Read `manual.md` and follow its steps.
+Read `manual.md` and follow it.
 
 ---
 
-## Step 2 — Fill in test cases
+## Step 2 — Fill test cases
 
 ### Package choice
 
 | Situation | Package |
 |-----------|---------|
 | Need direct access to internal fields/types | `package <pkg>` (white-box) |
-| Testing only the public API | `package <pkg>_test` (black-box) |
+| Test only public API | `package <pkg>_test` (black-box) |
 
 ### Common patterns
 
@@ -51,21 +51,20 @@ Read `manual.md` and follow its steps.
 {name: "all nil", ...},
 ```
 
-**Error propagation** — cover both error and non-error paths:
+**Error propagation** — cover error and non-error paths:
 ```go
 {name: "propagates error", ..., wantErr: true},
 {name: "no error on success", ..., wantErr: false},
 ```
 
-**Context cancellation** — confirm external cancellation is not treated as an error:
+**Context cancellation** — external cancellation should not be treated as error:
 ```go
 {name: "external cancel returns no error", ..., wantErr: false},
 ```
 
 ### Time-related tests
 
-When `time.After`, `time.Sleep`, or `time.Ticker` appears in the test path,
-read `synctest.md` and follow its guidelines.
+If `time.After`, `time.Sleep`, or `time.Ticker` appears in the path, read `synctest.md` and follow it.
 
 ---
 

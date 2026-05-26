@@ -1,98 +1,97 @@
 ---
 name: typescript-development
-description: "Must be used when writing, reviewing, or refactoring TypeScript code. Applies type-safety patterns and anti-patterns based on strict mode. Automatically triggers when opening TypeScript files, designing types, or discussing generics/type narrowing."
+description: "Use for TypeScript write/review/refactor tasks. Enforce strict type-safety patterns and anti-patterns for type design, narrowing, generics, API design, and null handling."
 ---
 
 # TypeScript Development Skill
 
-## Official References
-
+## References
 - TypeScript Handbook: https://www.typescriptlang.org/docs/handbook/intro.html
 - TypeScript Do's and Don'ts: https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html
-- TypeScript tsconfig reference: https://www.typescriptlang.org/tsconfig
-- Total TypeScript (Matt Pocock): https://www.totaltypescript.com/articles
-- TypeScript Tips: https://www.totaltypescript.com/tips
+- TSConfig reference: https://www.typescriptlang.org/tsconfig
+- Total TypeScript articles: https://www.totaltypescript.com/articles
+- Total TypeScript tips: https://www.totaltypescript.com/tips
 - refactoring.guru TypeScript patterns: https://refactoring.guru/design-patterns/typescript
 
 ---
 
-## Patterns (Do's)
+## Do
 
 ### Type Design
-- Enable `strict: true` in tsconfig — especially `strictNullChecks` and `noImplicitAny`
-- Recommend `noUncheckedIndexedAccess: true` — for safe array/object index access
-- Use lowercase primitive types: `string`, `number`, `boolean` (uppercase `String`, `Number` are forbidden)
-- Express state with union types: `type Status = "pending" | "done" | "error"`
-- Prefer `type` over `interface` by default (intersection types are more flexible than extends)
-- Model state with Discriminated Unions
+- Enable `strict: true` (`strictNullChecks`, `noImplicitAny`).
+- Recommend `noUncheckedIndexedAccess: true`.
+- Use lowercase primitives: `string`, `number`, `boolean` (not `String`, `Number`).
+- Model states with unions (`"pending" | "done" | "error"`).
+- Prefer `type` over `interface` by default (intersection flexibility).
+- Use discriminated unions for state modeling.
 
 ### Type Narrowing
-- Use type guard functions for explicit narrowing: `function isUser(x: unknown): x is User`
-- Narrow naturally with `in` operator, `typeof`, and `instanceof`
-- Minimize `as` type assertions — when necessary, document the reason in a comment
-- Never bypass the type system with `as any`
+- Use explicit type guards: `x is User`.
+- Narrow with `in`, `typeof`, `instanceof`.
+- Minimize `as`; if needed, document reason.
+- Never use `as any`.
 
 ### Generics
-- Use generics only to eliminate type repetition (avoid over-generalization)
-- Constrain generics with `extends`: `<T extends object>`
-- Leverage utility types: `Partial<T>`, `Required<T>`, `Pick<T,K>`, `Omit<T,K>`, `ReturnType<F>`
+- Use generics to remove duplication, not for over-generalization.
+- Constrain generics with `extends`.
+- Use utility types: `Partial`, `Required`, `Pick`, `Omit`, `ReturnType`.
 
 ### Function / API Design
-- Annotate function return types explicitly (clarifies intent in complex logic)
-- Prefer union parameters + type guards over overloading
-- Use `unknown` then narrow (instead of `any`)
-- Express immutability with `readonly` arrays/objects
+- Annotate return types explicitly for non-trivial logic.
+- Prefer union params + type guards over overload sprawl.
+- Prefer `unknown` + narrowing over `any`.
+- Express immutability with `readonly`.
 
-### null / undefined Handling
-- Actively use optional chaining `?.` and nullish coalescing `??`
-- Perform explicit null checks before use (minimize non-null assertion `!`)
+### Null / Undefined Handling
+- Use `?.` and `??`.
+- Add explicit null checks before use.
+- Minimize non-null assertion `!`.
 
 ---
 
-## Anti-Patterns (Don'ts)
+## Don’t
 
 ### Type System Abuse
-| Anti-Pattern | Reason | Correct Alternative |
+| Anti-pattern | Reason | Correct Alternative |
 |---|---|---|
-| Using `any` | Completely disables type checking | `unknown` + type narrowing |
-| `as any` | Bypasses the type system | Proper type definition or type guard |
-| Uppercase `Number`, `String`, `Boolean` | Boxed object types, practically useless | `number`, `string`, `boolean` |
-| `Object` type | Less precise than `{}` or `object` | `Record<string, unknown>` or a specific type |
-| `Function` type | Ignores parameter/return types | Explicit signature `(x: T) => U` |
-| Overusing type assertions `as SomeType` | Can lead to runtime errors | Type guard or proper type design |
+| `any` | Disables type checking | `unknown` + narrowing |
+| `as any` | Bypasses type system | Proper type or type guard |
+| `Number`/`String`/`Boolean` | Boxed types | `number`/`string`/`boolean` |
+| `Object` | Too imprecise | `Record<string, unknown>` or concrete type |
+| `Function` | Ignores signature | Explicit function signature |
+| Excessive `as SomeType` | Runtime risk | Type guard / better type design |
 
 ### Structural Design
-| Anti-Pattern | Reason | Correct Alternative |
+| Anti-pattern | Reason | Correct Alternative |
 |---|---|---|
-| Using `enum` | Generates JS runtime code, not tree-shakeable | `as const` + union type |
-| Empty interface `interface Foo {}` | Expresses nothing | `type Foo = Record<string, unknown>` |
-| Abusing declaration merging | Unpredictable type extension | Explicit extension |
-| Overusing classes (when unnecessary in JS) | Excessive complexity | Simple objects + functions |
-| Overusing `!` non-null assertion | Runtime null errors | Explicit null checks |
+| `enum` default usage | Emits runtime JS, poor tree-shaking | `as const` + union |
+| Empty interface | No meaning | `type Foo = Record<string, unknown>` |
+| Declaration merging abuse | Unpredictable extensions | Explicit extension |
+| Unnecessary class-heavy design | Complexity | Objects + functions |
+| Overusing `!` | Null runtime risk | Explicit null checks |
 
-### null / undefined
-| Anti-Pattern | Reason | Correct Alternative |
+### Null / Undefined
+| Anti-pattern | Reason | Correct Alternative |
 |---|---|---|
-| `== null` (loose comparison) | Intent is unclear | `=== null` or `=== undefined` |
-| Mixing null and undefined | Confusing | Stick to one (`undefined` recommended) |
-| Direct array index access `arr[0].name` | Ignores possibility of undefined | `noUncheckedIndexedAccess` + check |
+| `== null` | Ambiguous intent | `=== null` or `=== undefined` |
+| Mixing null + undefined | Inconsistent state model | Pick one (`undefined` recommended) |
+| Unsafe index access (`arr[0].x`) | `undefined` risk | `noUncheckedIndexedAccess` + guard |
 
 ### Performance / Build
-| Anti-Pattern | Reason | Correct Alternative |
+| Anti-pattern | Reason | Correct Alternative |
 |---|---|---|
-| Excessively deep nested generics | Slows compilation, hard to read | Split into intermediate type aliases |
-| `tsconfig` `strict: false` | Disables most type safety | `strict: true` |
-| Not using `import type` in `.d.ts` | Unnecessary runtime dependency | `import type` |
+| Deep nested generics | Slow compile, hard read | Split with intermediate type aliases |
+| `strict: false` | Weak type safety | `strict: true` |
+| Missing `import type` in `.d.ts` | Unneeded runtime deps | `import type` |
 
 ---
 
-## Checklist (For Code Review)
-
-- [ ] Is `strict: true` configured?
-- [ ] Is there no `any`? (replaced with `unknown` + narrowing?)
-- [ ] Are `as` assertions minimized?
-- [ ] Are primitive types lowercase (`string`, `number`)?
-- [ ] Is `as const` union used instead of `enum`?
-- [ ] Is `undefined` handled when accessing array/object indices?
-- [ ] Are return types explicitly annotated?
-- [ ] Does `tsc --noEmit` pass with no errors?
+## Checklist (Code Review)
+- [ ] `strict: true` enabled?
+- [ ] No `any` (replaced by `unknown` + narrowing)?
+- [ ] `as` assertions minimized?
+- [ ] Primitive types lowercase?
+- [ ] `as const` + union used instead of `enum` where possible?
+- [ ] `undefined` handled for indexed access?
+- [ ] Return types explicitly annotated?
+- [ ] `tsc --noEmit` passes clean?

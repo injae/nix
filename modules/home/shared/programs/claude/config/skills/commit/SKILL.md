@@ -1,6 +1,6 @@
 ---
 name: commit
-description: "Generate a conventional commit message for already-staged changes and open the Magit commit buffer with it pre-filled. Use when the user asks for a commit message or wants to commit already-staged files."
+description: "Generate a one-line conventional commit message from staged changes, copy it to Emacs clipboard, and open a prefilled Magit commit buffer."
 user-invocable: true
 allowed-tools:
   - Bash(git diff --cached*)
@@ -9,9 +9,9 @@ allowed-tools:
   - mcp__emacs-tools__git-prepare-commit
 ---
 
-# Generate Commit Message
+# Commit Message Flow
 
-Generate a one-line conventional commit message from staged changes, copy it to the Emacs clipboard, and open the Magit commit buffer with it pre-filled.
+Generate one-line conventional commit text from staged changes. Copy to clipboard. Open Magit commit buffer prefilled.
 
 ---
 
@@ -24,30 +24,30 @@ Run in parallel:
 
 ---
 
-## Step 2 — Evaluate: Is there anything staged?
+## Step 2 — Gate: staged changes exist?
 
-Answer YES or NO:
+Answer YES/NO:
 - **YES** if `git diff --cached --stat` returned file changes
-- **NO** if the output is empty
+- **NO** if output is empty
 
-If NO → tell the user nothing is staged and stop.
+If NO, report no staged changes and stop.
 
 ---
 
-## Step 3 — Generate commit message
+## Step 3 — Draft commit message
 
-Analyze the diff and write a one-line message:
+Analyze diff, write one-line message:
 - Format: `type(scope): message` ([Conventional Commits](https://www.conventionalcommits.org/))
 - Types: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `test`
-- Scope: affected module or area (`emacs`, `darwin`, `claude`, `home`, etc.)
+- Scope: affected module/area (`emacs`, `darwin`, `claude`, `home`, etc.)
 - One line, English, lowercase, no trailing period
 
 ---
 
-## Step 4 — Copy to clipboard and open Magit commit buffer
+## Step 4 — Clipboard + Magit buffer
 
 Run in parallel:
 - `call-fn` — `name`: `kill-new`, `args`: `["<the commit message>"]`
 - `git-prepare-commit` — with the message pre-filled
 
-Tell the user to press **C-c C-c** to commit.
+Tell user: press **C-c C-c** to commit.

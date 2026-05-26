@@ -49,3 +49,21 @@ user-invocable: true   # add if the skill can be called directly via /skill-name
 - Make every branch explicit: "If YES → X, if NO → Y"
 - Put shared content in SKILL.md; put variant-specific detail in separate files
 - When referencing emacs-tools MCP tools, use the shorthand name (e.g., `` `goto-line` ``, `` `lsp-def` ``) — never the full `mcp__emacs-tools__` prefix. Exception: `allowed-tools` frontmatter requires the full identifier.
+
+---
+
+## Step 5 — Compression/edit workflow (approved pattern)
+
+Use this loop when compressing existing skill docs without semantic loss.
+
+1. Work one file at a time.
+2. Create a compressed draft first (wording-only compression; keep all rules/branches/examples/conditions).
+3. Show a short unified diff first (no color required).
+4. If the user asks, show full **After** text with no `...` truncation.
+5. Do not write until explicit approval (`수정`/`적용`).
+6. After write completes, automatically move to the next file and show draft + short diff.
+
+Guardrails:
+- Never drop constraints or decision branches during compression.
+- Keep document language consistent with original (English doc stays English, etc.).
+- If approval scope is unclear, ask before writing.

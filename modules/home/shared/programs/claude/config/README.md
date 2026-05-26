@@ -1,25 +1,17 @@
 # Claude Code Config
 
-Nix-managed Claude Code configuration. Source of truth for `~/.claude/`.
+Nix-managed source of truth for `~/.claude/`.
 
 ## Structure
 
-```
-CLAUDE.md          — global instructions
-settings.json      — Claude Code settings
-hooks/             — lifecycle hook scripts (nix-managed symlinks)
-skills/            — local skill definitions
-```
+- `CLAUDE.md`: global instructions
+- `settings.json`: Claude Code settings
+- `hooks/`: lifecycle hooks (nix-managed symlinks + caveman plugin files)
+- `skills/`: local skills
 
-## Hook scripts
+## Caveman plugin hooks
 
-Nix-managed hooks in `hooks/` are symlinked to `/nix/store/` (read-only).
-
-### Caveman plugin hooks
-
-The `caveman` plugin (`caveman@caveman`, GitHub: JuliusBrussee/caveman) installs
-hook scripts directly into `~/.claude/hooks/` as regular files:
-
+`caveman@caveman` writes hook files directly into `~/.claude/hooks/`:
 - `caveman-activate.js`
 - `caveman-mode-tracker.js`
 - `caveman-stats.js`
@@ -27,13 +19,8 @@ hook scripts directly into `~/.claude/hooks/` as regular files:
 - `caveman-statusline.ps1`
 - `caveman-config.js`
 
-These coexist with nix-managed symlinks in the same directory.
+Reason: plugin installer uses `fs.copyFileSync`; nix store symlink target is read-only, so plugin update can fail with `EROFS`.
 
-**Why not managed by nix:** The plugin's `bin/install.js` uses `fs.copyFileSync`
-to write hook files. If these were nix symlinks (read-only store), `claude plugin update`
-would fail with `EROFS`. Plugin updates are manual-only (`/plugin update caveman`),
-not automatic, so the risk of accidental overwrite is low.
-
-**To update caveman hooks manually:** copy updated files from
-`~/.claude/plugins/marketplaces/caveman/src/hooks/` to this directory and
-commit them here instead.
+Update flow: copy updated hook files from
+`~/.claude/plugins/marketplaces/caveman/src/hooks/`
+into this repo `hooks/`, then commit.
