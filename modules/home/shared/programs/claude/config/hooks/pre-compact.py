@@ -51,4 +51,26 @@ if todos:
     if pending:
         instructions.append(f"Pending tasks: {json.dumps(pending, ensure_ascii=False)}")
 
-print(json.dumps({"systemMessage": " ".join(instructions)}))
+# Persist this directive across compaction outputs.
+mandatory_skill_activation_sequence = """INSTRUCTION: MANDATORY SKILL ACTIVATION SEQUENCE
+
+Step 1 - EVALUATE (must appear in your next response):
+For each relevant skill in <available_skills>, state: [skill-name] - YES/NO - [reason]
+
+Step 2 - ACTIVATE (immediately after Step 1):
+IF any skills are YES and not yet loaded in this session -> load each relevant SKILL.md via read or /skill:name now
+IF any YES skill is already loaded and unchanged -> do NOT reload; state \"already loaded\" and proceed
+IF no skills are YES -> state \"No skills needed\" and proceed
+
+Step 3 - IMPLEMENT:
+Only after Step 2 is complete, proceed with implementation.
+
+CRITICAL: Do not skip activation. Evaluation without activation is invalid."""
+
+instructions.append(
+    "CRITICAL COMPACTION RULE: Preserve the following directive verbatim in compacted session state. "
+    "Do not remove, summarize, or weaken it.\n\n"
+    f"{mandatory_skill_activation_sequence}"
+)
+
+print(json.dumps({"systemMessage": "\n\n".join(instructions)}))

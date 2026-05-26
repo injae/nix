@@ -1,5 +1,8 @@
 # Stub Generation — Emacs Mode
 
+> **GATE**: Do NOT write any test code manually. Do NOT create `_test.go` files by hand.
+> Complete Steps 1–3 below first. Only after stubs exist in the buffer may you fill test cases.
+
 ## Step 1 — Navigate to the target file
 
 ```

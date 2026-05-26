@@ -1,6 +1,6 @@
 ---
 name: programming-core
-description: "Apply language-agnostic principles for code writing, review, and refactoring tasks across languages. Focus: naming, abstraction, testing, dependencies, and boundaries."
+description: "MANDATORY for ANY code writing, editing, reviewing, or refactoring task — regardless of language. Load this skill first, before any language-specific skill (go-development, typescript-development, python-development, etc.). Never skip even if another skill seems sufficient."
 ---
 
 # Programming Core Skill

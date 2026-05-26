@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/session-start.py"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skill-eval.sh"
           }
         ]
       },
@@ -47,8 +51,7 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/emacs-buffer-context.py"
-          },
-          { "type": "command", "command": "~/.claude/hooks/skill-eval.sh" }
+          }
         ]
       },
       {
@@ -58,6 +61,14 @@
             "command": "node ~/.claude/hooks/caveman-mode-tracker.js",
             "timeout": 5,
             "statusMessage": "Tracking caveman mode..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skill-remind.sh"
           }
         ]
       }

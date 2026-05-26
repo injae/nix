@@ -13,4 +13,4 @@ Always respond in Korean.
 
 ## Work style
 
-Before starting any task, present a brief plan first, then execute.
+NEVER execute without approval. ALWAYS: plan → wait for explicit approval → execute. Skipping is not allowed.
