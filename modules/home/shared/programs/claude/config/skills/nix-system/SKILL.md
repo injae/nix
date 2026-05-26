@@ -8,7 +8,7 @@ user-invocable: true
 
 Read sub-files from this skill base directory.
 
-Rule: if `.envrc` + `flake.nix` both exist in cwd, prefix shell commands with `direnv exec .`.
+Rule: if `.envrc` exists in cwd, load and follow the `direnv` skill for environment-handling policy.
 
 | File | When to Read |
 |------|-------------|

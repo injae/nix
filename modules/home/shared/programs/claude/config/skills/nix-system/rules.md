@@ -2,7 +2,7 @@
 
 `NIX_CONFIG_DIR` is set — all edits to derived config files (`~/.claude/`, `~/.config/`, `/etc/`) must go to their source under `$NIX_CONFIG_DIR` instead. Never edit derived paths directly.
 
-If `.envrc` and `flake.nix` both exist in the current working directory, prefix every shell command with `direnv exec .` for the rest of this session.
+If `.envrc` exists in the current working directory, delegate environment-handling behavior to the `direnv` skill.
 
 ## Path mapping
 
