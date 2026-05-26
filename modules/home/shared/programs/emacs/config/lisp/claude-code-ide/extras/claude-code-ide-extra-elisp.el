@@ -40,10 +40,10 @@ Uses macro-expansion so indirect calls via macros are included."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-callees
     :name "elisp-callees"
-    :description "List all functions called by a given Elisp function. Performs macro-expansion before analysis, so indirect calls via macros are included. Equivalent to helpful's 'Functions used by' section. Only works with Elisp symbols."
+    :description "Fns called by Elisp fn. Macro-expanded; includes indirect calls. Only Elisp symbols."
     :args '((:name "name"
              :type string
-             :description "The name of the Elisp function to inspect")))
+             :description "Elisp function name")))
 
 
 (defun claude-code-ide-mcp-elisp-load-file (file-path)
@@ -57,10 +57,10 @@ Uses macro-expansion so indirect calls via macros are included."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-load-file
     :name "elisp-load"
-    :description "Load an Emacs Lisp file into the running Emacs session via load-file. Use after editing a .el file to test changes interactively."
+    :description "Load .el file via load-file. Test edits interactively."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to the .el file to load")))
+             :description "Absolute path to .el file")))
 
 (defun claude-code-ide-mcp--elisp-refs-extract (raw-results)
   "Extract file paths and line text from RAW-RESULTS while source buffers are alive."
@@ -118,10 +118,10 @@ Uses macro-expansion so indirect calls via macros are included."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-elisp-find-references
     :name "elisp-refs"
-    :description "Find all call-sites for an Elisp function across all loaded files. Returns file paths and the surrounding lines for each reference. Equivalent to helpful's 'Find all references' button. Only works with Elisp symbols."
+    :description "All call-sites for Elisp fn across loaded files. file:line + context. Only Elisp symbols."
     :args '((:name "name"
              :type string
-             :description "The name of the Elisp function to find references for")))
+             :description "Elisp function name")))
 
 (provide 'claude-code-ide-extra-elisp)
 ;;; claude-code-ide-extra-elisp.el ends here

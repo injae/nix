@@ -57,13 +57,13 @@ FILE-PATH is any file in the project to locate the eglot server context."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-workspace-symbols
     :name "lsp-ws-symbols"
-    :description "Project-wide symbol search via LSP (workspace/symbol). Includes external packages. Use lsp_proj_symbols to exclude them."
+    :description "Workspace symbol search via LSP. Includes external pkgs. Use lsp_proj_symbols to exclude."
     :args '((:name "query"
              :type string
-             :description "Symbol name or partial name to search for")
+             :description "Symbol name or partial")
             (:name "file_path"
              :type string
-             :description "Absolute path to any file in the project (used to find the eglot server)")))
+             :description "Any project file (finds eglot server)")))
 
 (defun claude-code-ide-mcp-lsp-project-symbols (query file-path)
   "Search for symbols matching QUERY within the project root only.
@@ -114,13 +114,13 @@ Filters out external packages (/go/pkg/mod/, /nix/store/)."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-project-symbols
     :name "lsp-proj-symbols"
-    :description "Project-only symbol search via LSP (no external package noise). Prefer over lsp_ws_symbols for project-internal searches."
+    :description "Project-only symbol search via LSP. No external pkg noise. Prefer over lsp_ws_symbols."
     :args '((:name "query"
              :type string
-             :description "Symbol name or partial name to search for")
+             :description "Symbol name or partial")
             (:name "file_path"
              :type string
-             :description "Absolute path to any file in the project (used to find the eglot server and project root)")))
+             :description "Any project file (finds eglot server and root)")))
 
 (defun claude-code-ide-mcp--resolve-symbol-location (identifier file-path)
   "Return plist (:file :line :col) for IDENTIFIER's definition via workspace/symbol.
@@ -196,13 +196,13 @@ Resolves definition via workspace/symbol then calls textDocument/references."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references-by-name
     :name "lsp-refs-by-name"
-    :description "Find all references to a symbol by name (no position needed). Use for functions/types; use lsp_refs for struct fields. Falls back with a message if not found."
+    :description "All refs to symbol by name, no position needed. For fns/types; use lsp_refs for struct fields. Falls back with message."
     :args '((:name "identifier"
              :type string
-             :description "Exact symbol name to find references for")
+             :description "Exact symbol name")
             (:name "file_path"
              :type string
-             :description "Absolute path to any file in the project (used to locate the eglot server and project root)")))
+             :description "Any project file (finds eglot server and root)")))
 
 (defun claude-code-ide-mcp-def-source (identifier file-path)
   "Find IDENTIFIER's definition via workspace/symbol and return its full source.
@@ -219,13 +219,13 @@ Combines symbol resolution + symbol_source in one call."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-def-source
     :name "def-source"
-    :description "Find a symbol's definition and return its full source in one call (lsp_def + symbol_source). Use instead of the two-step pipeline when you want the source of a known symbol."
+    :description "Symbol definition + full source in one call (lsp_def + symbol_source). Skip two-step pipeline."
     :args '((:name "identifier"
              :type string
-             :description "Symbol name to look up")
+             :description "Symbol name")
             (:name "file_path"
              :type string
-             :description "Absolute path to any file in the project")))
+             :description "Any project file")))
 
 (provide 'claude-code-ide-extra-lsp-nav-workspace)
 ;;; claude-code-ide-extra-lsp-nav-workspace.el ends here

@@ -15,10 +15,10 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-stage
     :name "git-stage"
-    :description "Stage a file for the next commit using git add. Refreshes any open magit buffers."
+    :description "Stage file via git add. Refreshes open magit buffers."
     :args '((:name "file_path"
              :type string
-             :description "Relative or absolute path to the file to stage")))
+             :description "Relative or absolute path")))
 
 (defvar claude-code-ide--pending-commit-message nil
   "Commit message to insert when the next git-commit buffer opens.")
@@ -61,10 +61,10 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-prepare-commit
     :name "git-prepare-commit"
-    :description "Open the magit commit buffer and pre-fill the commit message. Does NOT finish the commit — the user reviews and presses C-c C-c manually."
+    :description "Open magit commit buffer, pre-fill message. Does NOT commit. User presses C-c C-c."
     :args '((:name "message"
              :type string
-             :description "The commit message to pre-fill")))
+             :description "Commit message to pre-fill")))
 
 (defun claude-code-ide-mcp-magit-commit (message)
   "Create a git commit with MESSAGE from currently staged changes immediately."
@@ -77,10 +77,10 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-magit-commit
     :name "git-commit"
-    :description "Create a git commit immediately with the given message from all staged changes. Use magit-prepare-commit instead if the user should review the message first."
+    :description "Commit staged changes immediately. Use git-prepare-commit if user should review first."
     :args '((:name "message"
              :type string
-             :description "The commit message")))
+             :description "Commit message")))
 
 (provide 'claude-code-ide-extra-magit)
 ;;; claude-code-ide-extra-magit.el ends here

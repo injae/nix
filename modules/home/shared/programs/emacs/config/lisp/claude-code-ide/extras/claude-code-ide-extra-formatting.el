@@ -81,24 +81,24 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-formatter-info
     :name "formatter-info"
-    :description "Get formatter configuration for a file: shows the major mode, which formatters are active, and their command definitions."
+    :description "Formatter config for file: major-mode, active formatters, command defs."
     :args '((:name "file_path"
                 :type string
-                :description "Absolute path to the file to inspect")))
+                :description "Absolute path to file")))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-list-formatters
     :name "list-formatters"
-    :description "List all mode-to-formatter mappings configured in apheleia-mode-alist. Shows every mode and which formatter(s) are assigned to it."
+    :description "All apheleia mode→formatter mappings."
     :args '())
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-format-buffer
     :name "format-buffer"
-    :description "Run the apheleia formatter on a specific file. Opens the file if not already open and triggers formatting asynchronously."
+    :description "Run apheleia formatter on file. Opens if needed, triggers async."
     :args '((:name "file_path"
                 :type string
-                :description "Absolute path to the file to format")))
+                :description "Absolute path to file")))
 
 (provide 'claude-code-ide-extra-formatting)
 ;;; claude-code-ide-extra-formatting.el ends here

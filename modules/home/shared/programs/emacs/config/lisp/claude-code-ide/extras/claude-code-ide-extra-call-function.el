@@ -53,14 +53,14 @@ commands are refused."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-call-function
     :name "call-fn"
-    :description "Call any Emacs Lisp function by name with positional arguments. Use this instead of registering a dedicated MCP tool for every function. The return value is printed with prin1-to-string. Useful for calling utilities, querying state, or invoking helper functions defined in the Emacs config."
+    :description "Call any Elisp fn by name with positional args. Avoids dedicated MCP tools. Returns prin1-to-string."
     :args '((:name "name"
              :type string
-             :description "The name of the Emacs Lisp function to call (e.g. \"buffer-list\", \"claude-code-ide-mcp--function-source\")")
+             :description "Elisp fn name (e.g. \"buffer-list\", \"claude-code-ide-mcp--function-source\")")
             (:name "args"
              :type array
              :optional t
-             :description "Positional arguments as a JSON array, e.g. [\"hello\", 42, true]. Omit for zero-argument calls.")))
+             :description "JSON array of positional args, e.g. [\"hello\", 42]. Omit for zero-arg.")))
 
 (provide 'claude-code-ide-extra-call-function)
 ;;; claude-code-ide-extra-call-function.el ends here

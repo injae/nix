@@ -130,10 +130,10 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-describe-symbol
     :name "describe-symbol"
-    :description "Get full documentation for any Emacs symbol. If the symbol is a function/command, returns docstring, argument list, type (built-in/macro/command/function), source file, key bindings, autoload/native-compile status, and source code. If it is a variable, returns docstring, current value, default value, custom type, buffer-local status, source file, and source code. Shows both if the symbol is both a function and a variable."
+    :description "Full docs for Emacs symbol. Fn: docstring, arglist, type, source, keybinds, native-compile. Var: docstring, value, default, custom-type, buffer-local, source. Both if symbol is fn+var."
     :args '((:name "name"
              :type string
-             :description "The name of the Emacs symbol to describe")))
+             :description "Emacs symbol name")))
 
 (provide 'claude-code-ide-extra-describe-symbol)
 ;;; claude-code-ide-extra-describe-symbol.el ends here

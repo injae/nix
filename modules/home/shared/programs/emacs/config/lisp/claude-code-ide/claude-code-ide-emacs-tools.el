@@ -349,64 +349,64 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-xref-find-references
    :name "xref-refs"
-   :description "Find where a function, variable, or class is used throughout your codebase. Perfect for understanding code dependencies and impact analysis"
+   :description "Find all uses of fn/var/class in codebase. Shows call deps and impact."
    :args '((:name "identifier"
                   :type string
-                  :description "The identifier to find references for")
+                  :description "Identifier to find refs for")
            (:name "file_path"
                   :type string
-                  :description "File path to use as context for the search")))
+                  :description "File for search context")))
 
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-xref-find-apropos
    :name "xref-apropos"
-   :description "Search for functions, variables, or classes by name pattern across your project. Helps you discover code elements when you know part of the name"
+   :description "Search fn/var/class by name pattern across project. Discover code by partial name."
    :args '((:name "pattern"
                   :type string
-                  :description "The pattern to search for symbols")
+                  :description "Pattern to search symbols")
            (:name "file_path"
                   :type string
-                  :description "File path to use as context for the search")))
+                  :description "File for search context")))
 
   ;; Register project info tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-project-info
    :name "project-info"
-   :description "Get quick overview of your current project context including directory, active file, and project size"
+   :description "Project context: dir, active file, file count."
    :args nil)
 
   ;; Register imenu tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-imenu-list-symbols
    :name "imenu-symbols"
-   :description "Navigate and explore a file's structure by listing all its functions, classes, and variables with their locations"
+   :description "List file's fns, classes, vars with locations."
    :args '((:name "file_path"
                   :type string
-                  :description "Path to the file to analyze for symbols")))
+                  :description "File to analyze")))
 
   ;; Register tree-sitter tool
   (claude-code-ide-make-tool
    :function #'claude-code-ide-mcp-treesit-info
    :name "treesit-info"
-   :description "Get tree-sitter syntax tree information for a file, including node types, ranges, and hierarchical structure. Useful for understanding code structure and AST analysis"
+   :description "Tree-sitter AST for file: node types, ranges, hierarchy."
    :args '((:name "file_path"
                   :type string
-                  :description "Path to the file to analyze")
+                  :description "File to analyze")
            (:name "line"
                   :type number
-                  :description "Line number (1-based)"
+                  :description "Line (1-based)"
                   :optional t)
            (:name "column"
                   :type number
-                  :description "Column number (0-based)"
+                  :description "Column (0-based)"
                   :optional t)
            (:name "whole_file"
                   :type boolean
-                  :description "Show the entire file's syntax tree"
+                  :description "Show full file tree"
                   :optional t)
            (:name "include_ancestors"
                   :type boolean
-                  :description "Include parent node hierarchy"
+                  :description "Include parent nodes"
                   :optional t)
            (:name "include_children"
                   :type boolean

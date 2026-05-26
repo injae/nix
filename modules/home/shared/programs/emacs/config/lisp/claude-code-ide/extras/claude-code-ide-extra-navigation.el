@@ -33,13 +33,13 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-goto-file-line
     :name "goto-line"
-    :description "Open a source file at a specific line in the primary code window (non-claude, non-magit). Scrolls so the target line is near the top. Use this before explaining an issue to focus the user's view."
+    :description "Open file at line in primary code window (non-claude, non-magit). Target near top. Focus user view."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to the file to open")
+             :description "Absolute path to file")
             (:name "line"
              :type number
-             :description "Line number to navigate to (1-based)")))
+             :description "Line (1-based)")))
 
 (provide 'claude-code-ide-extra-navigation)
 ;;; claude-code-ide-extra-navigation.el ends here

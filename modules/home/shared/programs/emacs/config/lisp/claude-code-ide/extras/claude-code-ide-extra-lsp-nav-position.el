@@ -83,13 +83,13 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-definition
     :name "lsp-def"
-    :description "Find definition(s) of a symbol via LSP. Pass any project file as file_path to initialize the backend."
+    :description "Symbol definition(s) via LSP. Pass any project file to init backend."
     :args '((:name "identifier"
              :type string
-             :description "The symbol name to find the definition for")
+             :description "Symbol name")
             (:name "file_path"
              :type string
-             :description "Absolute path to any file in the project (used to initialize the eglot/xref backend)")))
+             :description "Any project file (inits eglot/xref backend)")))
 
 (defun claude-code-ide-mcp-lsp-find-implementation (file-path line column)
   "Find implementations at FILE-PATH LINE:COLUMN via eglot textDocument/implementation."
@@ -110,16 +110,16 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
     :name "lsp-impl"
-    :description "Find exact implementations of an interface method at a position (textDocument/implementation). More precise than lsp_proj_symbols. Line 1-based, column 0-based."
+    :description "Interface method impls at position (textDocument/implementation). Precise; use over lsp_proj_symbols. Line 1-based, col 0-based."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to the file containing the symbol")
+             :description "File containing symbol")
             (:name "line"
              :type number
-             :description "Line number (1-based) where the symbol appears")
+             :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column number (0-based) where the symbol starts")))
+             :description "Column (0-based)")))
 
 (defun claude-code-ide-mcp-lsp-find-typeDefinition (file-path line column)
   "Find type definition at FILE-PATH LINE:COLUMN via eglot textDocument/typeDefinition."
@@ -140,16 +140,16 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-typeDefinition
     :name "lsp-type-def"
-    :description "Find type definition at a position (textDocument/typeDefinition). Use on variable/parameter positions. Line 1-based, column 0-based. Fall back to lsp_def if gopls returns nothing."
+    :description "Type def at position (textDocument/typeDefinition). For vars/params. Falls back to lsp_def if gopls empty. Line 1-based, col 0-based."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to the file containing the symbol")
+             :description "File containing symbol")
             (:name "line"
              :type number
-             :description "Line number (1-based) where the symbol appears")
+             :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column number (0-based) where the symbol starts")))
+             :description "Column (0-based)")))
 
 (defun claude-code-ide-mcp-lsp-find-references (file-path line column)
   "Find all references to the symbol at FILE-PATH LINE:COLUMN via eglot."
@@ -171,16 +171,16 @@
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references
     :name "lsp-refs"
-    :description "Find all references at a position (textDocument/references). Line 1-based, column 0-based. Use lsp_refs_by_name when you only have a name."
+    :description "All refs at position (textDocument/references). Line 1-based, col 0-based. Use lsp_refs_by_name when only name known."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to the file containing the symbol")
+             :description "File containing symbol")
             (:name "line"
              :type number
-             :description "Line number (1-based) where the symbol appears")
+             :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column number (0-based) where the symbol starts")))
+             :description "Column (0-based)")))
 
 (provide 'claude-code-ide-extra-lsp-nav-position)
 ;;; claude-code-ide-extra-lsp-nav-position.el ends here
