@@ -8,16 +8,16 @@ user-invocable: true
 
 ## Step 1 — Detect mode
 
-Check whether `INSIDE_EMACS` is set or `mcp__ide__executeCode` is available.
+Check `INSIDE_EMACS` set or `mcp__ide__executeCode` available.
 
-Answer YES/NO:
+YES/NO:
 - **YES** — Emacs active
 - **NO** — standard environment
 
-Before proceeding, state:
+State before proceeding:
 > "Emacs is **[active / not active]**. Reading: **[emacs.md / manual.md]**."
 
-Both paths produce the same output format. Continue to Step 2 after stubs are generated.
+Both paths produce same output. Continue to Step 2 after stubs generated.
 
 ---
 
@@ -30,6 +30,49 @@ Read `emacs.md` and follow it.
 ## Step 1 (Emacs = NO) — Generate stubs from template
 
 Read `manual.md` and follow it.
+
+---
+
+## Step 1.5 — Stub audit (before filling)
+
+Scan every generated stub for anti-patterns. Fix **before** writing test cases — broken stubs waste effort.
+
+### Anti-pattern 1 — Unresolved generic type param
+
+**Signal:** non-generic test function has field typed `Foo[T]` (e.g., `endecoder.EnDecoder[T]`, `Option[T]`).  
+**Effect:** compile error — `T` undefined outside generic context.  
+**Fix:** replace `[T]` with concrete type (`[int]`, `[string]`, etc.) throughout that test function.
+
+### Anti-pattern 2 — `reflect.DeepEqual` on function values
+
+**Signal:** `want Option[T]` or `want GetOption` in table-driven test; comparison is `reflect.DeepEqual(got, tt.want)`.  
+**Effect:** always false — Go can't compare function values.  
+**Fix:** delete table struct. Apply option/func to real target struct, assert **effect**:
+```go
+func TestWithFoo(t *testing.T) {
+    s := &MyStruct{}
+    WithFoo("bar")(s)
+    if s.foo != "bar" {
+        t.Errorf("WithFoo() foo = %q, want \"bar\"", s.foo)
+    }
+}
+```
+
+### Anti-pattern 3 — `reflect.DeepEqual` on structs with function or interface fields
+
+**Signal:** constructor test does `reflect.DeepEqual(got, tt.want)` where returned struct contains function fields (`IDFunc`, `EnDecoder`, etc.).  
+**Effect:** always false — functions and interface values not comparable by DeepEqual.  
+**Fix:** assert individual observable properties:
+```go
+if got.client != client { t.Error(...) }
+if got.enDecoder == nil { t.Error(...) }
+if got.streamIDFunc("x") != "stream:x" { t.Error(...) }
+```
+
+### Anti-pattern 4 — Unused imports in stubs
+
+**Signal:** `_ "embed"` or `"reflect"` imported in test file that doesn't use them.  
+**Fix:** remove before filling to avoid compile noise.
 
 ---
 
@@ -57,14 +100,14 @@ Read `manual.md` and follow it.
 {name: "no error on success", ..., wantErr: false},
 ```
 
-**Context cancellation** — external cancellation should not be treated as error:
+**Context cancellation** — external cancel not treated as error:
 ```go
 {name: "external cancel returns no error", ..., wantErr: false},
 ```
 
 ### Time-related tests
 
-If `time.After`, `time.Sleep`, or `time.Ticker` appears in the path, read `synctest.md` and follow it.
+`time.After`, `time.Sleep`, or `time.Ticker` in path → read `synctest.md` and follow it.
 
 ---
 
