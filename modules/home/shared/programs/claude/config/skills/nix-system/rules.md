@@ -4,6 +4,15 @@
 
 If `.envrc` exists in the current working directory, delegate environment-handling behavior to the `direnv` skill.
 
+## BLOCKING CHECK — before any Edit or Write call
+
+Before calling Edit or Write, verify the path:
+
+1. Is it under `~/.claude/`, `~/.config/`, or `/etc/`? → remap using the table below first
+2. Is it a symlink? → resolve to Nix source first
+
+Do NOT call Edit or Write until the path points to the Nix source.
+
 ## Path mapping
 
 | Derived path | Nix source |
