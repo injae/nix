@@ -1,6 +1,6 @@
 ---
 name: emacs-lisp-development
-description: "Use for Emacs Lisp writing, package development, or config changes. Apply GNU conventions and community style patterns/anti-patterns. Auto-trigger on .el files, Emacs config edits, and Elisp implementation tasks."
+description: "MUST invoke for Emacs Lisp writing or .el file edits. Apply GNU conventions and community style patterns/anti-patterns."
 ---
 
 # Emacs Lisp Development Skill

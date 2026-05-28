@@ -21,12 +21,18 @@ Run IN PARALLEL:
 
 Reply: "Emacs mode active — MCP tools loaded."
 
-## Companion skills (depend on MCP schemas above)
+## MANDATORY — Load companion skills immediately after MCP schemas
 
-These activate via hook when relevant. MCP schemas MUST be loaded (Step above) before any of these can call emacs MCP tools.
+Invoke this NOW — not lazily, not "when needed":
 
-| Skill | Activate when |
-|-------|--------------|
-| `emacs-file-analysis` | reading/inspecting any source file |
-| `emacs-navigation` | LSP navigation, symbol lookup, finding references |
-| `emacs-lisp-development` | editing `.el` files or Emacs Lisp tasks |
+1. `/emacs-file-analysis` — governs ALL file reading (source AND config/go.mod/text files). Without this loaded, you will default to Bash grep.
+
+**Do NOT defer. Load before touching any file or answering any code question.**
+
+## Companion skills reference
+
+| Skill | When to load | Covers |
+|-------|-------------|--------|
+| `emacs-file-analysis` | **session start (mandatory)** | ANY file read — source, go.md, config, text |
+| `emacs-navigation` | on demand | symbol lookup, reference search, definition jump, Bash grep/find 대체 |
+| `emacs-lisp-development` | on demand | `.el` file edits, Emacs Lisp tasks |

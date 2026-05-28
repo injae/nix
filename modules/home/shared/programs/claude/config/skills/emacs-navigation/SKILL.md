@@ -1,6 +1,6 @@
 ---
 name: emacs-navigation
-description: "Use when doing LSP navigation, symbol lookup, finding references, cross-file analysis, or interface implementation search in emacs-dev context. Provides tool selection rules for lsp-refs vs lsp-proj-symbols."
+description: "MUST invoke before Bash grep/find or any symbol/reference/definition lookup in Emacs session. Provides MCP alternatives to grep and lsp-refs vs lsp-proj-symbols selection rules."
 user-invocable: false
 ---
 
@@ -20,6 +20,8 @@ user-invocable: false
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
 | Diagnostics | `getDiagnostics` | Bash |
+
+**Before reaching for `Bash grep/find`** — pause and check the table above. Most search tasks have an MCP equivalent that returns structured, LSP-aware results. Bash grep is a last resort, not a default.
 
 ## Symbol search precision
 
@@ -69,4 +71,3 @@ Long:  imenu-symbols(file) → field line+col → lsp-refs → symbol-source
 - Line 1-based, column 0-based
 - `lsp-type-def` limitation: gopls doesn't support typeDefinition for interfaces/struct fields → fall back to `lsp-def`
 - If eglot not active: `(find-file-noselect "/path/to/any/project/file")` then retry
-- Before `Bash grep/find`: confirm `lsp-def` and `xref-apropos` both failed first
