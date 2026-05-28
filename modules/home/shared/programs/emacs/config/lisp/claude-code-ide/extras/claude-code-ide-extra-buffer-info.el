@@ -75,8 +75,14 @@ Otherwise return all user-visible buffers ordered by recency."
                     (pos  (cond ((overlayp raw) (overlay-start raw))
                                 ((markerp raw)  (marker-position raw))
                                 ((integerp raw) raw)))
-                    (line (line-number-at-pos pos)))
-          (push (cons line (format "%d: %s%s" line prefix name)) pairs)))))
+                    (line (line-number-at-pos pos))
+                    (sig  (save-excursion
+                            (goto-char pos)
+                            (string-trim
+                             (buffer-substring-no-properties
+                              (line-beginning-position)
+                              (line-end-position))))))
+          (push (cons line (format "%d: %s%s  %s" line prefix name sig)) pairs)))))
     pairs))
 
 (defun claude-code-ide-mcp-file-outline (file-path)
@@ -105,7 +111,7 @@ Opens the file in the background if not already open."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-file-outline
     :name "file-outline"
-    :description "major-mode, treesit, and all symbols with line nums. Opens in background."
+    :description "major-mode, treesit, and all symbols with line nums and signatures. Opens in background."
     :args '((:name "file_path"
              :type string
              :description "Absolute path to file")))

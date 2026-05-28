@@ -1,6 +1,6 @@
 ---
 name: emacs-file-analysis
-description: "Use when reading or inspecting source files in emacs-dev context — struct/type lookup, function body read, any source file access. Enforces file-outline → symbol-source → Read protocol. MUST activate before any file read in an Emacs session."
+description: "MUST invoke before reading any source file in Emacs session. Enforces file-outline → symbol-source → Read protocol. Never call Read as first tool on any source file."
 user-invocable: false
 ---
 
@@ -19,11 +19,12 @@ file-outline → symbol-source → Read
 ## Step 1 — `file-outline` (always first)
 
 Call `file-outline(file_path)` for every target file.  
-Returns: treesit availability + symbol list with line numbers.  
+Returns: treesit availability + symbol list with line numbers **and signatures**.  
 Multiple files: call in parallel.
 
 ## Step 2 — `symbol-source` (if treesit available)
 
+Signatures from Step 1 are often sufficient — call `symbol-source` only when the full body is needed.  
 Call `symbol-source(file_path, line)` using line from Step 1.  
 Multiple symbols: call in parallel.
 
