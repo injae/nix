@@ -9,17 +9,24 @@ allowed-tools:
 
 # Emacs MCP Setup
 
-Load MCP tool schemas via two parallel ToolSearch calls:
+**CRITICAL: BLOCKING setup. MUST NOT read any source file or answer any code question until complete.**
+
+## MANDATORY — Load MCP tool schemas
+
+Run IN PARALLEL:
 - `"emacs-tools"` max_results:29
 - `"+ide getDiagnostics"` max_results:3
 
-Then read sub-files from this skill base directory:
+**Calling any Emacs MCP tool before this step is a violation.**
 
-| File | When to Read |
-|------|-------------|
-| `navigation.md` | Code navigation, LSP queries, symbol lookup, cross-file analysis |
-| `file-analysis.md` | Always — read right after MCP tool load |
-| `elisp.md` | Any `.el`/Emacs Lisp task, regardless of active IDE file |
-| `testing.md` | When user asks to validate/test/evaluate navigation skills |
+Reply: "Emacs mode active — MCP tools loaded."
 
-Read only task-relevant sub-files. Reply: "Emacs mode active — MCP tools loaded."
+## Companion skills (depend on MCP schemas above)
+
+These activate via hook when relevant. MCP schemas MUST be loaded (Step above) before any of these can call emacs MCP tools.
+
+| Skill | Activate when |
+|-------|--------------|
+| `emacs-file-analysis` | reading/inspecting any source file |
+| `emacs-navigation` | LSP navigation, symbol lookup, finding references |
+| `emacs-lisp-development` | editing `.el` files or Emacs Lisp tasks |
