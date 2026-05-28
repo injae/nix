@@ -6,8 +6,6 @@
 let
   inherit (flake) inputs;
   inherit (inputs) self;
-  inherit (pkgs.stdenv.hostPlatform) system;
-  stable = inputs.nixpkgs-stable.legacyPackages.${system};
   exclude = [
     "default.nix"
     "dock.nix"
@@ -35,7 +33,7 @@ in
   # for dockerTools
   nix.linux-builder = {
     enable = true;
-    package = stable.darwin.linux-builder;
+    package = pkgs.darwin.linux-builder;
     ephemeral = true;
     maxJobs = 4;
     systems = [ "aarch64-linux" ];
