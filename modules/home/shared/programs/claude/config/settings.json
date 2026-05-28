@@ -76,7 +76,8 @@
       "Read(**/secrets/**)",
       "Read(~/.config/sops/**)",
       "Read(~/.config/sops-nix/**)",
-      "Bash(rm -rf /:*)"
+      "Bash(rm -rf /:*)",
+      "Bash(git commit*)"
     ]
   },
   "skillOverrides": {
