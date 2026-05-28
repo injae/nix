@@ -155,7 +155,7 @@ To add project-only filtering (like `lsp-project-symbols`), bind `project-root` 
 
 `claude-code-ide-mcp-server-with-session-context` is a macro that splices `,@body` in two places. The `(error ...)` handler of `condition-case` must close at the same nesting level as `condition-case`, NOT inside the macro body.
 
-**After writing, always run the Step 4.5 diagnostic** (see `elisp.md`):
+**After writing, always run the Step 4.5 diagnostic:**
 ```
 Expected: (handler-conditions (claude-code-ide-mcp-server-with-session-context error))
 Bug:      (handler-conditions (claude-code-ide-mcp-server-with-session-context))
@@ -184,5 +184,5 @@ Count closing parens at the end of the macro body: the last `)` of the macro cal
                                                      (plist-get t :name)))
                        claude-code-ide-mcp-server-tools))
    ```
-3. Add the tool to the navigation table in `navigation.md`.
+3. Add the tool to the navigation table in `emacs-navigation` skill (`emacs-navigation/SKILL.md`).
 4. Load the file: `elisp-load-file`.

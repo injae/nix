@@ -92,7 +92,7 @@ When adding LSP navigation tools, read `mcp-tool-patterns.md` (in this skill's d
 | **B — Identifier-based** (`--with-identifier`) | tool takes a symbol name string |
 | **C — Server-context search** (`server-with-session-context`) | tool queries LSP workspace/symbol |
 
-Pattern C has a known pitfall: one misplaced `)` absorbs the `condition-case` error handler into the macro body, leaving no handler. After writing any Pattern C tool, run the Step 4.5 diagnostic from `emacs-dev/elisp.md`.
+Pattern C has a known pitfall: one misplaced `)` absorbs the `condition-case` error handler into the macro body, leaving no handler. After writing any Pattern C tool, run the Step 4.5 diagnostic in `mcp-tool-patterns.md`.
 
 ## Background operation — don't disturb the user
 
