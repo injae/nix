@@ -6,11 +6,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/hooks/session-start.py"
+            "command": "python3 ~/.claude/hooks/context/session-start.py"
           },
           {
             "type": "command",
-            "command": "~/.claude/hooks/skill-eval.sh"
+            "command": "~/.claude/hooks/skills/skill-eval.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/session-start.sh"
           }
         ]
       }
@@ -20,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/hooks/stop-context-guard.py"
+            "command": "python3 ~/.claude/hooks/context/stop-context-guard.py"
           }
         ]
       }
@@ -30,7 +34,38 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/hooks/pre-compact.py"
+            "command": "python3 ~/.claude/hooks/context/pre-compact.py"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skills/skill-eval.sh"
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "**/.envrc",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/reload.sh"
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/reload.sh"
           }
         ]
       }
@@ -40,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.claude/hooks/emacs-buffer-context.py"
+            "command": "python3 ~/.claude/hooks/emacs/emacs-buffer-context.py"
           }
         ]
       },
@@ -48,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/skill-remind.sh"
+            "command": "~/.claude/hooks/skills/skill-remind.sh"
           }
         ]
       }
@@ -56,6 +91,7 @@
   },
   "permissions": {
     "allow": [
+      "Read(~/.claude/**)",
       "Read(~/nix/**)",
       "Bash(git -C ~/nix*)",
       "Read(~/.emacs.d/**)",
@@ -100,6 +136,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash ~/.claude/hooks/caveman-statusline.sh"
+    "command": "bash ~/.claude/hooks/caveman/caveman-statusline.sh"
   }
 }

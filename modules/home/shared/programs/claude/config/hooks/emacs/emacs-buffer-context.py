@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: inject active Emacs buffer as context."""
-import os, subprocess, re, sys
+import os
+import subprocess
+import re
 
 
 def main():
