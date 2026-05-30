@@ -16,14 +16,18 @@
 ;;; Helpers
 
 (defmacro +vterm-test--env (&rest body)
-  "Run BODY in a temp buffer with Korean vterm state initialized."
+  "Run BODY in a temp buffer with Korean vterm state initialized.
+Saves and restores global hangul-queue to prevent test pollution."
   (declare (indent 0))
-  `(with-temp-buffer
-     (setq-local vterm--term t)
-     (setq-local input-method-function #'hangul2-input-method)
-     (setq-local +vterm--hangul-has-preedit nil)
-     (setq hangul-queue (make-vector 6 0))
-     ,@body))
+  `(let ((saved-queue (copy-sequence hangul-queue)))
+     (unwind-protect
+         (with-temp-buffer
+           (setq-local vterm--term t)
+           (setq-local input-method-function #'hangul2-input-method)
+           (setq-local +vterm--hangul-has-preedit nil)
+           (setq hangul-queue (make-vector 6 0))
+           ,@body)
+       (setq hangul-queue saved-queue))))
 
 (defun +vterm-test--press (key orig-fn)
   "Invoke +vterm--self-insert-with-im with KEY as last-command-event."
