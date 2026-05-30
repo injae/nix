@@ -4,11 +4,123 @@
 
 (declare-function claude-code-ide-session-buffer-p "claude-code-ide" (buffer))
 
+(defvar +vterm--hangul-captured ""
+  "Characters captured from hangul self-insert-command during vterm composition.")
+
+(defvar-local +vterm--hangul-has-preedit nil
+  "Non-nil when this vterm buffer has a pending preedit character.")
+
+(defun +vterm--hangul-capture-self-insert (_n &optional char)
+  "Capture self-insert-command output during per-keystroke hangul composition."
+  (let ((c (or char (and (characterp last-command-event) last-command-event))))
+    (when c
+      (setq +vterm--hangul-captured
+            (concat +vterm--hangul-captured (char-to-string c))))))
+
+(defun +vterm--hangul-flush ()
+  "Commit any pending hangul preedit syllable to vterm."
+  (when (and +vterm--hangul-has-preedit
+             (boundp 'hangul-queue)
+             hangul-queue
+             (not (seq-every-p #'zerop hangul-queue)))
+    (let ((+vterm--hangul-captured ""))
+      (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
+                ((symbol-function 'quail-delete-region) #'ignore)
+                ((symbol-function 'move-overlay) #'ignore))
+        (hangul-insert-character hangul-queue))
+      (when (> (length +vterm--hangul-captured) 0)
+        (vterm-send-string +vterm--hangul-captured)))
+    (setq +vterm--hangul-has-preedit nil)
+    (setq hangul-queue (make-vector 6 0))
+    (message "")))
+
+(defun +vterm--self-insert-with-im (orig-fn)
+  "Around advice for `vterm--self-insert' supporting Emacs hangul input.
+Calls hangul2-input-method-internal per keystroke so each committed
+syllable is sent to the terminal immediately."
+  (if (and vterm--term
+           input-method-function
+           (characterp last-command-event)
+           (not (memq 'meta (event-modifiers last-command-event)))
+           (not (memq 'control (event-modifiers last-command-event))))
+      (let ((key (event-basic-type last-command-event)))
+        (require 'hangul)
+        (if (hangul-alphabetp key)
+            ;; Hangul key: advance composition by exactly one step.
+            ;; Use last-command-event (not key) to preserve shift for ㄲ/ㅆ/ㅃ etc.
+            (let ((+vterm--hangul-captured ""))
+              (unless (and (boundp 'quail-overlay) (overlayp quail-overlay))
+                (setq quail-overlay (make-overlay (point) (point) nil t t)))
+              (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
+                        ((symbol-function 'quail-delete-region) #'ignore)
+                        ((symbol-function 'move-overlay) #'ignore))
+                (hangul2-input-method-internal last-command-event))
+              (let ((captured +vterm--hangul-captured))
+                ;; hangul-insert-character inserts N chars per call.
+                ;; Last char is always preedit; everything before is committed.
+                (when (> (length captured) 1)
+                  (vterm-send-string (substring captured 0 -1)))
+                (if (> (length captured) 0)
+                    (progn
+                      (setq +vterm--hangul-has-preedit t)
+                      (message "[ %s ]" (substring captured -1)))
+                  (setq +vterm--hangul-has-preedit nil)
+                  (message ""))))
+          ;; Backspace with pending preedit: decompose one step (까→ㄲ→∅).
+          (if (and (or (eq key 'backspace)
+                       (and (integerp key) (or (= key ?\d) (= key ?\^H))))
+                   +vterm--hangul-has-preedit)
+              (let ((+vterm--hangul-captured ""))
+                (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
+                          ((symbol-function 'delete-backward-char) #'ignore)
+                          ((symbol-function 'delete-char) #'ignore)
+                          ((symbol-function 'quail-delete-region) #'ignore)
+                          ((symbol-function 'move-overlay) #'ignore))
+                  (hangul-delete-backward-char))
+                (if (> (length +vterm--hangul-captured) 0)
+                    (progn
+                      (setq +vterm--hangul-has-preedit t)
+                      (message "[ %s ]" +vterm--hangul-captured))
+                  (setq +vterm--hangul-has-preedit nil)
+                  (message "")))
+            ;; Other non-hangul key (including space): flush pending preedit first,
+            ;; then send key. Matches standard Korean IME behavior (가+space → "가 ").
+            (+vterm--hangul-flush)
+            (let ((input-method-function nil))
+              (funcall orig-fn)))))
+    (funcall orig-fn)))
+
+(defun +vterm-toggle-korean ()
+  "Toggle Korean hangul input method in vterm buffer."
+  (interactive)
+  (require 'hangul)
+  (if input-method-function
+      (progn
+        (+vterm--hangul-flush)
+        (setq-local input-method-function nil)
+        (setq-local current-input-method nil)
+        (when (boundp 'evil-input-method) (setq-local evil-input-method nil))
+        (setq +vterm--hangul-has-preedit nil)
+        (setq hangul-queue (make-vector 6 0))
+        (force-mode-line-update)
+        (message "Korean input: OFF"))
+    (setq +vterm--hangul-has-preedit nil)
+    (setq hangul-queue (make-vector 6 0))
+    (setq-local input-method-function #'hangul2-input-method)
+    (setq-local current-input-method "korean-hangul")
+    ;; Tell evil to restore Korean on insert state re-entry.
+    (when (boundp 'evil-input-method) (setq-local evil-input-method "korean-hangul"))
+    (force-mode-line-update)
+    (message "Korean input: ON 한2")))
+
 (use-package vterm :after (evil-collection exec-path-from-shell)
 ;:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
+    (advice-add 'vterm--self-insert :around #'+vterm--self-insert-with-im)
+    (dolist (key '("C-'" "S-SPC" "<f17>" "<Hangul>"))
+      (add-to-list 'vterm-keymap-exceptions key))
     ;; Match vterm-color-black background to Emacs default background.
     ;; Opencode/Claude Code use ANSI black (#0) as background for UI
     ;; elements; without this, it renders as gray and clashes with the
