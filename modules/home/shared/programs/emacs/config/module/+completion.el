@@ -29,6 +29,10 @@
     :general (:keymaps 'vertico-map
               :state   'insert
               "<escape>" #'evil-normal-state)
+             (:keymaps 'vertico-map
+              :state   'normal
+              "y"        #'ignore
+              "Y"        #'ignore)
     :custom
     ;; Different scroll margin
     ;; (vertico-scroll-margin 0)
