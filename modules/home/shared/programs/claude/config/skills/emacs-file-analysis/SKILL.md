@@ -1,6 +1,6 @@
 ---
 name: emacs-file-analysis
-description: "MUST invoke before reading any source file in Emacs session. Enforces file-outline → symbol-source → Read protocol. Never call Read as first tool on any source file."
+description: "MUST invoke before reading any source file. Enforces file-outline → symbol-source → Read protocol. Never call Read as first tool on any source file."
 user-invocable: false
 ---
 
@@ -37,3 +37,5 @@ Allowed only when:
 2. treesit unavailable OR `symbol-source` insufficient
 
 Use specific line range. Never read whole file unless range unknown.
+
+**NEVER call `Read` after `symbol-source` already returned the full body.** If `symbol-source` gave the complete function/type body, that is sufficient — do not call `Read` to "confirm" or see imports. Imports can be inferred from symbol usage.

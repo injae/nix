@@ -66,6 +66,12 @@ description: "Use for Go writing, review, or refactoring tasks. Apply idiomatic 
 
 ---
 
+## Library Migration
+
+Read `/migration` skill. Go-specific protocol in `/migration/go.md`.
+
+---
+
 ## Checklist (Code Review)
 
 - [ ] Are all errors handled? (no ignored `_, err` patterns)

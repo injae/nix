@@ -1,6 +1,6 @@
 ---
 name: emacs-navigation
-description: "MUST invoke before Bash grep/find or any symbol/reference/definition lookup in Emacs session. Provides MCP alternatives to grep and lsp-refs vs lsp-proj-symbols selection rules."
+description: "MUST invoke before Bash grep/find or any symbol/reference/definition lookup. Provides MCP alternatives to grep and lsp-refs vs lsp-proj-symbols selection rules."
 user-invocable: false
 ---
 
@@ -22,6 +22,28 @@ user-invocable: false
 | Diagnostics | `getDiagnostics` | Bash |
 
 **Before reaching for `Bash grep/find`** — pause and check the table above. Most search tasks have an MCP equivalent that returns structured, LSP-aware results. Bash grep is a last resort, not a default.
+
+## External files (module cache, non-project paths)
+
+LSP is configured to follow references into external files (module cache, stdlib). "File is outside the project" is NOT a reason to use grep.
+
+**WRONG**: "This file is in `/go/pkg/mod/` → LSP won't index it → use grep"
+**RIGHT**: "This file is in `/go/pkg/mod/` → open-file-lsp or file-outline first"
+
+```
+External file protocol (LSP auto-initializes on any call — no open-file-lsp needed):
+1. file-outline(external_file_path)        → symbols + line numbers via treesit
+2. symbol-source(external_file_path, line) → full body of target symbol
+3. lsp-def / lsp-refs work on external files directly
+4. Read(external_file_path, offset, limit) → only if above insufficient
+❌ Bash grep -n "pattern" external_file    → NEVER
+```
+
+**Grep is allowed ONLY when:**
+- Pattern search across many unknown files with no target file identified yet
+- Binary or non-text files
+
+"File is external / not in project" is never a valid reason to use grep.
 
 ## Symbol search precision
 
@@ -70,4 +92,4 @@ Long:  imenu-symbols(file) → field line+col → lsp-refs → symbol-source
 
 - Line 1-based, column 0-based
 - `lsp-type-def` limitation: gopls doesn't support typeDefinition for interfaces/struct fields → fall back to `lsp-def`
-- If eglot not active: `(find-file-noselect "/path/to/any/project/file")` then retry
+- LSP tools auto-start eglot on first call — no prerequisite needed. Use `open-file-lsp` only to pre-warm the server before a batch of LSP queries.

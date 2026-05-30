@@ -1,6 +1,6 @@
 ---
 name: emacs-lisp-development
-description: "MUST invoke for Emacs Lisp writing or .el file edits. Apply GNU conventions and community style patterns/anti-patterns."
+description: "MUST invoke for Emacs Lisp writing, .el file edits, or .el file analysis/reading. Apply GNU conventions and community style patterns/anti-patterns."
 ---
 
 # Emacs Lisp Development Skill

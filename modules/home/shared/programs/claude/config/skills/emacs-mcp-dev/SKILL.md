@@ -18,7 +18,7 @@ Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 | `claude-code-ide-extra-lsp-nav-position.el` | LSP position-based navigation (def, refs, impl, type) |
 | `claude-code-ide-extra-lsp-nav-workspace.el` | LSP workspace/symbol navigation |
 | `claude-code-ide-extra-magit.el` | magit git operations |
-| `claude-code-ide-extra-navigation.el` | goto-line |
+| `claude-code-ide-extra-navigation.el` | goto-line, open-file-lsp |
 
 `claude-code-ide-emacs-tools-extra.el` is the aggregator — it adds `extras/` to `load-path` and `require`s each file. No registration step needed beyond adding to the right file.
 

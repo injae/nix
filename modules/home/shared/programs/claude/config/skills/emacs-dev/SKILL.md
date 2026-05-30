@@ -14,7 +14,7 @@ allowed-tools:
 ## MANDATORY — Load MCP tool schemas
 
 Run IN PARALLEL:
-- `"emacs-tools"` max_results:29
+- `"emacs-tools"` max_results:30
 - `"+ide getDiagnostics"` max_results:3
 
 **Calling any Emacs MCP tool before this step is a violation.**
@@ -26,6 +26,7 @@ Reply: "Emacs mode active — MCP tools loaded."
 Invoke this NOW — not lazily, not "when needed":
 
 1. `/emacs-file-analysis` — governs ALL file reading (source AND config/go.mod/text files). Without this loaded, you will default to Bash grep.
+2. `/emacs-navigation` — load immediately when the task involves **any source file exploration** (reading multiple files, understanding codebase structure, migration, refactor). Do NOT wait until the first grep — by then the protocol is already violated.
 
 **Do NOT defer. Load before touching any file or answering any code question.**
 
@@ -34,5 +35,5 @@ Invoke this NOW — not lazily, not "when needed":
 | Skill | When to load | Covers |
 |-------|-------------|--------|
 | `emacs-file-analysis` | **session start (mandatory)** | ANY file read — source, go.md, config, text |
-| `emacs-navigation` | on demand | symbol lookup, reference search, definition jump, Bash grep/find 대체 |
+| `emacs-navigation` | **load before any source file exploration** — multiple file reads, codebase analysis, migration, refactor. Not needed for config/text-only tasks. | symbol lookup, reference search, definition jump, Bash grep/find replacement |
 | `emacs-lisp-development` | on demand | `.el` file edits, Emacs Lisp tasks |
