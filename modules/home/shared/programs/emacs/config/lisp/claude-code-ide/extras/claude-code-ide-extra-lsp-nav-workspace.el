@@ -8,18 +8,22 @@
 
 (defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
   "Return a buffer with an active eglot server for FILE-PATH's project.
-Prefers an already-open buffer to avoid triggering Emacs hooks."
-  (or (find-buffer-visiting file-path)
-      (when-let* ((dir (file-name-directory (expand-file-name file-path)))
-                  (proj (ignore-errors (project-current nil dir)))
-                  (root (expand-file-name (project-root proj))))
-        (seq-find
-         (lambda (buf)
-           (and (buffer-file-name buf)
-                (string-prefix-p root (expand-file-name (buffer-file-name buf)))
-                (with-current-buffer buf (eglot-current-server))))
-         (buffer-list)))
-      (find-file-noselect file-path)))
+Starts eglot via eglot--connect if no server is already running."
+  (let ((buf (or (find-buffer-visiting file-path)
+                 (when-let* ((dir (file-name-directory (expand-file-name file-path)))
+                             (proj (ignore-errors (project-current nil dir)))
+                             (root (expand-file-name (project-root proj))))
+                   (seq-find
+                    (lambda (b)
+                      (and (buffer-file-name b)
+                           (string-prefix-p root (expand-file-name (buffer-file-name b)))
+                           (with-current-buffer b (eglot-current-server))))
+                    (buffer-list)))
+                 (let ((delay-mode-hooks t))
+                   (find-file-noselect file-path)))))
+    (with-current-buffer buf
+      (claude-code-ide-mcp--ensure-eglot file-path))
+    buf))
 
 (defun claude-code-ide-mcp-lsp-workspace-symbols (query file-path)
   "Search for symbols matching QUERY project-wide via LSP workspace/symbol.

@@ -41,5 +41,34 @@
              :type number
              :description "Line (1-based)")))
 
+(defun claude-code-ide-mcp-open-file-lsp (file-path)
+  "Open FILE-PATH in Emacs and start LSP server without interactive prompts.
+Uses eglot--connect directly since eglot-ensure relies on post-command-hook
+and never fires in non-interactive (MCP) contexts."
+  (condition-case err
+      (let* ((expanded (expand-file-name file-path))
+             (buf (or (find-buffer-visiting expanded)
+                      (find-file-noselect expanded))))
+        (with-current-buffer buf
+          (unless (eglot-current-server)
+            (condition-case oops
+                (apply #'eglot--connect (eglot--guess-contact))
+              (error (message "[open-file-lsp] eglot--connect: %s" (error-message-string oops)))))
+          (cl-loop repeat 100
+                   until (eglot-current-server)
+                   do (sleep-for 0.1))
+          (if (eglot-current-server)
+              (format "LSP ready: %s" expanded)
+            (format "LSP not ready for %s — server may need more time or is unsupported" expanded))))
+    (error (format "Error: %s" (error-message-string err)))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-open-file-lsp
+    :name "open-file-lsp"
+    :description "Open file in Emacs and start LSP server without UI prompts. Call before lsp-* tools on projects not yet open in Emacs."
+    :args '((:name "file_path"
+             :type string
+             :description "Absolute path to any file in the project")))
+
 (provide 'claude-code-ide-extra-navigation)
 ;;; claude-code-ide-extra-navigation.el ends here

@@ -346,13 +346,11 @@ Prefers the last active buffer over the registered buffer."
                       (and registered-buffer
                            (buffer-live-p registered-buffer)
                            registered-buffer))))
-     (if (not context)
-         (error "No session context found for session %s" ,session-id)
-       (let ((default-directory (or project-dir default-directory)))
-         (if buffer
-             (with-current-buffer buffer
-               ,@body)
-           ,@body)))))
+     (let ((default-directory (or project-dir default-directory)))
+       (if buffer
+           (with-current-buffer buffer
+             ,@body)
+         ,@body))))
 
 ;;; Internal Functions
 

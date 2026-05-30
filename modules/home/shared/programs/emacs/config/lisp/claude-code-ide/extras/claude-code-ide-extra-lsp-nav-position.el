@@ -20,12 +20,34 @@
                          (substring-no-properties (xref-item-summary xref)))))
              xrefs "\n"))))
 
+(defun claude-code-ide-mcp--open-file-no-hooks (file-path)
+  "Open FILE-PATH without triggering mode hooks that may cause UI prompts.
+Returns the buffer."
+  (or (find-buffer-visiting file-path)
+      (let ((delay-mode-hooks t))
+        (find-file-noselect file-path))))
+
+(defun claude-code-ide-mcp--ensure-eglot (file-path)
+  "Ensure an eglot server is running for the current buffer.
+Starts one via eglot--connect directly if needed — eglot-ensure relies on
+post-command-hook and never fires in non-interactive (MCP) contexts.
+FILE-PATH is used only for error messages."
+  (unless (eglot-current-server)
+    (condition-case oops
+        (apply #'eglot--connect (eglot--guess-contact))
+      (error (error "Cannot start LSP for %s: %s" file-path (error-message-string oops))))
+    (cl-loop repeat 100
+             until (eglot-current-server)
+             do (sleep-for 0.1))
+    (unless (eglot-current-server)
+      (error "LSP server did not start for %s" file-path))))
+
 (defun claude-code-ide-mcp--with-identifier (file-path identifier fn)
   "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
-      (with-current-buffer (or (find-buffer-visiting file-path)
-                               (find-file-noselect file-path))
+      (with-current-buffer (claude-code-ide-mcp--open-file-no-hooks file-path)
+        (claude-code-ide-mcp--ensure-eglot file-path)
         (save-excursion
           (goto-char (point-min))
           (if (search-forward identifier nil t)
@@ -38,8 +60,8 @@
   "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
-      (with-current-buffer (or (find-buffer-visiting file-path)
-                               (find-file-noselect file-path))
+      (with-current-buffer (claude-code-ide-mcp--open-file-no-hooks file-path)
+        (claude-code-ide-mcp--ensure-eglot file-path)
         (save-excursion
           (goto-char (point-min))
           (when (and line (> line 0))
