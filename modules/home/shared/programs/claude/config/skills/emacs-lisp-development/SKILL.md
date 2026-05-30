@@ -92,6 +92,31 @@ description: "MUST invoke for Emacs Lisp writing, .el file edits, or .el file an
 
 ---
 
+## Event Handler Debugging
+
+### 1. Verify key dispatch before analyzing logic
+
+Before debugging handler logic, confirm the key actually reaches the intended function.
+
+```elisp
+(lookup-key vterm-mode-map [backspace])   ; → vterm-send-backspace (not vterm--self-insert!)
+(advice-member-p #'my-advice 'target-fn)
+```
+
+Special keys (`backspace`, `return`, etc.) bind to their own dedicated commands.
+Advising only `vterm--self-insert` won't catch bugs triggered by special keys.
+
+### 2. Write scenario tests alongside unit tests
+
+Unit tests verify internal logic; they don't catch dispatch-path bugs.
+Write scenario tests that simulate a full key sequence and assert the final terminal state.
+
+- Track terminal state as a `string` variable
+- Mock `vterm-send-string` and IME internals with `cl-letf`
+- Assert the final `term` value at the end of each scenario
+
+---
+
 ## Checklist (Code Review)
 
 - [ ] File header includes `;;; -*- lexical-binding: t; -*-`?
