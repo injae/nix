@@ -3,12 +3,16 @@
 ;;; Code:
 
 (declare-function claude-code-ide-session-buffer-p "claude-code-ide" (buffer))
+(defvar quail-overlay)
 
 (defvar +vterm--hangul-captured ""
   "Characters captured from hangul self-insert-command during vterm composition.")
 
-(defvar-local +vterm--hangul-has-preedit nil
-  "Non-nil when this vterm buffer has a pending preedit character.")
+(defvar-local +vterm--hangul-preedit-sent ""
+  "Preedit character currently displayed inline in the vterm terminal.")
+
+(defvar-local +vterm--hangul-active nil
+  "Non-nil when Korean hangul input is active in this vterm buffer.")
 
 (defun +vterm--hangul-capture-self-insert (_n &optional char)
   "Capture self-insert-command output during per-keystroke hangul composition."
@@ -17,99 +21,130 @@
       (setq +vterm--hangul-captured
             (concat +vterm--hangul-captured (char-to-string c))))))
 
+(defun +vterm--hangul-erase-preedit ()
+  "Erase the inline preedit character from the vterm terminal."
+  (when (> (length +vterm--hangul-preedit-sent) 0)
+    (vterm-send-string "\177")
+    (setq +vterm--hangul-preedit-sent "")))
+
 (defun +vterm--hangul-flush ()
-  "Commit any pending hangul preedit syllable to vterm."
-  (when (and +vterm--hangul-has-preedit
-             (boundp 'hangul-queue)
-             hangul-queue
-             (not (seq-every-p #'zerop hangul-queue)))
-    (let ((+vterm--hangul-captured ""))
-      (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
-                ((symbol-function 'quail-delete-region) #'ignore)
-                ((symbol-function 'move-overlay) #'ignore))
-        (hangul-insert-character hangul-queue))
-      (when (> (length +vterm--hangul-captured) 0)
-        (vterm-send-string +vterm--hangul-captured)))
-    (setq +vterm--hangul-has-preedit nil)
-    (setq hangul-queue (make-vector 6 0))
-    (message "")))
+  "Commit pending preedit: already inline in terminal, just clear tracking state."
+  (when (> (length +vterm--hangul-preedit-sent) 0)
+    (setq +vterm--hangul-preedit-sent "")
+    (setq hangul-queue (make-vector 6 0))))
+
+(defun +vterm--after-evil-insert-clear-imf ()
+  "Clear input-method-function after evil restores it on insert state entry.
+Evil calls activate-input-method which sets input-method-function; that causes
+hangul2-input-method to be invoked by the event loop, inserting directly into
+the vterm buffer. This hook clears it so our advice remains the sole handler."
+  (when +vterm--hangul-active
+    (setq input-method-function nil)))
+
+(defun +vterm--hangul-compose-key (event)
+  "Advance hangul2 composition one step for EVENT, update inline preedit.
+EVENT is last-command-event; passed directly to preserve shift for ㄲ/ㅆ/ㅃ."
+  (unless (and (boundp 'quail-overlay) (overlayp quail-overlay))
+    (setq quail-overlay (make-overlay (point) (point) nil t t)))
+  (let ((+vterm--hangul-captured ""))
+    (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
+              ((symbol-function 'quail-delete-region) #'ignore)
+              ((symbol-function 'move-overlay) #'ignore))
+      (hangul2-input-method-internal event))
+    (let ((captured +vterm--hangul-captured))
+      (+vterm--hangul-erase-preedit)
+      (when (> (length captured) 1)
+        (vterm-send-string (substring captured 0 -1)))
+      (if (> (length captured) 0)
+          (progn
+            (vterm-send-string (substring captured -1))
+            (setq +vterm--hangul-preedit-sent (substring captured -1)))
+        (setq +vterm--hangul-preedit-sent "")))))
+
+(defun +vterm--hangul-decompose-backspace ()
+  "Decompose current preedit one step via hangul-delete-backward-char."
+  (let ((+vterm--hangul-captured ""))
+    (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
+              ((symbol-function 'delete-backward-char) #'ignore)
+              ((symbol-function 'delete-char) #'ignore)
+              ((symbol-function 'quail-delete-region) #'ignore)
+              ((symbol-function 'move-overlay) #'ignore))
+      (hangul-delete-backward-char))
+    (+vterm--hangul-erase-preedit)
+    (if (> (length +vterm--hangul-captured) 0)
+        (progn
+          (vterm-send-string +vterm--hangul-captured)
+          (setq +vterm--hangul-preedit-sent +vterm--hangul-captured))
+      (setq +vterm--hangul-preedit-sent ""))))
 
 (defun +vterm--self-insert-with-im (orig-fn)
   "Around advice for `vterm--self-insert' supporting Emacs hangul input.
 Calls hangul2-input-method-internal per keystroke so each committed
 syllable is sent to the terminal immediately."
   (if (and vterm--term
-           input-method-function
+           +vterm--hangul-active
            (characterp last-command-event)
            (not (memq 'meta (event-modifiers last-command-event)))
            (not (memq 'control (event-modifiers last-command-event))))
       (let ((key (event-basic-type last-command-event)))
         (require 'hangul)
-        (if (hangul-alphabetp key)
-            ;; Hangul key: advance composition by exactly one step.
-            ;; Use last-command-event (not key) to preserve shift for ㄲ/ㅆ/ㅃ etc.
-            (let ((+vterm--hangul-captured ""))
-              (unless (and (boundp 'quail-overlay) (overlayp quail-overlay))
-                (setq quail-overlay (make-overlay (point) (point) nil t t)))
-              (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
-                        ((symbol-function 'quail-delete-region) #'ignore)
-                        ((symbol-function 'move-overlay) #'ignore))
-                (hangul2-input-method-internal last-command-event))
-              (let ((captured +vterm--hangul-captured))
-                ;; hangul-insert-character inserts N chars per call.
-                ;; Last char is always preedit; everything before is committed.
-                (when (> (length captured) 1)
-                  (vterm-send-string (substring captured 0 -1)))
-                (if (> (length captured) 0)
-                    (progn
-                      (setq +vterm--hangul-has-preedit t)
-                      (message "[ %s ]" (substring captured -1)))
-                  (setq +vterm--hangul-has-preedit nil)
-                  (message ""))))
-          ;; Backspace with pending preedit: decompose one step (까→ㄲ→∅).
-          (if (and (or (eq key 'backspace)
-                       (and (integerp key) (or (= key ?\d) (= key ?\^H))))
-                   +vterm--hangul-has-preedit)
-              (let ((+vterm--hangul-captured ""))
-                (cl-letf (((symbol-function 'self-insert-command) #'+vterm--hangul-capture-self-insert)
-                          ((symbol-function 'delete-backward-char) #'ignore)
-                          ((symbol-function 'delete-char) #'ignore)
-                          ((symbol-function 'quail-delete-region) #'ignore)
-                          ((symbol-function 'move-overlay) #'ignore))
-                  (hangul-delete-backward-char))
-                (if (> (length +vterm--hangul-captured) 0)
-                    (progn
-                      (setq +vterm--hangul-has-preedit t)
-                      (message "[ %s ]" +vterm--hangul-captured))
-                  (setq +vterm--hangul-has-preedit nil)
-                  (message "")))
-            ;; Other non-hangul key (including space): flush pending preedit first,
-            ;; then send key. Matches standard Korean IME behavior (가+space → "가 ").
-            (+vterm--hangul-flush)
-            (let ((input-method-function nil))
-              (funcall orig-fn)))))
+        (cond
+         ((hangul-alphabetp key)
+          (+vterm--hangul-compose-key last-command-event))
+         ((and (or (eq key 'backspace)
+                   (and (integerp key) (or (= key ?\d) (= key ?\^H))))
+               (> (length +vterm--hangul-preedit-sent) 0))
+          (+vterm--hangul-decompose-backspace))
+         (t
+          (+vterm--hangul-flush)
+          (let ((input-method-function nil))
+            (funcall orig-fn)))))
     (funcall orig-fn)))
+
+(defun +vterm--send-backspace-with-im (orig-fn)
+  "Around advice for `vterm-send-backspace' supporting hangul decompose.
+When Korean is active and preedit exists, decompose one jaso step instead of
+sending a raw backspace to the terminal."
+  (if (and vterm--term +vterm--hangul-active)
+      (if (> (length +vterm--hangul-preedit-sent) 0)
+          (+vterm--hangul-decompose-backspace)
+        (funcall orig-fn))
+    (funcall orig-fn)))
+
+(defun +vterm--send-return-flush-im (orig-fn)
+  "Around advice for `vterm-send-return' to flush pending hangul preedit.
+The preedit char is already inline in the terminal and becomes committed text;
+this clears tracking state before Enter is sent."
+  (when (and vterm--term +vterm--hangul-active)
+    (+vterm--hangul-flush))
+  (funcall orig-fn))
 
 (defun +vterm-toggle-korean ()
   "Toggle Korean hangul input method in vterm buffer."
   (interactive)
   (require 'hangul)
-  (if input-method-function
+  (if +vterm--hangul-active
       (progn
         (+vterm--hangul-flush)
-        (setq-local input-method-function nil)
+        (setq-local +vterm--hangul-active nil)
         (setq-local current-input-method nil)
+        (setq-local input-method-function nil)
         (when (boundp 'evil-input-method) (setq-local evil-input-method nil))
-        (setq +vterm--hangul-has-preedit nil)
-        (setq hangul-queue (make-vector 6 0))
+        (when (boundp 'evil-insert-state-entry-hook)
+          (remove-hook 'evil-insert-state-entry-hook
+                       #'+vterm--after-evil-insert-clear-imf t))
+        (kill-local-variable 'hangul-queue)
         (force-mode-line-update)
         (message "Korean input: OFF"))
-    (setq +vterm--hangul-has-preedit nil)
+    (setq +vterm--hangul-preedit-sent "")
+    (make-local-variable 'hangul-queue)
     (setq hangul-queue (make-vector 6 0))
-    (setq-local input-method-function #'hangul2-input-method)
+    (setq-local +vterm--hangul-active t)
     (setq-local current-input-method "korean-hangul")
-    ;; Tell evil to restore Korean on insert state re-entry.
-    (when (boundp 'evil-input-method) (setq-local evil-input-method "korean-hangul"))
+    (setq-local input-method-function nil)
+    (when (boundp 'evil-insert-state-entry-hook)
+      (add-hook 'evil-insert-state-entry-hook
+                #'+vterm--after-evil-insert-clear-imf t t))
     (force-mode-line-update)
     (message "Korean input: ON 한2")))
 
@@ -118,7 +153,9 @@ syllable is sent to the terminal immediately."
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
     (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
-    (advice-add 'vterm--self-insert :around #'+vterm--self-insert-with-im)
+    (advice-add 'vterm--self-insert  :around #'+vterm--self-insert-with-im)
+    (advice-add 'vterm-send-backspace :around #'+vterm--send-backspace-with-im)
+    (advice-add 'vterm-send-return   :around #'+vterm--send-return-flush-im)
     (dolist (key '("C-'" "S-SPC" "<f17>" "<Hangul>"))
       (add-to-list 'vterm-keymap-exceptions key))
     ;; Match vterm-color-black background to Emacs default background.
