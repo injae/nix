@@ -14,7 +14,7 @@ allowed-tools:
 ## MANDATORY — Load MCP tool schemas
 
 Run IN PARALLEL:
-- `"emacs-tools"` max_results:30
+- `"emacs-tools"` max_results:25
 - `"+ide getDiagnostics"` max_results:3
 
 **Calling any Emacs MCP tool before this step is a violation.**

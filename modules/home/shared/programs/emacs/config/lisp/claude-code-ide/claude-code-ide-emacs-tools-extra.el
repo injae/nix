@@ -4,7 +4,6 @@
 
 (defvar claude-code-ide--extras-files
   '("claude-code-ide-extra-buffer-info"
-    "claude-code-ide-extra-call-function"
     "claude-code-ide-extra-describe-symbol"
     "claude-code-ide-extra-elisp"
     "claude-code-ide-extra-formatting"

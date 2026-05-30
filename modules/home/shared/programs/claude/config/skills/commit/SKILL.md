@@ -5,7 +5,7 @@ user-invocable: true
 allowed-tools:
   - Bash(git diff --cached*)
   - Bash(git log*)
-  - mcp__emacs-tools__call-fn
+  - mcp__ide__executeCode
   - mcp__emacs-tools__git-prepare-commit
 ---
 
@@ -47,7 +47,7 @@ Analyze diff, write one-line message:
 ## Step 4 — Clipboard + Magit buffer
 
 Run in parallel:
-- `call-fn` — `name`: `kill-new`, `args`: `["<the commit message>"]`
+- `executeCode` — `(kill-new "<the commit message>")`
 - `git-prepare-commit` — with the message pre-filled
 
 Tell user: press **C-c C-c** to commit.

@@ -7,7 +7,7 @@ allowed-tools:
   - Bash(git log*)
   - Bash(git status*)
   - Bash(git add*)
-  - mcp__emacs-tools__call-fn
+  - mcp__ide__executeCode
   - mcp__emacs-tools__git-prepare-commit
 ---
 
@@ -92,7 +92,7 @@ For each group:
    git add <file1> <file2> ...
    ```
 
-2. Follow commit skill Steps 3–4: generate message from group diff, run `kill-new` + `git-prepare-commit` in parallel.
+2. Follow commit skill Steps 3–4: generate message from group diff, run `executeCode (kill-new ...)` + `git-prepare-commit` in parallel.
 
 3. Tell user:
    ```text
@@ -107,4 +107,4 @@ For each group:
 ## Step 6 — Done
 
 - Print summary of committed groups
-- Open Magit status: `call-fn` — `name`: `magit-status`, `args`: `[]`
+- Open Magit status: `executeCode` — `(magit-status)`

@@ -11,7 +11,6 @@ Tools live in `config/lisp/claude-code-ide/extras/`, one file per domain:
 | File | Domain |
 |------|--------|
 | `claude-code-ide-extra-buffer-info.el` | buffer info, file outline, symbol source |
-| `claude-code-ide-extra-call-function.el` | call any Elisp function by name |
 | `claude-code-ide-extra-describe-symbol.el` | describe function/variable |
 | `claude-code-ide-extra-elisp.el` | callees, load-file, find-references |
 | `claude-code-ide-extra-formatting.el` | apheleia formatter |
