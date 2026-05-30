@@ -1,9 +1,16 @@
 # Global Claude Instructions
 
+## Nix-managed paths — BLOCKING
+
+`~/.claude/`, `~/.config/`, `/etc/` are Nix-derived (read-only symlinks).
+**Before any Edit or Write**, check: is the target under one of these?
+If yes → remap to `$NIX_CONFIG_DIR/modules/home/shared/programs/claude/config/` first.
+Never write to a derived path directly. This check is non-negotiable, even mid-task.
+
 ## Session start
 
 `SessionStart` hook injects env-specific skill/instructions:
-- `INSIDE_EMACS` set → `/emacs-dev`
+- Always → `/emacs-dev` (Emacs detected 시 prefix 추가)
 - `NIX_CONFIG_DIR` set → `/nix-system`
 - `~/.claude/CLAUDE.local.md` exists → inject file content
 
@@ -14,6 +21,22 @@ Always respond in Korean.
 ## Work style
 
 NEVER execute without approval. ALWAYS: plan → wait for explicit approval → execute. Skipping is not allowed.
+
+## Explore Before Acting
+
+**Before any information gathering, present an exploration plan and wait for approval.**
+
+Plan format:
+- Targets: [list of files, dirs, URLs, or other sources to consult]
+- Order:
+  1. [target] — [tool] — [reason]
+  2. [target] — [tool] — [reason]
+- Goal: [what must be known before implementation is possible]
+- Unknowns: [what is unclear right now]
+
+Present the plan, ask "Shall I explore in this order?" → wait for approval or correction before starting.
+
+During exploration: if a new approach not in the plan is needed, state the new approach + reason → get approval before applying.
 
 ## Think Before Coding
 

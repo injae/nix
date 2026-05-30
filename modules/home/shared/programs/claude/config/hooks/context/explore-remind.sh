@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "EXPLORE BEFORE ACTING: info gather? Plan first → Targets / Order(target—tool—reason) / Goal / Unknowns → ask \"Shall I explore in this order?\" → wait approval. Mid-plan change: state+reason → get approval."

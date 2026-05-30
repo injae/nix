@@ -86,6 +86,14 @@
             "command": "~/.claude/hooks/skills/skill-remind.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/context/explore-remind.sh"
+          }
+        ]
       }
     ]
   },

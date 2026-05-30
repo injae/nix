@@ -35,10 +35,10 @@ if trigger == "compact":
 e = os.environ.get("INSIDE_EMACS", "")
 t = os.environ.get("TERM_PROGRAM", "")
 if e or t == "emacs":
-    parts.append(
-        f"Emacs detected (INSIDE_EMACS={e}). "
-        "MANDATORY SESSION START: You MUST invoke the /emacs-dev skill before responding to the user."
-    )
+    parts.append(f"Emacs detected (INSIDE_EMACS={e}).")
+parts.append(
+    "MANDATORY SESSION START: You MUST invoke the /emacs-dev skill before responding to the user."
+)
 
 nix_config = os.environ.get("NIX_CONFIG_DIR", "")
 cwd = os.getcwd()
