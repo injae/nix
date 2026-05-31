@@ -92,7 +92,7 @@ For each group:
    git add <file1> <file2> ...
    ```
 
-2. Follow commit skill Steps 3–4: generate message from group diff, run `executeCode (kill-new ...)` + `git-prepare-commit` in parallel.
+2. **MANDATORY: invoke `/commit` skill now** — do NOT write the message manually. The commit skill reads the staged diff and generates the message. Run its Steps 3–4: generate message from group diff, run `executeCode (kill-new ...)` + `git-prepare-commit` in parallel.
 
 3. Tell user:
    ```text
