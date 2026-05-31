@@ -11,7 +11,9 @@
 ;:custom (vterm-always-compile-module t)
 :config
     (add-hook 'vterm-mode-hook (lambda () (display-line-numbers-mode -1)))
-    (add-hook 'vterm-mode-hook (lambda () (ligature-mode -1)))
+    (add-hook 'vterm-mode-hook (lambda ()
+      (ligature-mode -1)
+      (face-remap-add-relative 'default :family "Sarasa Term K" :height 160)))
     (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
     ;; Match vterm-color-black background to Emacs default background.
     ;; Opencode/Claude Code use ANSI black (#0) as background for UI
