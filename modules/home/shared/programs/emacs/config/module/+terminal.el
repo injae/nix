@@ -158,6 +158,8 @@ this clears tracking state before Enter is sent."
     (advice-add 'vterm-send-return   :around #'+vterm--send-return-flush-im)
     (dolist (key '("C-'" "S-SPC" "<f17>" "<Hangul>"))
       (add-to-list 'vterm-keymap-exceptions key))
+    (define-key vterm-mode-map (kbd "C-'")      #'+vterm-toggle-korean)
+    (define-key vterm-mode-map (kbd "<Hangul>") #'+vterm-toggle-korean)
     ;; Match vterm-color-black background to Emacs default background.
     ;; Opencode/Claude Code use ANSI black (#0) as background for UI
     ;; elements; without this, it renders as gray and clashes with the
