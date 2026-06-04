@@ -33,6 +33,7 @@ in
   img2webp = self.callPackage "${packages}/img2webp.nix" { };
   dl-yt = self.callPackage "${packages}/dl-yt.nix" { };
   dl-yt-mp3 = self.callPackage "${packages}/dl-yt-mp3.nix" { };
+  pytest-language-server = self.callPackage "${packages}/pytest-language-server.nix" { };
   #lima-additional-guestagents =
   #  self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
   #    { };

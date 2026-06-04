@@ -7,5 +7,6 @@
     uv
     ty
     python3
+    pytest-language-server
   ];
 }
