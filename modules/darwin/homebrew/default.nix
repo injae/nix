@@ -6,8 +6,10 @@
     user = flake.config.people.myself;
     onActivation = {
       autoUpdate = true;
-      cleanup = "zap";
+      #cleanup = "zap";
       upgrade = false;
+      # https://github.com/nix-darwin/nix-darwin/pull/1789
+      extraFlags = [ "--force-cleanup" ];
     };
 
     taps = [

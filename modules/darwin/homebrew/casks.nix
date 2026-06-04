@@ -44,7 +44,7 @@ _:
 
   "TheBoredTeam/boring-notch/boring-notch"
 
-  "claude-code"
+  "claude-code@latest"
 
   "headlamp"
 
