@@ -52,6 +52,8 @@
 
 (use-package eglot-typescript-preset :after eglot
   :custom (eglot-typescript-preset-lsp-server 'rass)
+          (eglot-typescript-preset-rass-tools
+           '(typescript-language-server eslint tailwindcss-language-server))
   :config
   (eglot-typescript-preset-setup)
   )
