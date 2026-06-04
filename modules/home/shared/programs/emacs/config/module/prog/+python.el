@@ -13,7 +13,7 @@
 
 (use-package eglot-python-preset :after eglot
     :custom (eglot-python-preset-lsp-server 'rass)
-    :config (setopt eglot-python-preset-rass-tools '(ty ruff))
+    :config (setopt eglot-python-preset-rass-tools '(ty ruff ["pytest-language-server"]))
     )
 
 (use-package pet :after python
@@ -22,6 +22,9 @@
     (add-hook 'python-base-mode-hook (lambda ()
         (setq-local python-shell-interpreter     (pet-executable-find "python")
                     python-shell-virtualenv-root (pet-virtualenv-root))
+        (setq-local eglot-workspace-configuration
+                    '(:ty (:inlayHints (:variableTypes :json-false
+                                        :callArgumentNames :json-false))))
         (my/eglot-ensure)
         ))
     )
