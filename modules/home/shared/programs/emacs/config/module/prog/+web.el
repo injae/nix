@@ -51,7 +51,9 @@
     )
 
 (use-package eglot-typescript-preset :after eglot
-  :config (eglot-typescript-preset-setup)
+  :custom (eglot-typescript-preset-lsp-server 'rass)
+  :config
+  (eglot-typescript-preset-setup)
   )
 
 (provide '+web)
