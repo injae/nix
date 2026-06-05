@@ -36,7 +36,7 @@ in
         path = "${home-dir}/.aws/credentials";
       };
       "secrets/wireless.env" = { };
-      "secrets/nexon-injae-gitlab" = { };
+      "secrets/git-secret" = { };
     };
   };
 
@@ -50,6 +50,6 @@ in
       sops_base_env = "export SOPS_AGE_KEY_FILE=\"${age-key-file}\"\n";
     in
     builtins.foldl' (acc: elm: acc + elm + "\n") sops_base_env (
-      builtins.map convertSecretEnv (builtins.filter filterSecrets (builtins.attrNames secrets))
+      map convertSecretEnv (builtins.filter filterSecrets (builtins.attrNames secrets))
     );
 }

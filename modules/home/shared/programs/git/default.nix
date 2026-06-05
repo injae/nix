@@ -60,18 +60,13 @@ in
       };
       lfs.enable = true;
       includes = [
-        { path = config.sops.secrets."secrets/nexon-injae-gitlab".path; }
+        { path = config.sops.secrets."secrets/git-secret".path; }
       ];
     };
     gh = {
       enable = true;
       gitCredentialHelper = {
         enable = true;
-        hosts = [
-          "https://github.com/injae/"
-          "https://github.com/EmbarkStudios/"
-          "https://github.com/nexon-public"
-        ];
       };
     };
     gh-dash.enable = true;
