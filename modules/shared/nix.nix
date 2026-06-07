@@ -38,6 +38,12 @@ in
       gc = {
         automatic = true;
         options = "--delete-older-than 1w";
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        interval = {
+          Hour = 13;
+          Minute = 0;
+        };
       };
       settings = {
         # https://github.com/NixOS/nix/issues/9574
