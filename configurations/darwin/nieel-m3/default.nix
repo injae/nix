@@ -35,12 +35,13 @@ in
     package = pkgs.darwin.linux-builder;
     ephemeral = true;
     maxJobs = 4;
+    protocol = "ssh";
     systems = [ "aarch64-linux" ];
     config = {
       virtualisation = {
         darwin-builder = {
           diskSize = 40 * 1024;
-          memorySize = 8 * 1024;
+          memorySize = 16 * 1024;
         };
         cores = 6;
       };
