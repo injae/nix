@@ -8,30 +8,30 @@
     enable = true;
     #addKeysToAgent = "yes";
     enableDefaultConfig = false;
-    matchBlocks = {
+    settings = {
       "*" = {
-        forwardAgent = false;
-        addKeysToAgent = "yes";
-        compression = false;
-        serverAliveInterval = 0;
-        serverAliveCountMax = 3;
-        hashKnownHosts = false;
-        userKnownHostsFile = "~/.ssh/known_hosts";
-        controlMaster = "no";
-        controlPath = "~/.ssh/master-%r@%n:%p";
-        controlPersist = "no";
+        ForwardAgent = false;
+        AddKeysToAgent = "yes";
+        Compression = false;
+        ServerAliveInterval = 0;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
       };
       "github.com/injae" = {
-        hostname = "github.com";
-        identitiesOnly = true;
-        identityFile = "/Users/nieel/.ssh/id_github";
+        HostName = "github.com";
+        IdentitiesOnly = true;
+        IdentityFile = "/Users/nieel/.ssh/id_github";
       };
       "linux-builder" = {
-        user = "builder";
-        hostname = "localhost";
+        User = "builder";
+        HostName = "localhost";
         #hostKeyAlias = "linux-builder";
-        identityFile = "/etc/nix/builder_ed25519";
-        port = 31022;
+        IdentityFile = "/etc/nix/builder_ed25519";
+        Port = 31022;
       };
     };
   };
