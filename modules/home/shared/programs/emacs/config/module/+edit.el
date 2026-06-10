@@ -62,5 +62,10 @@
     :config (setq-default goggles-pulse t)
     )
 
+(use-package outline-indent
+    :commands outline-indent-minor-mode
+    :custom (outline-indent-ellipsis " ▼")
+    )
+
 (provide '+edit)
 ;;; +edit.el ends here
