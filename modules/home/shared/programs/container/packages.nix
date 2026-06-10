@@ -20,10 +20,9 @@
     k9s
     kustomize
     kubernetes-helm
+    kubectl-explore
     kubebuilder
     argocd
-
-    ngrok
 
     stern
 
