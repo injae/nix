@@ -19,7 +19,6 @@ in
     overlays = [
       inputs.rust-overlay.overlays.default
       inputs.emacs-overlay.overlays.default
-      inputs.emacs-lsp-booster.overlays.default
     ]
     ++ lib.attrValues self.overlays;
   };

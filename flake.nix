@@ -49,11 +49,9 @@
     };
 
     emacs-overlay = {
-      url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    emacs-lsp-booster = {
-      url = "github:slotThe/emacs-lsp-booster-flake";
+      # pinned: emacs 소스를 고정해 flake update마다 native-comp emacs 재빌드 방지.
+      # emacs 업그레이드하려면 rev 갱신 (nix flake lock --update-input emacs-overlay).
+      url = "github:nix-community/emacs-overlay/92ce8bce0857519b8d25eaa24a52722d941f3a87";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     #vscode-server.url = "github:nix-community/nixos-vscode-server";

@@ -2,20 +2,25 @@
 let
   # Fix OS window role (needed for window managers like yabai)
 
+  # https://github.com/d12frosted/homebrew-emacs-plus/tree/master/patches/emacs-31
   fix-window-role = pkgs.fetchpatch {
-    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-28/fix-window-role.patch";
-    sha256 = "sha256-+z/KfsBm1lvZTZNiMbxzXQGRTjkCFO4QPlEK35upjsE=";
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-31/fix-ns-x-colors.patch";
+    sha256 = "sha256-oe3DFgEXwp0cZJl+ufWqTonaeWSliikTRsVDNbcy4Yw=";
   };
 
-  rounded-undecorated-frame-patch-30 = pkgs.fetchpatch {
-    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/round-undecorated-frame.patch";
-    sha256 = "sha256-uYIxNTyfbprx5mCqMNFVrBcLeo+8e21qmBE3lpcnd+4=";
+  rounded-undecorated-frame-patch = pkgs.fetchpatch {
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-31/round-undecorated-frame.patch";
+    sha256 = "sha256-KCMEvJzN1OkwFYoMLpZghvdeoO1Ckcxk3Mo19YAf850=";
   };
-  # https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/system-appearance.patch
-  system-appearance-patch-30 = pkgs.fetchpatch {
-    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-30/system-appearance.patch";
-    sha256 = "sha256-3QLq91AQ6E921/W9nfDjdOUWR8YVsqBAT/W9c1woqAw=";
+
+  system-appearance-patch = pkgs.fetchpatch {
+    url = "https://raw.githubusercontent.com/d12frosted/homebrew-emacs-plus/refs/heads/master/patches/emacs-31/system-appearance.patch";
+    sha256 = "sha256-4+2U+4+2tpuaThNJfZOjy1JPnneGcsoge9r+WpgNDko=";
   };
+
+  # darwin: NS (Cocoa) build — emacs-plus patches target the NS build
+  # linux: pgtk build (Wayland-native)
+  emacsBase = if pkgs.stdenv.isDarwin then pkgs.emacs-unstable else pkgs.emacs-unstable-pgtk;
 
 in
 {
@@ -33,57 +38,26 @@ in
     with pkgs;
     [
       (
-        (emacs-unstable-pgtk.overrideAttrs (old: {
+        (emacsBase.overrideAttrs (old: {
           patches =
             (old.patches or [ ])
             ++ (
               if pkgs.stdenv.isDarwin then
                 [
                   fix-window-role
-                  rounded-undecorated-frame-patch-30
-                  system-appearance-patch-30
+                  rounded-undecorated-frame-patch
+                  system-appearance-patch
                 ]
               else
                 [ ]
             );
         })).override
         {
-          # https://github.com/NixOS/nixpkgs/issues/395169
-          #withNativeCompilation = (!pkgs.stdenv.isDarwin);
           withNativeCompilation = true;
-          withPgtk = (pkgs.stdenv.isDarwin);
         }
       )
-      # (
-      #   (emacs-git-pgtk.overrideAttrs (old: {
-      #     patches =
-      #       (old.patches or [ ])
-      #       ++ (
-      #         if pkgs.stdenv.isDarwin then
-      #           [
-      #             ./patches/system-appearance.patch # Make Emacs aware of OS-level light/dark mode
-      #             ./patches/round-undecorated-frame.patch # Enable rounded window with no decoration
-      #             #./patches/dedupe-rpath-entries.patch # https://github.com/NixOS/nixpkgs/issues/395169
-      #             #round-undecorated-frame-patch
-      #             #system-appearance-patch
-      #           ]
-      #         else
-      #           [ ]
-      #       );
-      #   })).override
-      #   {
-      #     # https://github.com/NixOS/nixpkgs/issues/395169
-      #     withNativeCompilation = (!pkgs.stdenv.isDarwin);
-      #     withPgtk = (pkgs.stdenv.isDarwin);
-      #   }
-      # )
     ]
     ++ (with pkgs; [
-      # https://github.com/NixOS/nixpkgs/issues/395169
-      (emacs-lsp-booster.overrideAttrs (old: {
-        doCheck = false;
-        nativeCheckInputs = [ ];
-      }))
       emacs-all-the-icons-fonts
       copilot-language-server
       glibtool

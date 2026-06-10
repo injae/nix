@@ -21,7 +21,6 @@
           "nix-index-database"
           "rust-overlay"
           "emacs-overlay"
-          "emacs-lsp-booster"
         ];
       };
     };
