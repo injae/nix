@@ -1,4 +1,4 @@
-;;; +yaml.el --- yaml config
+;;; +yaml.el --- Summery -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
 
