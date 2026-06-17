@@ -4,8 +4,7 @@
 
 (use-package evil
     :custom ((evil-want-C-u-scroll t)
-             (evil-symbol-word-search t)
-             (evil-want-minibuffer t))
+             (evil-symbol-word-search t))
     :init
     (setq evil-want-integration   t
           evil-want-keybinding  nil)
