@@ -34,6 +34,29 @@
     (add-to-list 'eglot-server-programs '(nix-ts-mode  . ("rass" "nix")))
     (add-to-list 'eglot-server-programs '(nix-mode     . ("rass" "nix")))
     (add-to-list 'eglot-server-programs '(markdown-ts-mode . ("marksman" "server")))
+
+    ;; On reconnect eglot re-syncs every managed buffer.  Buffers whose file
+    ;; was renamed or deleted externally (git mv, refactor tools) otherwise
+    ;; keep feeding stale content to the language server, so it reports
+    ;; symbols from files that no longer exist -- even across eglot-shutdown
+    ;; / reconnect.  After connecting, drop such buffers from the server
+    ;; (sends didClose, no kill) and report them.
+    (defun my/eglot-exclude-deleted-file-buffers (server)
+        "Unmanage SERVER buffers whose file no longer exists, and report them."
+        (let ((gone (seq-filter
+                     (lambda (buf)
+                         (let ((f (buffer-local-value 'buffer-file-name buf)))
+                             (and f
+                                  (not (file-remote-p f))
+                                  (not (file-exists-p f)))))
+                     (eglot--managed-buffers server))))
+            (dolist (buf gone)
+                (with-current-buffer buf (eglot--managed-mode -1)))
+            (when gone
+                (message "eglot: excluded %d deleted-file buffer(s): %s"
+                         (length gone)
+                         (mapconcat #'buffer-name gone ", ")))))
+    (add-hook 'eglot-connect-hook #'my/eglot-exclude-deleted-file-buffers)
     )
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
