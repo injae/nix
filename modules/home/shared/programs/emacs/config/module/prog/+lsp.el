@@ -20,6 +20,7 @@
         (exec-path-from-shell-initialize)
         (eglot-ensure))
     :hook (eglot-managed-mode . my/eglot-eldoc)
+    :custom (eglot-code-action-indications '(mode-line left-fringe margin))
     :config
     (defvar my/eglot-format-on-save-modes
         '(go-ts-mode rust-ts-mode nix-ts-mode python-ts-mode))
