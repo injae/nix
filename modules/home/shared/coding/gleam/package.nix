@@ -1,8 +1,8 @@
 { pkgs, ...}:
 {
   home.packages = with pkgs; [
-    erlang
-    elixir
+    beamPackages.erlang
+    beamPackages.elixir
     rebar3
     gleam
   ];

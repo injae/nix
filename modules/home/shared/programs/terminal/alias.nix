@@ -6,11 +6,6 @@
       enableZshIntegration = true;
     };
 
-    mcfly = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-
     # exa
     eza = {
       enable = true;

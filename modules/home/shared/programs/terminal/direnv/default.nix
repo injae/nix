@@ -6,7 +6,10 @@
       enableZshIntegration = true;
       nix-direnv.enable = true;
       config = {
-        warn_timeout = 0;
+        global = {
+          warn_timeout = 0;
+          hide_env_diff = true;
+        };
       };
     };
     zsh.initContent = ''

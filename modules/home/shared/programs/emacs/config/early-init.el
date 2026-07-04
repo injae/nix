@@ -6,8 +6,7 @@
 
 (setq package-enable-at-startup nil)
 
-(setq inhibit-automatic-native-compilation t)
-(setq native-comp-jit-compilation nil)
+(setq native-comp-jit-compilation t)
 
 
 (provide 'early-init)

@@ -51,8 +51,9 @@
     emacs-overlay = {
       # pinned: emacs 소스를 고정해 flake update마다 native-comp emacs 재빌드 방지.
       # emacs 업그레이드하려면 rev 갱신 (nix flake lock --update-input emacs-overlay).
-      url = "github:nix-community/emacs-overlay/92ce8bce0857519b8d25eaa24a52722d941f3a87";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # nixpkgs를 follows하지 않음: overlay 자체 nixpkgs로 빌드해야 emacs 해시가
+      # nix-community cachix 빌드와 일치해 재빌드 없이 캐시에서 받는다.
+      url = "github:nix-community/emacs-overlay/2c3d2ecbd8c0c1f2abfe4faa69724e8cadd91195";
     };
     #vscode-server.url = "github:nix-community/nixos-vscode-server";
   };

@@ -5,8 +5,14 @@
 (use-package projectile :after (evil exec-path-from-shell)
 :config
     ;(setq projectile-require-project-root nil)
-	;(setq projectile-enable-caching t)
 	;(setq projectile-current-project-on-switch t)
+	;; Cache the per-project file list so `projectile-project-files' is not
+	;; re-indexed on every call (eldoc/modeline/completion hammer it).  This
+	;; is what surfaces the recurring "Projectile is indexing ..." stall.
+	(setq projectile-enable-caching t)
+	;; Git indexing here is instant (82 files); the async progress-reporter
+	;; loop only adds `accept-process-output' churn.  Run it synchronously.
+	(setq projectile-async-indexing nil)
 	(setq projectile-globally-ignored-directories
         (append '("^\\eln-cache$") projectile-globally-ignored-directories))
 	(evil-ex-define-cmd "kp" 'projectile-kill-buffers)

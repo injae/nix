@@ -13,8 +13,8 @@
     (claude-code-ide-terminal-backend 'vterm)
     ;; 클라이언트측 배칭 hack 비활성 (default가 t라 nil 명시 필요).
     ;; 대신 CLI 네이티브 NO_FLICKER 렌더러 사용.
-    (claude-code-ide-vterm-anti-flicker nil)
-    (claude-code-ide-no-flicker t)
+    (claude-code-ide-vterm-anti-flicker t)
+    (claude-code-ide-no-flicker nil)
     (claude-code-ide-focus-claude-after-ediff nil)
     ;; (claude-code-ide-backend 'opencode)   ;; switch to opencode
     ;; (claude-code-ide-open-code-model "anthropic/claude-sonnet-4-20250514")

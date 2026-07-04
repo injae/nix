@@ -15,6 +15,10 @@ in
       allowUnsupportedSystem = true;
       allowUnfree = true;
       #allowInsecure = true;
+      # vue-language-server pins pnpm-10.34.0 as a build-time dep; upstream
+      # marked it insecure (CVE-2026-55xxx) but hasn't bumped the pin. pnpm
+      # here is sandboxed build tooling only, so allow this exact version.
+      permittedInsecurePackages = [ "pnpm-10.34.0" ];
     };
     overlays = [
       inputs.rust-overlay.overlays.default

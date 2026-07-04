@@ -91,6 +91,12 @@
     (emojify-display-style 'unicode)
     (emojify-emoji-styles '(unicode))
     :hook (after-init . global-emojify-mode)
+    :config
+    ;; prog-mode 버퍼에서 emojify 비활성.
+    ;; jit-lock fontify 중 with-silent-modifications 로 버퍼를 건드려
+    ;; copilot 의 track-changes tracker 가 변경을 놓치고
+    ;; "Missing/incorrect calls to before/after-change-functions" 경고를 유발함.
+    (add-to-list 'emojify-inhibit-major-modes 'prog-mode)
 )
 
 (use-package textsize :ensure (:type git :host github :repo "WJCFerguson/textsize"))
