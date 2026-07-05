@@ -48,7 +48,15 @@
       (progn
         (require 'magit nil 'noerror)
         (setq claude-code-ide--pending-commit-message message)
-        (let ((magit-win (seq-find
+        ;; MCP로 커밋을 띄우면 git이 Claude vterm의 pty(TERM=dumb)를 제어터미널로
+        ;; 물려받아, with-editor의 emacsclient가 그 tty에 프레임을 만들려다
+        ;; "Unknown terminal type"으로 실패한다.  emacsclient를 비활성화하면
+        ;; with-editor가 터미널을 쓰지 않는 sleeping-editor(순수 sh)를 사용해
+        ;; 기존 GUI 프레임에 커밋 버퍼를 연다.  이 커밋 프로세스에만 적용되며
+        ;; (async 프로세스의 env는 시작 시점에 고정), 전역 emacsclient 설정은
+        ;; Emacs 셸에서의 git commit용으로 보존된다.
+        (let ((with-editor-emacsclient-executable nil)
+              (magit-win (seq-find
                           (lambda (w)
                             (string-prefix-p "magit:" (buffer-name (window-buffer w))))
                           (window-list))))
