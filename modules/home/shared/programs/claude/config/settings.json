@@ -121,6 +121,7 @@
       "Read(~/.config/sops/**)",
       "Read(~/.config/sops-nix/**)",
       "Bash(rm -rf /:*)",
+      "Bash(find / *)",
       "Bash(git commit*)"
     ]
   },
