@@ -48,6 +48,36 @@ External file protocol (LSP auto-initializes on any call — no open-file-lsp ne
 
 "File is external / not in project" is never a valid reason to use grep.
 
+## Content search — `grep-block` (default for text/pattern search)
+
+`grep-block(pattern, path, cap)` = ripgrep, but each hit is expanded to its
+enclosing tree-sitter block. One call returns the match **plus context** —
+no follow-up `file-outline`/`symbol-source`/`Read` needed to understand a hit.
+
+Per hit it reports:
+- **A** — enclosing top-level declaration: signature + `[start-end]` range (range only, no source)
+- **B** — tightest enclosing named block: full source, matched lines marked `▶`
+- deduped by block; header `N blocks total (M matches), showing K`
+
+**Reach for `grep-block` FIRST when:**
+- Searching a text/regex pattern, not a resolved symbol (string literals,
+  comments, log messages, config keys, error text)
+- You want to see *where and in what block* a pattern appears, not just the line
+- No target file identified yet — pattern search across the tree
+- Any time you would otherwise run `Bash rg`/`grep` for code content
+
+**Do NOT plain-`Bash grep` for code content** — `grep-block` gives the same
+match with block context in one call. Bash grep stays only for binary/non-text
+files or filename listing.
+
+**`grep-block` vs `lsp-refs` family:**
+- Known symbol, "where is it used?" → `lsp-refs` / `lsp-refs-by-name` (semantic, collision-free)
+- Text pattern, non-symbol match, or quick "show me the block" → `grep-block`
+
+**cap:** default 20 distinct blocks, `0` = unlimited. Total is always reported,
+so `total > showing` is the signal to narrow the pattern (or raise `cap`), never
+a silent cutoff.
+
 ## Symbol search precision
 
 `lsp-proj-symbols` = partial substring match → noisy on short/common names:
