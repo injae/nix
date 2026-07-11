@@ -46,6 +46,7 @@
         (goto-char (point-min)) (forward-line (1- end))
         (let ((be (line-end-position)))
           (list :a-start nil :a-end nil :a-sig nil
+                :b-type nil
                 :b-start start :b-end end
                 :b-source (buffer-substring-no-properties bs be)))))))
 
@@ -87,6 +88,7 @@ Falls back to a line window when tree-sitter is unavailable."
                 (list :a-start (and as (line-number-at-pos as))
                       :a-end   (and ae (line-number-at-pos ae))
                       :a-sig   (and as (claude-code-ide-mcp--grep-block-first-line as))
+                      :b-type  (treesit-node-type b)
                       :b-start (line-number-at-pos bs)
                       :b-end   (line-number-at-pos be)
                       :b-source (buffer-substring-no-properties bs be)))
@@ -129,6 +131,7 @@ Records sharing a (:b-start :b-end) within a file are merged."
          (a-sig (plist-get rec :a-sig))
          (a-start (plist-get rec :a-start))
          (a-end (plist-get rec :a-end))
+         (b-type (plist-get rec :b-type))
          (b-start (plist-get rec :b-start))
          (b-end (plist-get rec :b-end))
          (src-lines (split-string (plist-get rec :b-source) "\n"))
@@ -140,7 +143,7 @@ Records sharing a (:b-start :b-end) within a file are merged."
     (concat
      (if a-sig (format "  %s  [%d-%d]\n" a-sig a-start a-end)
        "  (no enclosing declaration)\n")
-     (format "  block [%d-%d]:\n" b-start b-end)
+     (format "  block %s[%d-%d]:\n" (if b-type (concat b-type " ") "") b-start b-end)
      (string-join (nreverse rendered) "\n"))))
 
 (defun claude-code-ide-mcp-grep-block (pattern &optional path cap)
