@@ -101,8 +101,11 @@ files or filename listing.
 - Text pattern, non-symbol match, or quick "show me the block" → `grep-block`
 
 **cap:** default 20 distinct blocks, `0` = unlimited. Total is always reported,
-so `total > showing` is the signal to narrow the pattern (or raise `cap`), never
-a silent cutoff.
+never a silent cutoff. When `total > showing`, the omitted blocks are listed as
+a **headers-only tail** (`file · block-type · signature · [range]`, no source) —
+read that to see everything's location and expand only the ones you need,
+instead of re-running with a higher `cap`. Each shown block is tagged with its
+tree-sitter node type (`function_item`, `use_declaration`, …).
 
 ## Symbol search precision
 

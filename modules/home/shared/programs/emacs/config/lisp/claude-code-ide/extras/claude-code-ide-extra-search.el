@@ -171,6 +171,7 @@ and reports the enclosing top-level declaration's range."
                  (total (length sorted))
                  (over (and (> cap 0) (> total cap)))
                  (kept (if over (seq-take sorted cap) sorted))
+                 (omitted (if over (seq-drop sorted cap) nil))
                  (shown (length kept))
                  (by-file (make-hash-table :test 'equal))
                  (order '()))
@@ -186,7 +187,22 @@ and reports the enclosing top-level declaration's range."
                 (concat "\n" (file-relative-name f base) "\n"
                         (mapconcat #'claude-code-ide-mcp--grep-block-render-one
                                    (nreverse (gethash f by-file)) "\n")))
-              (nreverse order) "")))))
+              (nreverse order) "")
+             (when omitted
+               (concat
+                (format "\n\n... %d more (headers only, re-run with higher cap to expand):\n"
+                        (length omitted))
+                (mapconcat
+                 (lambda (rec)
+                   (format "  %s  %s%s[%d-%d]"
+                           (file-relative-name (plist-get rec :file) base)
+                           (if (plist-get rec :b-type)
+                               (concat (plist-get rec :b-type) "  ") "")
+                           (if (plist-get rec :a-sig)
+                               (concat (plist-get rec :a-sig) "  ") "")
+                           (plist-get rec :b-start)
+                           (plist-get rec :b-end)))
+                 omitted "\n")))))))
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
