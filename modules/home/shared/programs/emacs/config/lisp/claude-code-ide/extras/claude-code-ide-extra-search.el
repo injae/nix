@@ -74,6 +74,7 @@ Falls back to a line window when tree-sitter is unavailable."
                             node
                             (lambda (n)
                               (and (treesit-node-check n 'named)
+                                   (treesit-node-parent n)
                                    (> (line-number-at-pos (treesit-node-end n))
                                       (line-number-at-pos (treesit-node-start n)))))
                             t)))
