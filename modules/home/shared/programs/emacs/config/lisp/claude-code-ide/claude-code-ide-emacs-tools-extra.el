@@ -10,7 +10,8 @@
     "claude-code-ide-extra-lsp-nav-position"
     "claude-code-ide-extra-lsp-nav-workspace"
     "claude-code-ide-extra-magit"
-    "claude-code-ide-extra-navigation")
+    "claude-code-ide-extra-navigation"
+    "claude-code-ide-extra-search")
   "Extras files loaded by `claude-code-ide-reload-mcp-tools'.")
 
 (let ((extras-dir (expand-file-name "extras" (file-name-directory
