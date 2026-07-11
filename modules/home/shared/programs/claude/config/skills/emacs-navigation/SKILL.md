@@ -48,6 +48,32 @@ External file protocol (LSP auto-initializes on any call — no open-file-lsp ne
 
 "File is external / not in project" is never a valid reason to use grep.
 
+## Locating a dependency's source path — jump, never `find`
+
+To find WHERE a dependency in use lives on disk (module cache, stdlib,
+`site-packages`, `node_modules`, vendored source), **navigate to it via LSP** —
+never `find`/`fd`/`ls` over global paths like `~/go/pkg/mod`, `/nix/store`,
+`~/.cargo`, `site-packages`.
+
+```
+Have a symbol from the dependency (type, function, import):
+  def-source(symbol, any_project_file)   → definition body + its file path, one call
+  lsp-def(symbol, any_project_file)      → jumps to the defining file (external path resolved)
+
+Have only the file already (from a def jump):
+  file-outline(that_path) → symbol-source / lsp-refs   (per External file protocol above)
+```
+
+The def jump RESOLVES the external path for you — the returned location is the
+real on-disk file. That is how you learn the path.
+
+❌ `find / -name '<pkg>*'` / `find ~/go/pkg/mod ...` / `fd <pkg>` — NEVER for
+locating a dependency. Global `find` is slow, noisy, and guesses at layout the
+LSP already knows exactly.
+
+`find` is acceptable only for non-code file discovery with no symbol entry
+point (e.g. locating a config/asset by name inside the project).
+
 ## Content search — `grep-block` (default for text/pattern search)
 
 `grep-block(pattern, path, cap)` = ripgrep, but each hit is expanded to its
