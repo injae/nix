@@ -35,5 +35,62 @@
     (string-trim (buffer-substring-no-properties
                   (line-beginning-position) (line-end-position)))))
 
+(defun claude-code-ide-mcp--grep-block-window (line)
+  "Return a ±6-line window plist around LINE (tree-sitter fallback)."
+  (let* ((max-line (line-number-at-pos (point-max)))
+         (start (max 1 (- line 6)))
+         (end (min max-line (+ line 6))))
+    (save-excursion
+      (goto-char (point-min)) (forward-line (1- start))
+      (let ((bs (point)))
+        (goto-char (point-min)) (forward-line (1- end))
+        (let ((be (line-end-position)))
+          (list :a-start nil :a-end nil :a-sig nil
+                :b-start start :b-end end
+                :b-source (buffer-substring-no-properties bs be)))))))
+
+(defun claude-code-ide-mcp--grep-block-extract (line)
+  "Return a block plist for the match at LINE in the current buffer.
+Keys: :a-start :a-end :a-sig :b-start :b-end :b-source.
+A = enclosing top-level declaration (range/signature only).
+B = tightest enclosing named multi-line node (source).
+Falls back to a line window when tree-sitter is unavailable."
+  (save-excursion
+    (goto-char (point-min))
+    (forward-line (1- line))
+    (back-to-indentation)
+    (if (and (fboundp 'treesit-parser-list) (treesit-parser-list)
+             (fboundp 'treesit-node-at))
+        (let* ((node (treesit-node-at (point)))
+               (a (and node
+                       (treesit-parent-until
+                        node
+                        (lambda (n)
+                          (when-let ((p (treesit-node-parent n)))
+                            (null (treesit-node-parent p))))
+                        t)))
+               (bnode (and node
+                           (treesit-parent-until
+                            node
+                            (lambda (n)
+                              (and (treesit-node-check n 'named)
+                                   (> (line-number-at-pos (treesit-node-end n))
+                                      (line-number-at-pos (treesit-node-start n)))))
+                            t)))
+               (b (or bnode a)))
+          (if b
+              (let ((bs (treesit-node-start b))
+                    (be (treesit-node-end b))
+                    (as (and a (treesit-node-start a)))
+                    (ae (and a (treesit-node-end a))))
+                (list :a-start (and as (line-number-at-pos as))
+                      :a-end   (and ae (line-number-at-pos ae))
+                      :a-sig   (and as (claude-code-ide-mcp--grep-block-first-line as))
+                      :b-start (line-number-at-pos bs)
+                      :b-end   (line-number-at-pos be)
+                      :b-source (buffer-substring-no-properties bs be)))
+            (claude-code-ide-mcp--grep-block-window line)))
+      (claude-code-ide-mcp--grep-block-window line))))
+
 (provide 'claude-code-ide-extra-search)
 ;;; claude-code-ide-extra-search.el ends here
