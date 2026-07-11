@@ -146,11 +146,36 @@ Records sharing a (:b-start :b-end) within a file are merged."
      (format "  block %s[%d-%d]:\n" (if b-type (concat b-type " ") "") b-start b-end)
      (string-join (nreverse rendered) "\n"))))
 
-(defun claude-code-ide-mcp-grep-block (pattern &optional path cap)
+(defun claude-code-ide-mcp--grep-block-render-header (rec)
+  "One-line header for REC: block type, A signature, B range.  No source."
+  (format "%s%s[%d-%d]"
+          (if (plist-get rec :b-type) (concat (plist-get rec :b-type) "  ") "")
+          (if (plist-get rec :a-sig) (concat (plist-get rec :a-sig) "  ") "")
+          (plist-get rec :b-start)
+          (plist-get rec :b-end)))
+
+(defun claude-code-ide-mcp--grep-block-render-grouped (recs base render-fn)
+  "Group RECS by file, render each with RENDER-FN under a file header.
+File names are relative to BASE."
+  (let ((by-file (make-hash-table :test 'equal))
+        (order '()))
+    (dolist (rec recs)
+      (let ((f (plist-get rec :file)))
+        (unless (gethash f by-file) (push f order))
+        (push rec (gethash f by-file))))
+    (mapconcat
+     (lambda (f)
+       (concat "\n" (file-relative-name f base) "\n"
+               (mapconcat render-fn (nreverse (gethash f by-file)) "\n")))
+     (nreverse order) "")))
+
+(defun claude-code-ide-mcp-grep-block (pattern &optional path cap headers)
   "Search PATTERN with rg; expand each hit to its enclosing tree-sitter block.
 PATH is the search root (default: project root / cwd).  CAP limits distinct
-blocks (default 20; 0 = unlimited).  Shows the tightest enclosing block source
-and reports the enclosing top-level declaration's range."
+blocks (default 20; 0 = unlimited).  When HEADERS is non-nil, return every
+block as a headers-only line (block type, signature, range; no source, CAP
+ignored) — a cheap full survey to expand from.  Otherwise shows the tightest
+enclosing block source and reports the enclosing top-level declaration's range."
   (condition-case err
       (let* ((cap (if (numberp cap) cap 20))
              (matches (claude-code-ide-mcp--grep-block-search pattern path)))
@@ -168,47 +193,39 @@ and reports the enclosing top-level declaration's range."
                                        (< (plist-get x :b-start)
                                           (plist-get y :b-start))
                                      (string< fx fy))))))
-                 (total (length sorted))
-                 (over (and (> cap 0) (> total cap)))
-                 (kept (if over (seq-take sorted cap) sorted))
-                 (omitted (if over (seq-drop sorted cap) nil))
-                 (shown (length kept))
-                 (by-file (make-hash-table :test 'equal))
-                 (order '()))
-            (dolist (rec kept)
-              (let ((f (plist-get rec :file)))
-                (unless (gethash f by-file) (push f order))
-                (push rec (gethash f by-file))))
-            (concat
-             (format "%d blocks total (%d matches), showing %d\n"
-                     total (length matches) shown)
-             (mapconcat
-              (lambda (f)
-                (concat "\n" (file-relative-name f base) "\n"
-                        (mapconcat #'claude-code-ide-mcp--grep-block-render-one
-                                   (nreverse (gethash f by-file)) "\n")))
-              (nreverse order) "")
-             (when omitted
-               (concat
-                (format "\n\n... %d more (headers only, re-run with higher cap to expand):\n"
-                        (length omitted))
-                (mapconcat
-                 (lambda (rec)
-                   (format "  %s  %s%s[%d-%d]"
-                           (file-relative-name (plist-get rec :file) base)
-                           (if (plist-get rec :b-type)
-                               (concat (plist-get rec :b-type) "  ") "")
-                           (if (plist-get rec :a-sig)
-                               (concat (plist-get rec :a-sig) "  ") "")
-                           (plist-get rec :b-start)
-                           (plist-get rec :b-end)))
-                 omitted "\n")))))))
+                 (total (length sorted)))
+            (if headers
+                (concat
+                 (format "%d blocks total (%d matches), headers only\n"
+                         total (length matches))
+                 (claude-code-ide-mcp--grep-block-render-grouped
+                  sorted base
+                  (lambda (rec)
+                    (concat "  " (claude-code-ide-mcp--grep-block-render-header rec)))))
+              (let* ((over (and (> cap 0) (> total cap)))
+                     (kept (if over (seq-take sorted cap) sorted))
+                     (omitted (if over (seq-drop sorted cap) nil))
+                     (shown (length kept)))
+                (concat
+                 (format "%d blocks total (%d matches), showing %d\n"
+                         total (length matches) shown)
+                 (claude-code-ide-mcp--grep-block-render-grouped
+                  kept base #'claude-code-ide-mcp--grep-block-render-one)
+                 (when omitted
+                   (concat
+                    (format "\n\n... %d more (headers only, re-run with higher cap or headers mode to expand):\n"
+                            (length omitted))
+                    (mapconcat
+                     (lambda (rec)
+                       (concat "  " (file-relative-name (plist-get rec :file) base)
+                               "  " (claude-code-ide-mcp--grep-block-render-header rec)))
+                     omitted "\n")))))))))
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-grep-block
     :name "grep-block"
-    :description "ripgrep search; each hit expanded to its enclosing tree-sitter block source, with the top-level declaration's range. Args: pattern (rg regex), path (optional root, default project), cap (optional max blocks, default 20, 0=unlimited)."
+    :description "ripgrep search; each hit expanded to its enclosing tree-sitter block source, with the top-level declaration's range. Blocks are tagged with node type; truncated results list omitted blocks as headers. Args: pattern (rg regex), path (optional root, default project), cap (optional max blocks, default 20, 0=unlimited), headers (optional; non-empty = headers-only survey, no source, cap ignored)."
     :args '((:name "pattern"
              :type string
              :description "ripgrep regex pattern")
@@ -217,7 +234,10 @@ and reports the enclosing top-level declaration's range."
              :description "Search root dir or file (optional; default project root)")
             (:name "cap"
              :type number
-             :description "Max distinct blocks (optional; default 20, 0=unlimited)")))
+             :description "Max distinct blocks (optional; default 20, 0=unlimited)")
+            (:name "headers"
+             :type string
+             :description "Non-empty = headers-only survey: block type + signature + range for every hit, no source, cap ignored")))
 
 (provide 'claude-code-ide-extra-search)
 ;;; claude-code-ide-extra-search.el ends here

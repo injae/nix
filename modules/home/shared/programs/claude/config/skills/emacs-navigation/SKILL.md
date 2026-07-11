@@ -19,7 +19,7 @@ user-invocable: false
 | Find usages (by name) | `lsp-refs-by-name(identifier, file_path)` | `lsp-refs` with position |
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
-| Content search + enclosing block | `grep-block(pattern, path, cap)` | Bash grep |
+| Content search + enclosing block | `grep-block(pattern, path, cap, headers)` | Bash grep |
 | Diagnostics | `getDiagnostics` | Bash |
 
 **Before reaching for `Bash grep/find`** — pause and check the table above. Most search tasks have an MCP equivalent that returns structured, LSP-aware results. Bash grep is a last resort, not a default.
@@ -106,6 +106,12 @@ a **headers-only tail** (`file · block-type · signature · [range]`, no source
 read that to see everything's location and expand only the ones you need,
 instead of re-running with a higher `cap`. Each shown block is tagged with its
 tree-sitter node type (`function_item`, `use_declaration`, …).
+
+**headers mode** (`headers` = any non-empty string): return EVERY hit as a
+headers-only line (block type + signature + range, no source, `cap` ignored).
+Use it as the **first pass on a broad search** — survey all locations cheaply,
+then re-run without `headers` (narrowed pattern/path or targeted at the block
+you want) to pull source. Two-phase = minimal context on wide searches.
 
 ## Symbol search precision
 
