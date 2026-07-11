@@ -19,6 +19,7 @@ user-invocable: false
 | Find usages (by name) | `lsp-refs-by-name(identifier, file_path)` | `lsp-refs` with position |
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
+| Content search + enclosing block | `grep-block(pattern, path, cap)` | Bash grep |
 | Diagnostics | `getDiagnostics` | Bash |
 
 **Before reaching for `Bash grep/find`** — pause and check the table above. Most search tasks have an MCP equivalent that returns structured, LSP-aware results. Bash grep is a last resort, not a default.
@@ -41,6 +42,8 @@ External file protocol (LSP auto-initializes on any call — no open-file-lsp ne
 
 **Grep is allowed ONLY when:**
 - Pattern search across many unknown files with no target file identified yet
+  (prefer `grep-block` — it returns each hit's enclosing function/block, not
+  just the matching line)
 - Binary or non-text files
 
 "File is external / not in project" is never a valid reason to use grep.
