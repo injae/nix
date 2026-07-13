@@ -70,7 +70,23 @@
 (defconst claude-code-ide-mcp-handlers-idle-timer-delay 0
   "Delay in seconds for idle timer when deferring responses.")
 
+(defconst claude-code-ide-mcp-handlers-minibuffer-poll-interval 0.2
+  "Seconds between checks when deferring diff display past an active minibuffer.")
+
 ;;; Helper Functions
+
+(defun claude-code-ide-mcp--defer-until-minibuffer-inactive (fn)
+  "Call FN once no minibuffer is active.
+Running window-reconfiguring code such as `ediff' from a process filter
+while a minibuffer (e.g. an in-progress `consult' session with live
+preview) is active corrupts the terminal display.  When a minibuffer is
+active, poll on an idle timer and only invoke FN after it has closed;
+otherwise call FN immediately."
+  (if (zerop (minibuffer-depth))
+      (funcall fn)
+    (run-with-idle-timer
+     claude-code-ide-mcp-handlers-minibuffer-poll-interval nil
+     (lambda () (claude-code-ide-mcp--defer-until-minibuffer-inactive fn)))))
 
 (defun claude-code-ide-mcp--find-session-for-file (file-path)
   "Find the MCP session that owns FILE-PATH.
@@ -389,6 +405,96 @@ ARGUMENTS should contain `path' or `tab_name' of the file to close."
      (t
       (signal 'mcp-error '("Either 'path' or 'tab_name' must be provided"))))))
 
+(defun claude-code-ide-mcp--launch-diff (old-file-path new-file-path new-file-contents tab-name session)
+  "Create diff buffers and start `ediff' for TAB-NAME within SESSION.
+OLD-FILE-PATH and NEW-FILE-CONTENTS define the comparison; NEW-FILE-PATH
+is stored for later reference.  The current window configuration is
+captured here (rather than when the request arrives) so that a deferred
+launch restores the layout that exists after any minibuffer has closed.
+Signals on ediff startup failure after cleaning up."
+  ;; Save current window configuration
+  (let* ((saved-winconf (current-window-configuration))
+         (buffers (claude-code-ide-mcp--create-diff-buffers
+                   old-file-path new-file-contents tab-name))
+         (buffer-A (car buffers))
+         (buffer-B (cdr buffers))
+         (file-exists (file-exists-p old-file-path)))
+
+    ;; Store diff session info with session reference
+    (let ((active-diffs (claude-code-ide-mcp--get-active-diffs session)))
+      (puthash tab-name
+               `((buffer-A . ,buffer-A)
+                 (buffer-B . ,buffer-B)
+                 (old-file-path . ,old-file-path)
+                 (new-file-path . ,new-file-path)
+                 (file-exists . ,file-exists)
+                 (saved-winconf . ,saved-winconf)
+                 (session . ,session)  ; Store the session reference
+                 (created-at . ,(current-time)))
+               active-diffs))
+
+    ;; Set up startup hook to configure ediff after it's fully initialized
+    (let* ((hooks (claude-code-ide-mcp--setup-diff-hooks tab-name session saved-winconf))
+           (before-setup-hook-fn (car hooks))
+           (startup-hook-fn (cdr hooks)))
+
+      ;; Add hooks
+      (add-hook 'ediff-before-setup-hook before-setup-hook-fn)
+      (add-hook 'ediff-startup-hook startup-hook-fn)
+
+      ;; Start ediff
+      (condition-case err
+          (progn
+            ;; Delete all side windows before starting ediff
+            ;; This prevents "Cannot split side window" errors
+            (dolist (window (window-list))
+              (when (window-parameter window 'window-side)
+                (delete-window window)))
+
+            ;; Start ediff with plain window setup (control panel at bottom)
+            ;; Set a unique control buffer suffix to avoid conflicts with other ediff sessions
+            (let ((old-setup-fn ediff-window-setup-function)
+                  (old-split-fn ediff-split-window-function)
+                  ;; Use tab-name to create a unique suffix for this ediff session
+                  (ediff-control-buffer-suffix (format "<%s>" tab-name)))
+              (unwind-protect
+                  (progn
+                    (setq ediff-window-setup-function 'ediff-setup-windows-plain
+                          ediff-split-window-function 'split-window-horizontally)
+                    (ediff-buffers buffer-A buffer-B))
+                ;; Restore original values
+                (setq ediff-window-setup-function old-setup-fn
+                      ediff-split-window-function old-split-fn))))
+        (error
+         ;; Handle ediff startup errors
+         (when buffer-B
+           (kill-buffer buffer-B))
+         (let ((active-diffs (claude-code-ide-mcp--get-active-diffs session)))
+           (remhash tab-name active-diffs))
+         ;; Remove the hooks we added
+         (remove-hook 'ediff-before-setup-hook before-setup-hook-fn)
+         (remove-hook 'ediff-startup-hook startup-hook-fn)
+         ;; Re-signal the error
+         (signal (car err) (cdr err)))))))
+
+(defun claude-code-ide-mcp--defer-diff-launch (old-file-path new-file-path new-file-contents tab-name session)
+  "Launch the openDiff ediff for TAB-NAME once no minibuffer is active.
+The caller has already returned a deferred marker, so a startup failure
+is surfaced through the deferred channel rather than signalled into the
+idle timer (which would leave the request hanging).  See
+`claude-code-ide-mcp--defer-until-minibuffer-inactive'."
+  (claude-code-ide-mcp--defer-until-minibuffer-inactive
+   (lambda ()
+     (condition-case err
+         (claude-code-ide-mcp--launch-diff
+          old-file-path new-file-path new-file-contents tab-name session)
+       (error
+        (claude-code-ide-mcp-complete-deferred
+         session "openDiff"
+         (list `((type . "text")
+                 (text . ,(format "openDiff failed: %s" (error-message-string err)))))
+         tab-name))))))
+
 (defun claude-code-ide-mcp-handle-open-diff (arguments)
   "Open a diff view using ediff.
 ARGUMENTS should contain:
@@ -437,75 +543,22 @@ ARGUMENTS should contain:
               ;; Switch to the original tab
               (tab-bar-select-tab-by-name (alist-get 'name original-tab)))))))
 
-    ;; Save current window configuration
-    (let* ((saved-winconf (current-window-configuration))
-           (buffers (claude-code-ide-mcp--create-diff-buffers
-                     old-file-path new-file-contents tab-name))
-           (buffer-A (car buffers))
-           (buffer-B (cdr buffers))
-           (file-exists (file-exists-p old-file-path)))
+    ;; Launch the diff.  If a minibuffer is active (e.g. an in-progress
+    ;; `consult' session with live preview), defer the window-reconfiguring
+    ;; ediff until it closes so the terminal display is not corrupted;
+    ;; otherwise launch synchronously so startup errors propagate to the caller.
+    (if (zerop (minibuffer-depth))
+        (claude-code-ide-mcp--launch-diff
+         old-file-path new-file-path new-file-contents tab-name session)
+      (claude-code-ide-mcp--defer-diff-launch
+       old-file-path new-file-path new-file-contents tab-name session))
 
-      ;; Store diff session info with session reference
-      (let ((active-diffs (claude-code-ide-mcp--get-active-diffs session)))
-        (puthash tab-name
-                 `((buffer-A . ,buffer-A)
-                   (buffer-B . ,buffer-B)
-                   (old-file-path . ,old-file-path)
-                   (new-file-path . ,new-file-path)
-                   (file-exists . ,file-exists)
-                   (saved-winconf . ,saved-winconf)
-                   (session . ,session)  ; Store the session reference
-                   (created-at . ,(current-time)))
-                 active-diffs))
-
-      ;; Set up startup hook to configure ediff after it's fully initialized
-      (let* ((hooks (claude-code-ide-mcp--setup-diff-hooks tab-name session saved-winconf))
-             (before-setup-hook-fn (car hooks))
-             (startup-hook-fn (cdr hooks)))
-
-        ;; Add hooks
-        (add-hook 'ediff-before-setup-hook before-setup-hook-fn)
-        (add-hook 'ediff-startup-hook startup-hook-fn)
-
-        ;; Start ediff
-        (condition-case err
-            (progn
-              ;; Delete all side windows before starting ediff
-              ;; This prevents "Cannot split side window" errors
-              (dolist (window (window-list))
-                (when (window-parameter window 'window-side)
-                  (delete-window window)))
-
-              ;; Start ediff with plain window setup (control panel at bottom)
-              ;; Set a unique control buffer suffix to avoid conflicts with other ediff sessions
-              (let ((old-setup-fn ediff-window-setup-function)
-                    (old-split-fn ediff-split-window-function)
-                    ;; Use tab-name to create a unique suffix for this ediff session
-                    (ediff-control-buffer-suffix (format "<%s>" tab-name)))
-                (unwind-protect
-                    (progn
-                      (setq ediff-window-setup-function 'ediff-setup-windows-plain
-                            ediff-split-window-function 'split-window-horizontally)
-                      (ediff-buffers buffer-A buffer-B))
-                  ;; Restore original values
-                  (setq ediff-window-setup-function old-setup-fn
-                        ediff-split-window-function old-split-fn))))
-          (error
-           ;; Handle ediff startup errors
-           (when buffer-B
-             (kill-buffer buffer-B))
-           (let ((active-diffs (claude-code-ide-mcp--get-active-diffs session)))
-             (remhash tab-name active-diffs))
-           ;; Remove the hooks we added
-           (remove-hook 'ediff-before-setup-hook before-setup-hook-fn)
-           (remove-hook 'ediff-startup-hook startup-hook-fn)
-           ;; Re-signal the error
-           (signal (car err) (cdr err))))
-
-        ;; Return deferred indicator with session
-        `((deferred . t)
-          (unique-key . ,tab-name)
-          (session . ,session))))))
+    ;; Return deferred indicator with session.  The real result (FILE_SAVED /
+    ;; DIFF_REJECTED) is sent later via `claude-code-ide-mcp-complete-deferred'
+    ;; when the user quits ediff.
+    `((deferred . t)
+      (unique-key . ,tab-name)
+      (session . ,session))))
 
 (defun claude-code-ide-mcp--handle-ediff-quit (tab-name &optional session)
   "Handle ediff quit for TAB-NAME.

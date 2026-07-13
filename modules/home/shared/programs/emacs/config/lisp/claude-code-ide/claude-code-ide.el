@@ -652,6 +652,20 @@ cursor management, and process buffering for superior user experience."
    (t
     (error "Unknown terminal backend: %s" claude-code-ide-terminal-backend))))
 
+(defun claude-code-ide--terminal-redraw ()
+  "Repaint the terminal display in the current buffer from terminal state."
+  (cond
+   ((eq claude-code-ide-terminal-backend 'vterm)
+    (when (and (bound-and-true-p vterm--term)
+               (fboundp 'vterm--redraw))
+      (vterm--redraw vterm--term)))
+   ((eq claude-code-ide-terminal-backend 'eat)
+    ;; eat: ask the running program to repaint via Ctrl-L
+    (when (bound-and-true-p eat-terminal)
+      (eat-term-send-string eat-terminal "\f")))
+   (t
+    (error "Unknown terminal backend: %s" claude-code-ide-terminal-backend))))
+
 (defun claude-code-ide--sync-terminal-dimensions (buffer window)
   "Sync terminal dimensions in BUFFER to match WINDOW size.
 This ensures the terminal process has the correct dimensions after
@@ -1488,6 +1502,33 @@ Use this to balance between visual smoothness and raw responsiveness."
            (if claude-code-ide-vterm-anti-flicker
                "enabled (smoother display with minimal latency)"
              "disabled (direct rendering, maximum responsiveness)")))
+
+;;;###autoload
+(defun claude-code-ide-redraw ()
+  "Force-redraw the AI CLI terminal for the current project.
+Use this to recover the display after it has been corrupted (for example
+by another package reconfiguring windows).  Nudges the CLI to repaint its
+full-screen UI via a resize round-trip, resynchronizes the terminal
+buffer, and forces an Emacs redisplay."
+  (interactive)
+  (let ((buffer-name (claude-code-ide--get-buffer-name)))
+    (if-let ((buffer (get-buffer buffer-name)))
+        (with-current-buffer buffer
+          ;; 1. Nudge the CLI to repaint via a resize round-trip (SIGWINCH).
+          (when-let ((proc (get-buffer-process buffer))
+                     (window (get-buffer-window buffer t)))
+            (let ((height (window-body-height window))
+                  (width (window-body-width window)))
+              (when (and (> height 1) (> width 1))
+                (set-process-window-size proc height (1- width))
+                (set-process-window-size proc height width))))
+          ;; 2. Resynchronize the terminal buffer from terminal state.
+          (claude-code-ide--terminal-redraw)
+          ;; 3. Force Emacs to redisplay.
+          (force-window-update buffer)
+          (redraw-display)
+          (message "Redrew %s terminal" (claude-code-ide--backend-name)))
+      (user-error "No %s session for this project" (claude-code-ide--backend-name)))))
 
 ;;;###autoload
 (defun claude-code-ide-send-prompt (&optional prompt)
