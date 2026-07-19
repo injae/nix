@@ -1,4 +1,14 @@
 { pkgs, flake, ... }:
+let
+  trustedTap = tap:
+    if builtins.isString tap then
+      {
+        name = tap;
+        trusted = true;
+      }
+    else
+      tap // { trusted = tap.trusted or true; };
+in
 {
   environment.systemPackages = with pkgs; [ mas ];
   homebrew = {
@@ -10,7 +20,7 @@
       upgrade = false;
     };
 
-    taps = [
+    taps = map trustedTap [
       "hcavarsan/kftray"
       "theboredteam/boring-notch"
     ];
