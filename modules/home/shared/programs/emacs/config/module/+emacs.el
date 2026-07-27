@@ -68,6 +68,9 @@
 
     ;; native-comp
     (setq native-compile-prune-cache t)
+
+    (global-visual-line-mode 1)
+    (global-visual-wrap-prefix-mode 1)
 )
 
 (use-package ns-auto-titlebar
@@ -160,7 +163,6 @@
     (define-key (current-global-map)
         [remap shell-command] 'with-editor-shell-command)
     )
-
 
 
 (provide '+emacs)
