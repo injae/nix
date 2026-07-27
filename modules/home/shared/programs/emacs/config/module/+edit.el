@@ -67,5 +67,12 @@
     :custom (outline-indent-ellipsis " ▼")
     )
 
+(use-package super-save
+    :config
+    (setq super-save-auto-save-when-idle t)
+    (setq super-save-silent t)
+    (super-save-mode +1)
+    )
+
 (provide '+edit)
 ;;; +edit.el ends here
