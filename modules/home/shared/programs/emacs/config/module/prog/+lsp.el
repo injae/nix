@@ -62,7 +62,27 @@
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
     :after eglot
-    :config (eglot-x-setup)
+    :config
+    (eglot-x-setup)
+    ;; Compat shim: Emacs 31's bundled eglot changed
+    ;; `eglot--apply-workspace-edit' to (SERVER WEDIT ORIGIN), but eglot-x
+    ;; still calls it with two args, so applying an edit-producing code
+    ;; action fails with "Wrong number of arguments ... 2".  Re-define the
+    ;; `:around' method with SERVER threaded through until upstream catches up.
+    (cl-defmethod eglot-execute :around (server action)
+        "Execute ACTION locally if possible, otherwise ask SERVER to execute it."
+        (if (not eglot-x-client-commands)
+            (cl-call-next-method)
+            (eglot--dcase action
+                (((Command)) (eglot-x-execute-command server action))
+                (((CodeAction) edit command data)
+                 (if (and (null edit) (null command) data
+                          (eglot-server-capable :codeActionProvider :resolveProvider))
+                     (eglot-execute server
+                                    (eglot--request server :codeAction/resolve action))
+                     (when edit (eglot--apply-workspace-edit server edit this-command))
+                     (when command
+                         (eglot-x-execute-command server command)))))))
     )
 
 (use-package consult-eglot :after eglot)
