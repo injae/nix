@@ -93,6 +93,10 @@ Opens the file in the background if not already open."
         (with-current-buffer (or (find-buffer-visiting file-path)
                                  (find-file-noselect file-path))
           (save-excursion
+            ;; imenu caches its index; with `imenu-auto-rescan' nil it never
+            ;; rebuilds, so an already-indexed buffer returns stale marker
+            ;; positions.  Reset first to force a fresh build matching current text.
+            (setq imenu--index-alist nil)
             (let* ((mode (symbol-name major-mode))
                    (has-treesit (and (fboundp 'treesit-parser-list)
                                      (not (null (treesit-parser-list)))))
