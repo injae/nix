@@ -16,5 +16,7 @@
     pnpm
     eslint
     turbo
+    oxlint
+    oxfmt
   ];
 }
