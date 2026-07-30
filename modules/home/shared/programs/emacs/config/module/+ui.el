@@ -88,10 +88,14 @@
     (doom-modeline-mode 1)
 )
 
-(use-package rainbow-mode
-  :hook   (prog-mode text-mode)
-  :config (rainbow-mode)
-)
+(use-package colorful-mode
+  :custom
+    (colorful-use-prefix t)
+    (colorful-only-strings 'only-prog)
+    (css-fontify-colors nil)
+  :config
+    (global-colorful-mode t)
+    (add-to-list 'global-colorful-modes 'helpful-mode))
 
 (use-package rainbow-delimiters
   :hook ((prog-mode . rainbow-delimiters-mode)
