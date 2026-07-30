@@ -2,8 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 
-(declare-function claude-code-ide-session-buffer-p "claude-code-ide" (buffer))
-
 (use-package vterm-hangul :ensure nil :load-path "~/.emacs.d/lisp/vterm-hangul/" :after vterm
     :config (vterm-hangul-setup))
 
@@ -25,92 +23,90 @@
 )
 
 
-(use-package multi-vterm :after vterm
-:general (leader "tn" 'multi-vterm :wk "new terminal")
+(use-package ghostel :after exec-path-from-shell
+:custom (ghostel-term "xterm-ghostty")
+        ;; Keep the downloaded native module outside the elpaca build directory
+        ;; so it survives a package rebuild.
+        (ghostel-module-directory (no-littering-expand-var-file-name "ghostel/"))
+:config
+    (add-hook 'ghostel-mode-hook (lambda () (display-line-numbers-mode -1)))
+    (add-hook 'ghostel-mode-hook (lambda ()
+      (ligature-mode -1)
+      (face-remap-add-relative 'default :family "Sarasa Term K" :height 160)))
+    ;; Match ghostel-color-black to the Emacs background, same reason as
+    ;; `vterm-color-black' above.
+    (let ((bg (face-background 'default nil t)))
+      (set-face-background 'ghostel-color-black bg)
+      (set-face-foreground 'ghostel-color-black bg))
 )
 
-(use-package vterm-with-centaur-tab :no-require t :ensure nil :disabled
-:after (vterm-toggle centaur-tabs)
-:preface
-    (defun vmacs-awesome-tab-buffer-groups ()
-          "`vmacs-awesome-tab-buffer-groups' control buffers' group rules. "
-          (list
-           (cond
-            ((derived-mode-p 'eshell-mode 'term-mode 'shell-mode 'vterm-mode) "Term")
-            ((string-match-p (rx (or "\*Helm"
-                                     "\*helm"
-                                     "\*tramp"
-                                     "\*Completions\*"
-                                     "\*sdcv\*"
-                                     "\*Messages\*"
-                                     "\*Ido Completions\*"))
-                                     (buffer-name))
-             "Emacs")
-            (t "Common"))))
-    (defun vmacs-term-mode-p(&optional args)
-        (derived-mode-p 'eshell-mode 'term-mode 'shell-mode 'vterm-mode))
-:config (setq centaur-tabs-buffer-groups-function   'vmacs-awesome-tab-buffer-groups)
-        (setq vterm-toggle--vterm-buffer-p-function 'vmacs-term-mode-p)
+;; Lisp input methods (hangul) commit through `self-insert-command', which
+;; bypasses ghostel's key remapping; ghostel-ime forwards the committed text to
+;; the PTY.  Ships inside the ghostel package, so no separate recipe.
+(use-package ghostel-ime :ensure nil :after ghostel
+:hook (ghostel-mode . ghostel-ime-mode)
 )
 
-(use-package vterm-toggle :after vterm
-    :preface
-    (defun custom-vterm-toggle-cd-show ()
-        (interactive)
-        (vterm-toggle-cd)
-        (vterm-toggle-insert-cd))
-    :general (leader "ut" 'custom-vterm-toggle-cd-show :wk "toggle terminal")
-    :custom (vterm-toggle-projectile-root t)
-    :config
-    (setq vterm-toggle-fullscreen-p nil)
-    (add-to-list 'vterm-toggle-togglable-buffer-functions
-                 (lambda (buf)
-                   (if (fboundp 'claude-code-ide-session-buffer-p)
-                       (not (claude-code-ide-session-buffer-p buf))
-                     t)))
-    (add-to-list 'display-buffer-alist
-                '((lambda (buffer-or-name _)
-                    (let ((buffer (get-buffer buffer-or-name)))
-                        (with-current-buffer buffer
-                        (or (equal major-mode 'vterm-mode)
-                            (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-                    (display-buffer-reuse-window display-buffer-at-bottom)
-                    (reusable-frames . visible)
-                    (window-height . 0.3)))
-    )
+(use-package evil-ghostel :after (ghostel evil)
+:hook (ghostel-mode . evil-ghostel-mode)
+)
 
-(use-package vterm-command :no-require t :ensure nil
-:after (vterm projectile)
+(defun +terminal--shell-pop-type (backend)
+  "Return a `shell-pop-shell-type' value for BACKEND."
+  (pcase backend
+    ('vterm '("vterm" "*vterm*"
+              (lambda () (let ((vterm-shell shell-pop-term-shell)) (vterm)))))
+    ('ghostel '("ghostel" "*ghostel*"
+                (lambda () (let ((ghostel-shell shell-pop-term-shell)) (ghostel)))))))
+
+(defun +terminal--root ()
+  "Return the project root, or `default-directory' outside a project."
+  (or (and (fboundp 'projectile-project-root) (projectile-project-root))
+      default-directory))
+
+(defcustom +terminal-backend 'vterm
+  "Terminal emulator opened by `+terminal-new' and `+terminal-shell-pop'.
+Setting this through Customize reconfigures `shell-pop-shell-type'."
+  :type '(choice (const vterm) (const ghostel))
+  :group 'shell-pop
+  ;; Do not call :set while loading: `shell-pop' is not available yet.
+  :initialize #'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         (customize-set-variable 'shell-pop-shell-type
+                                 (+terminal--shell-pop-type val))))
+
+(defun +terminal-toggle-backend ()
+  "Toggle `+terminal-backend' between vterm and ghostel."
+  (interactive)
+  (customize-set-variable '+terminal-backend
+                          (if (eq +terminal-backend 'ghostel) 'vterm 'ghostel))
+  (message "terminal backend: %s" +terminal-backend))
+
+(defun +terminal-new (&optional arg)
+  "Open a terminal in the project root using `+terminal-backend'.
+Without ARG a fresh terminal buffer is created; with a numeric ARG switch to
+the terminal with that number, creating it when needed."
+  (interactive "P")
+  (let ((default-directory (+terminal--root)))
+    (pcase +terminal-backend
+      ('ghostel (ghostel (or arg t)))
+      ('vterm (vterm (or arg t))))))
+
+(use-package shell-pop
 :preface
-(defun run-in-vterm-kill (process event)
-  "A process sentinel. Kill PROCESS's buffer if it is live."
-  (let ((b (process-buffer process)))
-    (and (buffer-live-p b)
-         (kill-buffer b))))
-
-(defun run-in-vterm (command)
-  "Execute string COMMAND in a new vterm.
-Interactively, prompt for COMMAND with the current buffer's file name supplied.
-When called from Dired, supply the name of the file at point.
-Like `async-shell-command`, but run in a vterm for full terminal features.
-The new vterm buffer is named in the form `*foo bar.baz*`, the
-command and its arguments in earmuffs.
-When the command terminates, the shell remains open, but when the
-shell exits, the buffer is killed."
-  (interactive
-   (list
-    (let* ((f (cond (buffer-file-name)
-                    ((eq major-mode 'dired-mode)
-                     (dired-get-filename nil t))))
-           (filename (concat " " (shell-quote-argument (and f (file-relative-name f))))))
-      (read-shell-command "Terminal command: "
-                          (cons filename 0)
-                          (cons 'shell-command-history 1)
-                          (list filename)))))
-  (with-current-buffer (vterm (concat "*" command "*"))
-    (set-process-sentinel vterm--process #'run-in-vterm-kill)
-    (vterm-send-string command)
-    (vterm-send-return)))
+    (defun +terminal-shell-pop (arg)
+      "Pop a terminal in the project root, or in `default-directory' outside a project.
+ARG is passed through to `shell-pop'."
+      (interactive "P")
+      (let ((default-directory (+terminal--root)))
+        (shell-pop arg)))
+:general (leader "ut" '+terminal-shell-pop :wk "toggle terminal")
+         (leader "tn" '+terminal-new :wk "new terminal")
+:custom (shell-pop-window-size 30)
+        (shell-pop-window-position "bottom")
+        (shell-pop-full-span nil)
+        (shell-pop-shell-type (+terminal--shell-pop-type +terminal-backend))
 )
 
 (use-package powershell)
