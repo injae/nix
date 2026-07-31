@@ -178,6 +178,7 @@
              yaml toml json
              formatting bazel
              markdown terraform
+             sql
              ))
     )
 
