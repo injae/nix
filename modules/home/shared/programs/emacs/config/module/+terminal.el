@@ -64,7 +64,7 @@
   (or (and (fboundp 'projectile-project-root) (projectile-project-root))
       default-directory))
 
-(defcustom +terminal-backend 'vterm
+(defcustom +terminal-backend 'ghostel
   "Terminal emulator opened by `+terminal-new' and `+terminal-shell-pop'.
 Setting this through Customize reconfigures `shell-pop-shell-type'."
   :type '(choice (const vterm) (const ghostel))

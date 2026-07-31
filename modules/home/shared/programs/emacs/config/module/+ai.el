@@ -10,7 +10,7 @@
     :custom
     (claude-code-ide-open-in-new-frame t)
     (claude-code-ide-enable-mcp-server t)
-    (claude-code-ide-terminal-backend 'vterm)
+    (claude-code-ide-terminal-backend 'ghostel)
     ;; 클라이언트측 배칭 hack 비활성 (default가 t라 nil 명시 필요).
     ;; 대신 CLI 네이티브 NO_FLICKER 렌더러 사용.
     (claude-code-ide-vterm-anti-flicker t)
