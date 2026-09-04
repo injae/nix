@@ -69,7 +69,7 @@
     ;; native-comp
     (setq native-compile-prune-cache t)
 
-    (global-visual-line-mode 1)
+    ;(global-visual-line-mode 1)
     (global-visual-wrap-prefix-mode 1)
 )
 
