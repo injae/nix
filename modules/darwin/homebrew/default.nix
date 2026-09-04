@@ -1,6 +1,7 @@
 { pkgs, flake, ... }:
 let
-  trustedTap = tap:
+  trustedTap =
+    tap:
     if builtins.isString tap then
       {
         name = tap;
@@ -15,7 +16,7 @@ in
     enable = true;
     user = flake.config.people.myself;
     onActivation = {
-      autoUpdate = true;
+      autoUpdate = false;
       cleanup = "zap";
       upgrade = false;
     };
