@@ -58,6 +58,36 @@
                          (length gone)
                          (mapconcat #'buffer-name gone ", ")))))
     (add-hook 'eglot-connect-hook #'my/eglot-exclude-deleted-file-buffers)
+
+    ;; macOS pins Emacs at 1024 open file descriptors: `init_process_emacs'
+    ;; clamps RLIMIT_NOFILE down to FD_SETSIZE and `inrange_fd' closes
+    ;; anything above it, so raising the system limit cannot lift this.  The
+    ;; kqueue file-notify backend spends one descriptor per watched
+    ;; directory, and for a `baseUri' outside the project root
+    ;; `eglot--watch-globs' enumerates subdirectories with plain `find',
+    ;; ignoring VCS ignores.  A python server pointing at a /nix/store
+    ;; site-packages tree therefore exhausts the descriptors and every watch
+    ;; fails with "Opening directory: Too many open files".  Skip trees that
+    ;; cannot change (the nix store is read-only) or hold no source
+    ;; (__pycache__); .venv and node_modules stay watched because
+    ;; dependencies there really do change.
+    (defvar my/eglot-watch-exclude-regexp
+        (rx (or "/nix/store/" "/__pycache__/"))
+        "Regexp matching directory trees eglot must not file-watch.")
+
+    (defun my/eglot-skip-unwatchable-dir (fn server id globs dir &rest rest)
+        "Call FN unless DIR matches `my/eglot-watch-exclude-regexp'.
+SERVER, ID, GLOBS and REST are passed through to FN unchanged."
+        (unless (and dir
+                     (string-match-p my/eglot-watch-exclude-regexp
+                                     (file-name-as-directory dir)))
+            (apply fn server id globs dir rest)))
+    (advice-add 'eglot--watch-globs :around #'my/eglot-skip-unwatchable-dir)
+
+    ;; Second line of defence: eglot's cap must sit inside the 1024
+    ;; descriptor budget, or the default 10000 lets `file-notify-add-watch'
+    ;; fail with EMFILE before eglot ever warns.
+    (setq eglot-max-file-watches 600)
     )
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
