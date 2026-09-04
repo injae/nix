@@ -3,7 +3,11 @@ use_flake_exclude_git() {
     if [ -z "$flake" ]; then
         flake="."
     fi
-    git add flake.nix flake.lock nix
+    local paths=(flake.nix flake.lock)
+    [ -e nix ] && paths+=(nix)
+    local -x DIRENV_LOG_FORMAT=""
+    local -x NIX_CONFIG="access-tokens = github.com=$(gh auth token)"
+    git add "${paths[@]}"
     use flake $flake --impure
-    git reset flake.nix flake.lock nix
+    git reset -q "${paths[@]}"
 }
