@@ -46,6 +46,10 @@ _:
 
   "claude-code@latest"
 
+  # nixpkgs lags the upstream release; no codex@latest cask exists, so this
+  # tracks whatever version homebrew-cask currently ships.
+  "codex"
+
   "headlamp"
 
   "bruno"
