@@ -62,6 +62,7 @@ in
       copilot-language-server
       glibtool
       rassumfrassum
+      enchant
     ]);
 
   programs.zsh = {
