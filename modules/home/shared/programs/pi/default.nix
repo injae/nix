@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   home.file.".pi/agent/AGENTS.md" = {
     source = ./config/AGENTS.md;
@@ -21,4 +21,13 @@
     source = ./config/skills;
     recursive = true;
   };
+
+  home.file.".pi/agent/skills/vercel-composition-patterns".source =
+    "${pkgs.vercel-agent-skills}/vercel-composition-patterns";
+  home.file.".pi/agent/skills/vercel-react-best-practices".source =
+    "${pkgs.vercel-agent-skills}/vercel-react-best-practices";
+  home.file.".pi/agent/skills/vercel-react-view-transitions".source =
+    "${pkgs.vercel-agent-skills}/vercel-react-view-transitions";
+  home.file.".pi/agent/skills/web-design-guidelines".source =
+    "${pkgs.vercel-agent-skills}/web-design-guidelines";
 }
