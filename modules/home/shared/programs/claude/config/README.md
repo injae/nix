@@ -6,21 +6,17 @@ Nix-managed source of truth for `~/.claude/`.
 
 - `CLAUDE.md`: global instructions
 - `settings.json`: Claude Code settings
-- `hooks/`: lifecycle hooks (nix-managed symlinks + caveman plugin files)
+- `hooks/`: lifecycle hooks
 - `skills/`: local skills
 
-## Caveman plugin hooks
+## Upstream skills and plugins
 
-`caveman@caveman` writes hook files directly into `~/.claude/hooks/`:
-- `caveman-activate.js`
-- `caveman-mode-tracker.js`
-- `caveman-stats.js`
-- `caveman-statusline.sh`
-- `caveman-statusline.ps1`
-- `caveman-config.js`
+Third-party skills and plugins are not vendored here; they are pinned
+derivations symlinked into `~/.claude/skills/` by `../default.nix`:
 
-Reason: plugin installer uses `fs.copyFileSync`; nix store symlink target is read-only, so plugin update can fail with `EROFS`.
+- `packages/vercel-agent-skills.nix`: the four Vercel skills
+- `packages/superpowers-plugin.nix`: loaded as `superpowers@skills-dir`
+- `packages/caveman-plugin.nix`: loaded as `caveman@skills-dir`, and provides
+  the `statusLine` script at `~/.claude/skills/caveman/src/hooks/caveman-statusline.sh`
 
-Update flow: copy updated hook files from
-`~/.claude/plugins/marketplaces/caveman/src/hooks/`
-into this repo `hooks/`, then commit.
+Update flow: bump `version`/`tag` and `hash` in the package file.

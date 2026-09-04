@@ -34,6 +34,10 @@ in
   dl-yt = self.callPackage "${packages}/dl-yt.nix" { };
   dl-yt-mp3 = self.callPackage "${packages}/dl-yt-mp3.nix" { };
   pytest-language-server = self.callPackage "${packages}/pytest-language-server.nix" { };
+  archify-skill = self.callPackage "${packages}/archify-skill.nix" { };
+  vercel-agent-skills = self.callPackage "${packages}/vercel-agent-skills.nix" { };
+  superpowers-plugin = self.callPackage "${packages}/superpowers-plugin.nix" { };
+  caveman-plugin = self.callPackage "${packages}/caveman-plugin.nix" { };
   #lima-additional-guestagents =
   #  self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
   #    { };
