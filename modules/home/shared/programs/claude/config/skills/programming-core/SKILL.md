@@ -12,6 +12,18 @@ description: "MANDATORY for ANY code writing, editing, reviewing, or refactoring
 - Prefer small safe changes; avoid drive-by refactor.
 - Include error handling + boundary conditions in new code.
 
+## Comments
+Comment = code that cannot be guaranteed. Never executes, no test covers it, nothing
+enforces it still matches the code. Most unstable thing in the file; goes stale by default.
+
+- Default: no comment. Content, names, definitions, usage tracing carry meaning.
+- Comment only what those four cannot express: why this over an obvious alternative, or library behavior that contradicts intuition.
+- Never restate what code does or what a name says. Adds nothing, rots immediately.
+- Long comment = defect report on the code under it. Fix the code, not the prose.
+- Exception: heavily optimized or mathematical code (bit tricks, numerical stability, derived formula, hot-path rewrite). Unreadable by design; naming and structure cannot fix it. Comment warranted, still shortest possible. Point to invariant, derivation, or source (paper, formula); do not re-explain.
+- Docstring: same rule. Omit unless the reason the function exists is non-obvious.
+- Test docstring: omit when the test name explains it. Keep only when the reason the test exists is non-obvious.
+
 ## Functional Design
 - Write logic as plain functions first.
 - Promote to methods only if ownership by a specific type is clear.
