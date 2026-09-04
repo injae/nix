@@ -36,6 +36,7 @@ in
   # derivation.
   home.file.".claude/skills/superpowers".source = pkgs.superpowers-plugin;
   home.file.".claude/skills/caveman".source = pkgs.caveman-plugin;
+  home.file.".claude/skills/codex".source = pkgs.codex-plugin;
 
   home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     ${pkgs.python3}/bin/python3 ${mergeMcpServers}

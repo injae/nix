@@ -38,6 +38,7 @@ in
   vercel-agent-skills = self.callPackage "${packages}/vercel-agent-skills.nix" { };
   superpowers-plugin = self.callPackage "${packages}/superpowers-plugin.nix" { };
   caveman-plugin = self.callPackage "${packages}/caveman-plugin.nix" { };
+  codex-plugin = self.callPackage "${packages}/codex-plugin.nix" { };
   #lima-additional-guestagents =
   #  self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
   #    { };

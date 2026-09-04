@@ -18,5 +18,7 @@ derivations symlinked into `~/.claude/skills/` by `../default.nix`:
 - `packages/superpowers-plugin.nix`: loaded as `superpowers@skills-dir`
 - `packages/caveman-plugin.nix`: loaded as `caveman@skills-dir`, and provides
   the `statusLine` script at `~/.claude/skills/caveman/src/hooks/caveman-statusline.sh`
+- `packages/codex-plugin.nix`: the `plugins/codex` subtree of the
+  `openai/codex-plugin-cc` marketplace repo, loaded as `codex@skills-dir`
 
 Update flow: bump `version`/`tag` and `hash` in the package file.
