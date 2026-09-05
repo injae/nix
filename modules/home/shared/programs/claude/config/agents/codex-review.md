@@ -60,8 +60,17 @@ report failure as-is, do not retry more than once.
   and files with `git show <sha>:<path>`. Do not read the working tree — it has unrelated
   uncommitted changes." Range: `git diff <base>..HEAD`. Uncommitted: `git diff HEAD` plus
   `git status --short`.
-- **Output goes to the `-o` file — reply is the review itself.** Do not ask reviewer to write
-  files.
+- **Output goes to the `-o` file — reply is the review itself.** Never ask the reviewer to write
+  a file: under `--sandbox read-only` the write cannot succeed and cannot be approved
+  (`approval: never`).
+- **Usage limit fails silently: exit 0, no `-o` file.** The log's last line reads `ERROR: You've
+  hit your usage limit … try again at <date>`, yet the command exits 0, so an exit-code check calls
+  it success. Redirect the run's output to a log and, when the `-o` file is missing, `grep -i
+  "usage limit"` that log before anything else. Report the retry date; do not retry.
+  A run in this state can also sit for over an hour (observed 2026-09-05: 73 minutes, killed by
+  hand). Treat >15 minutes with no `-o` file as failed. A trivial probe (`codex exec --sandbox
+  read-only --color never "say OK"`) still answers on a spent quota — it is too cheap to prove
+  anything, so trust the log line, not the probe.
 - **Enforce English and caveman style** — include verbatim (Codex answers in Korean without
   the language line):
 
