@@ -118,5 +118,29 @@ REPO-DIR overrides the calling session's repository."
              :description "Commit message")
             ,claude-code-ide-mcp--magit-repo-arg))
 
+(defun claude-code-ide-mcp-magit-amend (&optional message repo-dir)
+  "Amend HEAD with the staged changes.
+MESSAGE replaces the commit message; without it the message is kept.
+REPO-DIR overrides the calling session's repository."
+  (condition-case err
+      (let ((default-directory (claude-code-ide-mcp--magit-repo repo-dir)))
+        (if (and (stringp message) (not (string-empty-p message)))
+            (magit-run-git "commit" "--amend" "-m" message)
+          (magit-run-git "commit" "--amend" "--no-edit"))
+        (format "Amended in %s: %s"
+                default-directory
+                (magit-git-string "log" "-1" "--format=%h %s")))
+    (error (format "Error: %s" (error-message-string err)))))
+
+(claude-code-ide-make-tool
+    :function #'claude-code-ide-mcp-magit-amend
+    :name "git-amend"
+    :description "Amend HEAD with staged changes. Keeps the message unless a new one is given."
+    :args `((:name "message"
+             :type string
+             :optional t
+             :description "New commit message. Omit to keep the current one.")
+            ,claude-code-ide-mcp--magit-repo-arg))
+
 (provide 'claude-code-ide-extra-magit)
 ;;; claude-code-ide-extra-magit.el ends here
