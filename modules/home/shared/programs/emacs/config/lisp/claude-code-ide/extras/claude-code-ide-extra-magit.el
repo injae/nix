@@ -11,14 +11,29 @@
 REPO-DIR overrides the calling session's project directory.  Never
 falls back to the current buffer, which may belong to another repo."
   (require 'magit nil 'noerror)
-  (let ((dir (cond
-              ((and (stringp repo-dir) (not (string-empty-p repo-dir)))
-               (expand-file-name repo-dir))
-              ((plist-get (claude-code-ide-mcp-server-get-session-context)
-                          :project-dir))
-              (t (error "No session project directory; pass project_dir")))))
+  (let* ((session-dir (plist-get (claude-code-ide-mcp-server-get-session-context)
+                                 :project-dir))
+         (dir (cond
+               ((and (stringp repo-dir) (not (string-empty-p repo-dir)))
+                ;; Relative paths resolve against the session, never against
+                ;; the focused buffer's `default-directory'.
+                (cond ((file-name-absolute-p repo-dir) (expand-file-name repo-dir))
+                      (session-dir (expand-file-name repo-dir session-dir))
+                      (t (error "Relative project_dir without a session project: %s"
+                                repo-dir))))
+               (session-dir)
+               (t (error "No session project directory; pass project_dir")))))
     (or (magit-toplevel dir)
         (error "Not inside a git repository: %s" dir))))
+
+(defun claude-code-ide-mcp--magit-git (&rest args)
+  "Run git with ARGS synchronously in `default-directory', then refresh magit.
+Signal an error on non-zero exit; `magit-run-git' would report success."
+  (let ((exit (apply #'magit-call-git args)))
+    (magit-refresh)
+    (unless (eq exit 0)
+      (error "git %s failed (exit %s); see %s"
+             (car args) exit (buffer-name (magit-process-buffer t))))))
 
 (defconst claude-code-ide-mcp--magit-repo-arg
   '(:name "project_dir"
@@ -32,7 +47,7 @@ falls back to the current buffer, which may belong to another repo."
 REPO-DIR overrides the calling session's repository."
   (condition-case err
       (let ((default-directory (claude-code-ide-mcp--magit-repo repo-dir)))
-        (magit-run-git "add" "--" file-path)
+        (claude-code-ide-mcp--magit-git "add" "--" file-path)
         (format "Staged: %s (in %s)" file-path default-directory))
     (error (format "Error: %s" (error-message-string err)))))
 
@@ -83,9 +98,16 @@ REPO-DIR overrides the calling session's repository."
                                     (equal (magit-toplevel) repo)))))
                          (window-list))))
         (setq claude-code-ide--pending-commit-message message)
-        (if magit-win
-            (with-selected-window magit-win (magit-commit-create))
-          (magit-commit-create))
+        ;; The hook consumes the message only once the commit buffer opens;
+        ;; if git never gets that far, drop it so it cannot leak into an
+        ;; unrelated commit buffer later.
+        (condition-case err
+            (if magit-win
+                (with-selected-window magit-win (magit-commit-create))
+              (magit-commit-create))
+          (error
+           (setq claude-code-ide--pending-commit-message nil)
+           (signal (car err) (cdr err))))
         (format "Commit buffer ready for %s — review the message and press C-c C-c to commit." repo))
     (error (format "Error: %s" (error-message-string err)))))
 
@@ -103,7 +125,7 @@ REPO-DIR overrides the calling session's repository."
 REPO-DIR overrides the calling session's repository."
   (condition-case err
       (let ((default-directory (claude-code-ide-mcp--magit-repo repo-dir)))
-        (magit-run-git "commit" "-m" message)
+        (claude-code-ide-mcp--magit-git "commit" "-m" message)
         (format "Committed in %s: %s"
                 default-directory
                 (substring message 0 (min 60 (length message)))))
@@ -125,8 +147,8 @@ REPO-DIR overrides the calling session's repository."
   (condition-case err
       (let ((default-directory (claude-code-ide-mcp--magit-repo repo-dir)))
         (if (and (stringp message) (not (string-empty-p message)))
-            (magit-run-git "commit" "--amend" "-m" message)
-          (magit-run-git "commit" "--amend" "--no-edit"))
+            (claude-code-ide-mcp--magit-git "commit" "--amend" "-m" message)
+          (claude-code-ide-mcp--magit-git "commit" "--amend" "--no-edit"))
         (format "Amended in %s: %s"
                 default-directory
                 (magit-git-string "log" "-1" "--format=%h %s")))
