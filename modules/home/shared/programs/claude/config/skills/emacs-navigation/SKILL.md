@@ -6,6 +6,10 @@ user-invocable: false
 
 # Navigation Tool Selection
 
+Multi-file or open-ended exploration (locate X, what calls Y, map a directory):
+dispatch the `Explore` agent — the Emacs MCP-aware override of the built-in.
+Use the table below directly only for a single targeted lookup.
+
 ## Quick reference
 
 | Task | Tool | Fallback |

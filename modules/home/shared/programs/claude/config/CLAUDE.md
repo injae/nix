@@ -38,6 +38,8 @@ Present the plan, ask "Shall I explore in this order?" → wait for approval or 
 
 During exploration: if a new approach not in the plan is needed, state the new approach + reason → get approval before applying.
 
+Code exploration (finding files, symbols, references, mapping a directory) goes through the `Explore` agent — the user-defined Emacs MCP-aware override, not inline grep. Dispatching it counts as user-authorized subagent use.
+
 ## Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
