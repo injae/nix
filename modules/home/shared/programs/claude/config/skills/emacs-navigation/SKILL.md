@@ -24,6 +24,9 @@ Use the table below directly only for a single targeted lookup.
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
 | Content search + enclosing block | `grep-block(pattern, path, cap, headers)` | Bash grep |
+| What changed (commit / range / tree) | `review-changes(target, mode, path, cap)` | Bash git diff |
+| Repository structure, depth-limited | `structure-tree(path, depth, symbols, pattern, cap)` | Bash ls/find |
+| Structural rewrite | `ast-rewrite(pattern, rewrite, path)` | Edit |
 | Diagnostics | `getDiagnostics` | Bash |
 
 **Before reaching for `Bash grep/find`** — pause and check the table above. Most search tasks have an MCP equivalent that returns structured, LSP-aware results. Bash grep is a last resort, not a default.
@@ -103,6 +106,26 @@ files or filename listing.
 **`grep-block` vs `lsp-refs` family:**
 - Known symbol, "where is it used?" → `lsp-refs` / `lsp-refs-by-name` (semantic, collision-free)
 - Text pattern, non-symbol match, or quick "show me the block" → `grep-block`
+
+## Structural rewrite — `ast-rewrite`
+
+`ast-rewrite(pattern, rewrite, path)` matches the syntax tree and replaces what
+it finds. Both sides are code fragments; `$A` binds one node and `$$$A` binds a
+node list: `foo($A, $B)` → `bar($B, $A)`. Whitespace and line breaks are
+ignored and node kinds must agree.
+
+It rewrites only. Searching stays with `grep-block`, and `dry_run` shows what a
+rewrite would touch without writing.
+
+**`ast-rewrite` vs `Edit`** — reach for `ast-rewrite` whenever the same shape
+occurs more than once, indentation is uncertain, or lookalike text sits nearby.
+Those are the three ways a textual edit lands in the wrong place, and none of
+them can reach a structural match: a comment or string that merely looks like
+the code is never hit, and formatting differences do not matter.
+
+A pattern that matches nothing comes back with its own parse tree, so pass
+`lang` to read why. Files with no tree-sitter parser cannot be rewritten this
+way — use `Edit` there.
 
 **cap:** default 20 distinct blocks, `0` = unlimited. Total is always reported,
 never a silent cutoff. When `total > showing`, the omitted blocks are listed as

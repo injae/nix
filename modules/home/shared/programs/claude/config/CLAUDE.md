@@ -40,7 +40,7 @@ During exploration: if a new approach not in the plan is needed, state the new a
 
 Code exploration (finding files, symbols, references, mapping a directory) goes through the `Explore` agent — the user-defined Emacs MCP-aware override, not inline grep. Dispatching it counts as user-authorized subagent use.
 
-Code review of a commit, range, or the uncommitted tree goes through the `codex-review` agent, which runs the review on Codex and returns only the verdict and one line per finding. Dispatching it counts as user-authorized subagent use.
+Code review of a commit, range, or the uncommitted tree goes through the `codex-review` agent, which runs the review on Codex and returns only the verdict and one line per finding. If Codex is unavailable — usage limit hit, CLI missing, run failed — fall back to the `fable-review` agent, which runs the same review contract on Fable. Say which one produced the result. Dispatching either counts as user-authorized subagent use.
 
 ## Think Before Coding
 
