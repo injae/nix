@@ -26,6 +26,9 @@
 
     mdbook
 
+    # structural search and rewrite, driven by the ast-grep MCP tool
+    ast-grep
+
     copilot-language-server
     litecli
 
