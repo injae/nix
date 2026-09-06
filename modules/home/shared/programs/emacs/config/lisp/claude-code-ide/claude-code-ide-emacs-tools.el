@@ -49,7 +49,7 @@ This function uses the session context to operate in the correct project."
   (if (not file-path)
       (error "file_path parameter is required. Please specify the file where you want to search for %s" identifier)
     (claude-code-ide-mcp-server-with-session-context nil
-      (let ((target-buffer (or (find-buffer-visiting file-path)
+      (let ((target-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                (find-file-noselect file-path)))
             (identifier-str (format "%s" identifier)))
         (with-current-buffer target-buffer
@@ -82,7 +82,7 @@ This function uses the session context to operate in the correct project."
   (if (not file-path)
       (error "file_path parameter is required. Please specify the file where you want to search for pattern %s" pattern)
     (claude-code-ide-mcp-server-with-session-context nil
-      (let ((target-buffer (or (find-buffer-visiting file-path)
+      (let ((target-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                (find-file-noselect file-path)))
             (pattern-str (format "%s" pattern)))
         (with-current-buffer target-buffer
@@ -139,7 +139,7 @@ Returns a list of symbols with their types and positions."
       (error "file_path parameter is required")
     (claude-code-ide-mcp-server-with-session-context nil
       (condition-case err
-          (let ((target-buffer (or (find-buffer-visiting file-path)
+          (let ((target-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                    (find-file-noselect file-path))))
             (with-current-buffer target-buffer
               ;; Generate or update imenu index
@@ -244,7 +244,7 @@ If INCLUDE_CHILDREN is non-nil, include child nodes."
       (condition-case err
           (if (not (treesit-available-p))
               "Tree-sitter is not available in this Emacs build"
-            (let ((target-buffer (or (find-buffer-visiting file-path)
+            (let ((target-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                      (find-file-noselect file-path))))
               (with-current-buffer target-buffer
                 (let* ((parsers (treesit-parser-list))

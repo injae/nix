@@ -225,6 +225,24 @@ Returns a list of plists with :name, :type, :description, :optional."
                 arg)))
           parameters))
 
+(defun claude-code-ide-mcp--refresh-visiting (file)
+  "Return the buffer visiting FILE, reverted when FILE changed on disk.
+Return nil when no buffer visits FILE.
+
+Claude edits files through the filesystem, so a buffer opened earlier keeps
+serving text the language server no longer agrees with, and eglot suppresses
+its own `workspace/didChangeWatchedFiles' notification for any file a buffer
+visits.  `global-auto-revert-mode' closes that gap only once per
+`auto-revert-interval', which is slower than one tool call follows another.
+A buffer holding unsaved changes is left alone: those edits outrank the file."
+  (let ((buffer (find-buffer-visiting file)))
+    (when (and buffer
+               (not (buffer-modified-p buffer))
+               (not (verify-visited-file-modtime buffer)))
+      (with-current-buffer buffer
+        (revert-buffer :ignore-auto :noconfirm)))
+    buffer))
+
 ;;; Public Functions
 
 (defun claude-code-ide-mcp-server-ensure-server ()

@@ -47,7 +47,7 @@ Uses eglot--connect directly since eglot-ensure relies on post-command-hook
 and never fires in non-interactive (MCP) contexts."
   (condition-case err
       (let* ((expanded (expand-file-name file-path))
-             (buf (or (find-buffer-visiting expanded)
+             (buf (or (claude-code-ide-mcp--refresh-visiting expanded)
                       (find-file-noselect expanded))))
         (with-current-buffer buf
           (unless (eglot-current-server)

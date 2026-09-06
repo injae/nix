@@ -23,7 +23,7 @@
 (defun claude-code-ide-mcp--open-file-no-hooks (file-path)
   "Open FILE-PATH without triggering mode hooks that may cause UI prompts.
 Returns the buffer."
-  (or (find-buffer-visiting file-path)
+  (or (claude-code-ide-mcp--refresh-visiting file-path)
       (let ((delay-mode-hooks t))
         (find-file-noselect file-path))))
 

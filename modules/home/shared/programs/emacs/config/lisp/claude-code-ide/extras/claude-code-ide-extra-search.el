@@ -106,7 +106,7 @@ Records sharing a (:b-start :b-end) within a file are merged."
     (maphash
      (lambda (file lines)
        (let ((inhibit-redisplay t))
-         (with-current-buffer (or (find-buffer-visiting file)
+         (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file)
                                   (find-file-noselect file))
            (save-excursion
              (let ((seen (make-hash-table :test 'equal)))

@@ -90,7 +90,7 @@ Otherwise return all user-visible buffers ordered by recency."
 Opens the file in the background if not already open."
   (condition-case err
       (let ((inhibit-redisplay t))
-        (with-current-buffer (or (find-buffer-visiting file-path)
+        (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                  (find-file-noselect file-path))
           (save-excursion
             ;; imenu caches its index; with `imenu-auto-rescan' nil it never
@@ -125,7 +125,7 @@ Opens the file in the background if not already open."
 Uses tree-sitter to find exact declaration bounds when available."
   (condition-case err
       (let ((inhibit-redisplay t))
-        (with-current-buffer (or (find-buffer-visiting file-path)
+        (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
                                  (find-file-noselect file-path))
           (save-excursion
             (goto-char (point-min))

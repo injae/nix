@@ -9,7 +9,7 @@
 (defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
   "Return a buffer with an active eglot server for FILE-PATH's project.
 Starts eglot via eglot--connect if no server is already running."
-  (let ((buf (or (find-buffer-visiting file-path)
+  (let ((buf (or (claude-code-ide-mcp--refresh-visiting file-path)
                  (when-let* ((dir (file-name-directory (expand-file-name file-path)))
                              (proj (ignore-errors (project-current nil dir)))
                              (root (expand-file-name (project-root proj))))
