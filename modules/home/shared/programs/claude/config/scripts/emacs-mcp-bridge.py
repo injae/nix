@@ -2,8 +2,12 @@
 """stdio ↔ HTTP bridge for Emacs MCP server.
 
 Used when running claude outside Emacs. Ensures Emacs daemon is running,
-acquires the MCP HTTP server port via emacsclient, then bridges MCP
-stdio JSON-RPC to the Emacs HTTP endpoint.
+acquires the MCP HTTP server port, then bridges MCP stdio JSON-RPC to the
+Emacs HTTP endpoint.
+
+The port is pinned by `claude-code-ide-mcp-server-port' in +ai.el, so the
+common path is a single probe. The emacsclient handshake stays as the
+fallback: it still works when the port is taken, changed, or auto-selected.
 """
 
 import json
@@ -17,6 +21,8 @@ from typing import Any
 MAX_RETRIES = 3
 DAEMON_WAIT_SECS = 5.0
 HTTP_TIMEOUT_SECS = 30
+FIXED_PORT = 10777
+PROBE_TIMEOUT_SECS = 1.0
 
 
 def _emacsclient_eval(expr: str) -> str:
@@ -49,7 +55,32 @@ def _start_emacs_daemon() -> None:
     time.sleep(DAEMON_WAIT_SECS)
 
 
+def _probe_port(port: int) -> bool:
+    """Report whether a JSON-RPC endpoint answers on PORT.
+
+    A bare TCP or GET check would accept any process holding the port; the
+    GET handler answers 404 even for us. A ping tells the two apart.
+    """
+    body = json.dumps({"jsonrpc": "2.0", "id": 0, "method": "ping"}).encode()
+    req = urllib.request.Request(
+        f"http://localhost:{port}/mcp",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=PROBE_TIMEOUT_SECS) as resp:
+            if resp.status == 204:
+                return True
+            content = resp.read()
+            return not content or "jsonrpc" in json.loads(content)
+    except Exception:
+        return False
+
+
 def acquire_port() -> int:
+    if _probe_port(FIXED_PORT):
+        return FIXED_PORT
     for attempt in range(MAX_RETRIES):
         port = _get_mcp_port()
         if port is not None:

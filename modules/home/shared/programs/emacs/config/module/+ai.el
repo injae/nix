@@ -10,6 +10,9 @@
     :custom
     (claude-code-ide-open-in-new-frame t)
     (claude-code-ide-enable-mcp-server t)
+    ;; 고정 포트. emacs-mcp-bridge.py가 emacsclient 왕복 없이 바로 붙는다.
+    ;; Emacs 인스턴스를 둘 이상 띄우면 두 번째는 이 포트를 못 잡는다.
+    (claude-code-ide-mcp-server-port 10777)
     (claude-code-ide-terminal-backend 'ghostel)
     ;; 클라이언트측 배칭 hack 비활성 (default가 t라 nil 명시 필요).
     ;; 대신 CLI 네이티브 NO_FLICKER 렌더러 사용.
