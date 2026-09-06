@@ -5,13 +5,17 @@
 (defvar claude-code-ide--extras-files
   '("claude-code-ide-extra-buffer-info"
     "claude-code-ide-extra-describe-symbol"
+    "claude-code-ide-extra-edit"
     "claude-code-ide-extra-elisp"
     "claude-code-ide-extra-formatting"
     "claude-code-ide-extra-lsp-nav-position"
     "claude-code-ide-extra-lsp-nav-workspace"
     "claude-code-ide-extra-magit"
     "claude-code-ide-extra-navigation"
-    "claude-code-ide-extra-search")
+    "claude-code-ide-extra-search"
+    "claude-code-ide-extra-sync"
+    "claude-code-ide-extra-review"
+    "claude-code-ide-extra-tree")
   "Extras files loaded by `claude-code-ide-reload-mcp-tools'.")
 
 (let ((extras-dir (expand-file-name "extras" (file-name-directory
