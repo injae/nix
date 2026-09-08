@@ -1,7 +1,7 @@
 ---
 name: codex-review
 description: Send commit (or range / uncommitted tree) to Codex CLI for review, return **only verdict and gist of each finding**. Full review stays in file, never enters main conversation. Caller supplies commit SHA, review name, optional self-report path.
-tools: Bash, Read, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-refs-by-name
+tools: Bash, Read, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph
 model: sonnet
 ---
 

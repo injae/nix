@@ -1,13 +1,13 @@
 # MCP Tool Patterns — LSP Navigation
 
-Reference when adding tools to `config/module/mcp/+lsp-navigation.el`.
-For general MCP tool conventions (naming, registration, inhibit-redisplay) see the `emacs-mcp-dev` skill.
+Use when add tool to `extras/claude-code-ide-extra-lsp-nav-position.el` (Pattern A, B) or `extras/claude-code-ide-extra-lsp-nav-workspace.el` (Pattern C).
+General MCP tool rule (naming, registration, inhibit-redisplay): see `emacs-mcp-dev` skill.
 
 ---
 
 ## Helper overview
 
-These helpers in `+lsp-navigation.el` are building blocks for every pattern below.
+Helper live in two `lsp-nav` extras file. Build block for all pattern below.
 
 | Helper | Purpose | Call site |
 |--------|---------|-----------|
@@ -24,7 +24,7 @@ These helpers in `+lsp-navigation.el` are building blocks for every pattern belo
 
 ## Pattern A — Position-based LSP request
 
-**When**: the tool locates a symbol by file + line + column.
+**When**: tool find symbol by file + line + column.
 
 **Examples**: `lsp-find-implementation`, `lsp-find-references`, `lsp-find-typeDefinition`
 
@@ -54,7 +54,7 @@ These helpers in `+lsp-navigation.el` are building blocks for every pattern belo
             (:name "column"    :type number :description "Column number (0-based)")))
 ```
 
-**LSP methods** for common operations:
+**LSP methods** for common op:
 
 | Operation | Method |
 |-----------|--------|
@@ -62,7 +62,7 @@ These helpers in `+lsp-navigation.el` are building blocks for every pattern belo
 | All references | `:textDocument/references` + `(:context (:includeDeclaration :json-false))` |
 | Type definition | `:textDocument/typeDefinition` |
 
-For `:textDocument/references`, append the context param:
+For `:textDocument/references`, add context param:
 ```elisp
 (eglot--request server :textDocument/references
                 (append (claude-code-ide-mcp--textdoc-position-params)
@@ -73,7 +73,7 @@ For `:textDocument/references`, append the context param:
 
 ## Pattern B — Identifier-based xref tool
 
-**When**: the tool takes a symbol name as a string, no position needed.
+**When**: tool take symbol name as string. No position need.
 
 **Example**: `lsp-find-definition`
 
@@ -101,7 +101,7 @@ For `:textDocument/references`, append the context param:
 
 ## Pattern C — Server-context symbol search
 
-**When**: the tool queries the LSP server for symbols across the workspace.
+**When**: tool ask LSP server for symbol across workspace.
 
 **Examples**: `lsp-workspace-symbols`, `lsp-project-symbols`
 
@@ -133,7 +133,7 @@ For `:textDocument/references`, append the context param:
     (error (format "Error: %s" (error-message-string err)))))
 ```
 
-To add project-only filtering (like `lsp-project-symbols`), bind `project-root` in the inner `let*` before `result`:
+For project-only filter (like `lsp-project-symbols`), bind `project-root` in inner `let*` before `result`:
 ```elisp
 (let* ((project-root
         (when-let* ((proj (project-current nil (file-name-directory
@@ -153,15 +153,15 @@ To add project-only filtering (like `lsp-project-symbols`), bind `project-root` 
 
 ### CRITICAL — condition-case placement for Pattern C
 
-`claude-code-ide-mcp-server-with-session-context` is a macro that splices `,@body` in two places. The `(error ...)` handler of `condition-case` must close at the same nesting level as `condition-case`, NOT inside the macro body.
+`claude-code-ide-mcp-server-with-session-context` is macro. It splice `,@body` in two place. `(error ...)` handler of `condition-case` must close at same nesting level as `condition-case`, NOT inside macro body.
 
-**After writing, always run the Step 4.5 diagnostic:**
+**After write, always run Step 4.5 diagnostic:**
 ```
 Expected: (handler-conditions (claude-code-ide-mcp-server-with-session-context error))
 Bug:      (handler-conditions (claude-code-ide-mcp-server-with-session-context))
 ```
 
-Count closing parens at the end of the macro body: the last `)` of the macro call must appear on the `mapconcat`/format line, not on the `(error ...)` handler line.
+Count close paren at end of macro body: last `)` of macro call must sit on `mapconcat`/format line, not on `(error ...)` handler line.
 
 ```elisp
 ;; Correct — macro call closes on the format line (one extra `)`)
@@ -177,12 +177,14 @@ Count closing parens at the end of the macro body: the last `)` of the macro cal
 
 ## After adding a tool
 
-1. Run Step 4.5 diagnostic if the tool uses Pattern C.
-2. Verify total tool count matches `max_results` in `SKILL.md`:
+1. Run Step 4.5 diagnostic if tool use Pattern C.
+2. Check tool count stay under `max_results` in `emacs-dev/SKILL.md`:
    ```elisp
-   (length (seq-filter (lambda (t) (string-prefix-p "claude-code-ide-mcp-"
-                                                     (plist-get t :name)))
-                       claude-code-ide-mcp-server-tools))
+   (length claude-code-ide-mcp-server-tools)
    ```
-3. Add the tool to the navigation table in `emacs-navigation` skill (`emacs-navigation/SKILL.md`).
-4. Load the file: `elisp-load-file`.
+3. Add tool to navigation table in `emacs-navigation` skill (`emacs-navigation/SKILL.md`).
+4. Add it to `tools:` allowlist of every agent that must reach it —
+   `agents/Explore.md`, `agents/fable-review.md`, `agents/codex-review.md`.
+   List is explicit: tool missing from one is invisible to that agent.
+5. Load file: `elisp-load`, then `claude-code-ide-reload-mcp-tools` to
+   re-register. New `:name` reach CLI only in new session.
