@@ -189,7 +189,7 @@ calling session's repository."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-review-changes
     :name "review-changes"
-    :description "Git read side of a code review: commit metadata, per-file stat, patch, and diff hunks expanded to their enclosing tree-sitter block with changed lines marked. Args: target (\"uncommitted\" default, commit SHA, or range like main..HEAD), mode (summary = metadata + stat only, diff = full patch (default), blocks = hunks as tree-sitter blocks), path (limit to one path), cap (max blocks in blocks mode, default 20, 0=unlimited). Survey with summary, then read blocks. blocks mode reads block source from the working tree, so prefer diff for a revision the tree has moved past."
+    :description "Git read side of a code review: commit metadata, per-file stat, patch, diff hunks grown to their enclosing tree-sitter block with changed lines marked. Args: target (\"uncommitted\" default, commit SHA, or range like main..HEAD), mode (summary = metadata + stat only, diff = full patch (default), blocks = hunks as tree-sitter blocks), path (limit to one path), cap (max blocks in blocks mode, default 20, 0=unlimited). Survey with summary, then read blocks. blocks mode reads block source from the working tree, so prefer diff for a revision the tree has moved past."
     :args `((:name "target"
              :type string
              :description "\"uncommitted\" (default), a commit SHA, or a range like main..HEAD"

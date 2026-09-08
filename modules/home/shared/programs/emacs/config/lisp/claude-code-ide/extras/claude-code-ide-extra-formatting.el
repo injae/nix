@@ -5,11 +5,19 @@
 (require 'claude-code-ide-mcp-server)
 
 (defun claude-code-ide-mcp--apheleia-with-buffer (file-path fn)
-    "Visit FILE-PATH buffer and call FN with it current."
+    "Visit FILE-PATH buffer and call FN with it current.
+The buffer stays open: `apheleia-format-buffer' runs asynchronously and
+writes back into it after this call returns."
     (let ((inhibit-redisplay t)
              (buf (or (claude-code-ide-mcp--refresh-visiting file-path)
                       (find-file-noselect file-path))))
         (with-current-buffer buf
+            (funcall fn))))
+
+(defun claude-code-ide-mcp--apheleia-inspect (file-path fn)
+    "Call FN in a buffer visiting FILE-PATH, closing one this call opened."
+    (let ((inhibit-redisplay t))
+        (claude-code-ide-mcp--with-temp-visit file-path
             (funcall fn))))
 
 (defun claude-code-ide-mcp--apheleia-get-formatters ()
@@ -27,7 +35,7 @@
 (defun claude-code-ide-mcp-formatter-info (file-path)
     "Return formatter configuration for FILE-PATH."
     (condition-case err
-        (claude-code-ide-mcp--apheleia-with-buffer file-path
+        (claude-code-ide-mcp--apheleia-inspect file-path
             (lambda ()
                 (let ((formatters (claude-code-ide-mcp--apheleia-get-formatters)))
                     (if (null formatters)

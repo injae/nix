@@ -243,6 +243,36 @@ A buffer holding unsaved changes is left alone: those edits outrank the file."
         (revert-buffer :ignore-auto :noconfirm)))
     buffer))
 
+(defun claude-code-ide-mcp--flag-set-p (value)
+  "Non-nil when string argument VALUE is a flag the caller actually set.
+A boolean tool argument arrives as a string, and an empty one means the flag
+was left blank -- but every string, `\"\"' included, is non-nil in Elisp."
+  (and value (not (equal value ""))))
+
+(defmacro claude-code-ide-mcp--with-temp-visit (file-path &rest body)
+  "Run BODY in a buffer visiting FILE-PATH, closing a buffer this call opened.
+A buffer that already visited FILE-PATH is left open, and so is one BODY
+leaves modified.  Read-only tools visit one buffer per file they touch, and a
+search across a large project would otherwise leave the whole Emacs session
+out of file descriptors."
+  (declare (indent 1) (debug (form body)))
+  (let ((file (make-symbol "file"))
+        (existing (make-symbol "existing"))
+        (buffer (make-symbol "buffer")))
+    `(let* ((,file ,file-path)
+            ;; Killing the buffer means the next call re-creates it, so a mode
+            ;; whose grammar and font-lock rules disagree logs its mismatch
+            ;; again on every read.  The mismatch is real but not this tool's,
+            ;; and repeating it drowns the warning buffer.
+            (warning-suppress-log-types
+             (cons '(treesit-font-lock-rules-mismatch) warning-suppress-log-types))
+            (,existing (claude-code-ide-mcp--refresh-visiting ,file))
+            (,buffer (or ,existing (find-file-noselect ,file))))
+       (unwind-protect
+           (with-current-buffer ,buffer ,@body)
+         (unless (or ,existing (buffer-modified-p ,buffer))
+           (kill-buffer ,buffer))))))
+
 ;;; Public Functions
 
 (defun claude-code-ide-mcp-server-ensure-server ()

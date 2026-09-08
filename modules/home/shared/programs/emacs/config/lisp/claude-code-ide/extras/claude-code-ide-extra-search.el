@@ -14,19 +14,43 @@
    ((project-current) (project-root (project-current)))
    (t (expand-file-name default-directory))))
 
-(defun claude-code-ide-mcp--grep-block-search (pattern path)
-  "Run rg for PATTERN under PATH.  Return list of (FILE . LINE) match cells."
-  (let* ((root (claude-code-ide-mcp--grep-block-root path))
-         (out (with-output-to-string
-                (with-current-buffer standard-output
-                  (call-process "rg" nil t nil "--vimgrep" "--" pattern root))))
-         (matches '()))
+(defun claude-code-ide-mcp--grep-block-parse (out)
+  "Parse rg --vimgrep output OUT into a list of (FILE . LINE) match cells."
+  (let ((matches '()))
     (dolist (ln (split-string out "\n" t))
       (when (string-match "\\`\\(.*?\\):\\([0-9]+\\):[0-9]+:" ln)
         (push (cons (match-string 1 ln)
                     (string-to-number (match-string 2 ln)))
               matches)))
     (nreverse matches)))
+
+(defun claude-code-ide-mcp--grep-block-search (pattern path &optional flags)
+  "Run rg for PATTERN under PATH.  Return list of (FILE . LINE) match cells.
+FLAGS is a list of extra rg options inserted before the pattern."
+  (let ((root (claude-code-ide-mcp--grep-block-root path)))
+    (claude-code-ide-mcp--grep-block-parse
+     (with-output-to-string
+       (with-current-buffer standard-output
+         (apply #'call-process "rg" nil t nil
+                (append '("--vimgrep") flags (list "--" pattern root))))))))
+
+(defun claude-code-ide-mcp--grep-block-search-files (pattern files &optional flags)
+  "Run rg for PATTERN over FILES.  Return list of (FILE . LINE) match cells."
+  (claude-code-ide-mcp--grep-block-parse
+   (with-output-to-string
+     (with-current-buffer standard-output
+       (apply #'call-process "rg" nil t nil
+              (append '("--vimgrep") flags (list "--" pattern) files))))))
+
+(defun claude-code-ide-mcp--grep-block-files (pattern path &optional flags)
+  "Return the files under PATH that contain PATTERN, via rg --files-with-matches."
+  (let ((root (claude-code-ide-mcp--grep-block-root path)))
+    (split-string
+     (with-output-to-string
+       (with-current-buffer standard-output
+         (apply #'call-process "rg" nil t nil
+                (append '("--files-with-matches") flags (list "--" pattern root)))))
+     "\n" t)))
 
 (defun claude-code-ide-mcp--grep-block-first-line (pos)
   "Return trimmed text of the line containing POS in the current buffer."
@@ -106,8 +130,7 @@ Records sharing a (:b-start :b-end) within a file are merged."
     (maphash
      (lambda (file lines)
        (let ((inhibit-redisplay t))
-         (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file)
-                                  (find-file-noselect file))
+         (claude-code-ide-mcp--with-temp-visit file
            (save-excursion
              (let ((seen (make-hash-table :test 'equal)))
                (dolist (line (sort (copy-sequence lines) #'<))
@@ -194,7 +217,7 @@ enclosing block source and reports the enclosing top-level declaration's range."
                                           (plist-get y :b-start))
                                      (string< fx fy))))))
                  (total (length sorted)))
-            (if headers
+            (if (claude-code-ide-mcp--flag-set-p headers)
                 (concat
                  (format "%d blocks total (%d matches), headers only\n"
                          total (length matches))
@@ -225,7 +248,7 @@ enclosing block source and reports the enclosing top-level declaration's range."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-grep-block
     :name "grep-block"
-    :description "ripgrep search; each hit expanded to its enclosing tree-sitter block source, with the top-level declaration's range. Blocks are tagged with node type; truncated results list omitted blocks as headers. Args: pattern (rg regex), path (root, default project), cap (max blocks, default 20, 0=unlimited), headers (non-empty = headers-only survey, no source, cap ignored)."
+    :description "ripgrep search; each hit grown to its enclosing tree-sitter block source, plus the top-level declaration's range. Blocks tagged with node type; truncated results list omitted blocks as headers. Args: pattern (rg regex), path (root, default project), cap (max blocks, default 20, 0=unlimited), headers (non-empty = headers-only survey, no source, cap ignored)."
     :args '((:name "pattern"
              :type string
              :description "ripgrep regex pattern")
@@ -241,6 +264,73 @@ enclosing block source and reports the enclosing top-level declaration's range."
              :type string
              :description "Non-empty = headers-only survey: block type + signature + range for every hit, no source, cap ignored"
              :optional t)))
+
+(defun claude-code-ide-mcp--project-root-for (file-path)
+  "Return the project root containing FILE-PATH, else its directory."
+  (let ((dir (file-name-directory (expand-file-name file-path))))
+    (or (when-let* ((proj (ignore-errors (project-current nil dir))))
+          (expand-file-name (project-root proj)))
+        dir)))
+
+(defun claude-code-ide-mcp--limit-matches-by-file (matches cap)
+  "Keep MATCHES from at most CAP distinct files, 0 meaning all.
+Returns (KEPT . OMITTED-FILE-COUNT).  The collector visits one buffer per
+file, so an uncapped common identifier would exhaust the file descriptors of
+the whole Emacs session."
+  (let ((files (delete-dups (mapcar #'car matches))))
+    (if (or (<= cap 0) (<= (length files) cap))
+        (cons matches 0)
+      (let ((keep (seq-take files cap)))
+        (cons (seq-filter (lambda (m) (member (car m) keep)) matches)
+              (- (length files) cap))))))
+
+(defun claude-code-ide-mcp--identifier-text-refs (identifier root cap)
+  "Return (RECS . OMITTED-FILES) for whole-word matches of IDENTIFIER under ROOT.
+Matching is textual, so unrelated symbols sharing the name are included.
+At most CAP files are inspected, 0 meaning all.  The file list is collected
+first and capped before any match is read, so a name common enough to hit
+every file in the tree cannot build an unbounded result."
+  (let* ((flags '("-w" "-F"))
+         (files (claude-code-ide-mcp--grep-block-files identifier root flags))
+         (kept (if (and (> cap 0) (> (length files) cap))
+                   (seq-take files cap)
+                 files)))
+    (if (null kept)
+        (cons nil 0)
+      (cons (claude-code-ide-mcp--grep-block-collect
+             (claude-code-ide-mcp--grep-block-search-files identifier kept flags))
+            (- (length files) (length kept))))))
+
+(defun claude-code-ide-mcp--text-refs-omitted-note (omitted-files)
+  "Note that OMITTED-FILES matching files were never inspected, or nil."
+  (when (> omitted-files 0)
+    (format "\n... %d more files matched but were not inspected; narrow the identifier or raise cap"
+            omitted-files)))
+
+(defconst claude-code-ide-mcp--text-refs-default-cap 20
+  "Blocks shown by a textual reference report before it truncates.")
+
+(defun claude-code-ide-mcp--text-refs-render (recs base cap)
+  "Render block records RECS as one line each, with paths relative to BASE.
+At most CAP records are rendered, 0 meaning all; a truncated render ends
+with how many blocks were omitted."
+  (let* ((total (length recs))
+         (kept (if (and (> cap 0) (> total cap)) (seq-take recs cap) recs)))
+    (concat
+     (mapconcat
+      (lambda (rec)
+        (format "%s  %s  [%d-%d]  matched: %s"
+                (file-relative-name (plist-get rec :file) base)
+                (or (plist-get rec :a-sig) "(no enclosing declaration)")
+                (plist-get rec :b-start)
+                (plist-get rec :b-end)
+                (mapconcat #'number-to-string
+                           (sort (copy-sequence (plist-get rec :matched)) #'<)
+                           ", ")))
+      kept "\n")
+     (when (< (length kept) total)
+       (format "\n... %d more blocks omitted; narrow the identifier or raise cap"
+               (- total (length kept)))))))
 
 (provide 'claude-code-ide-extra-search)
 ;;; claude-code-ide-extra-search.el ends here

@@ -13,6 +13,7 @@
     "claude-code-ide-extra-magit"
     "claude-code-ide-extra-navigation"
     "claude-code-ide-extra-search"
+    "claude-code-ide-extra-graph"
     "claude-code-ide-extra-sync"
     "claude-code-ide-extra-review"
     "claude-code-ide-extra-tree")

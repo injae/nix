@@ -85,48 +85,60 @@ Otherwise return all user-visible buffers ordered by recency."
           (push (cons line (format "%d: %s%s  %s" line prefix name sig)) pairs)))))
     pairs))
 
+(defun claude-code-ide-mcp--file-outline-one (file-path)
+  "Return the outline report for the single file FILE-PATH."
+  (let ((inhibit-redisplay t))
+    (claude-code-ide-mcp--with-temp-visit file-path
+      (save-excursion
+        ;; imenu caches its index; with `imenu-auto-rescan' nil it never
+        ;; rebuilds, so an already-indexed buffer returns stale marker
+        ;; positions.  Reset first to force a fresh build matching current text.
+        (setq imenu--index-alist nil)
+        (let* ((mode (symbol-name major-mode))
+               (has-treesit (and (fboundp 'treesit-parser-list)
+                                 (not (null (treesit-parser-list)))))
+               (index (condition-case _ (imenu--make-index-alist t) (error nil)))
+               (pairs (when index (claude-code-ide-mcp--imenu-collect index "")))
+               (symbols (mapcar #'cdr (sort pairs (lambda (a b) (< (car a) (car b)))))))
+          (concat
+           (format "file: %s\nmajor-mode: %s\ntreesit: %s"
+                   (expand-file-name file-path) mode
+                   (cond (has-treesit "available")
+                         (symbols "unavailable (imenu fallback)")
+                         (t "unavailable")))
+           (if symbols
+               (concat "\n\nsymbols:\n" (string-join symbols "\n"))
+             "")))))))
+
 (defun claude-code-ide-mcp-file-outline (file-path)
   "Return major-mode, treesit availability, and symbol list for FILE-PATH.
-Opens the file in the background if not already open."
+FILE-PATH may be a comma-separated list of files, so a path containing a comma
+cannot be passed here.  One unreadable file reports its own error and the rest
+are still returned."
   (condition-case err
-      (let ((inhibit-redisplay t))
-        (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
-                                 (find-file-noselect file-path))
-          (save-excursion
-            ;; imenu caches its index; with `imenu-auto-rescan' nil it never
-            ;; rebuilds, so an already-indexed buffer returns stale marker
-            ;; positions.  Reset first to force a fresh build matching current text.
-            (setq imenu--index-alist nil)
-            (let* ((mode (symbol-name major-mode))
-                   (has-treesit (and (fboundp 'treesit-parser-list)
-                                     (not (null (treesit-parser-list)))))
-                   (index (condition-case _ (imenu--make-index-alist t) (error nil)))
-                   (pairs (when index (claude-code-ide-mcp--imenu-collect index "")))
-                   (symbols (mapcar #'cdr (sort pairs (lambda (a b) (< (car a) (car b)))))))
-              (concat
-               (format "buffer: %s\nmajor-mode: %s\ntreesit: %s"
-                       (buffer-name) mode
-                       (if has-treesit "available" "unavailable"))
-               (if symbols
-                   (concat "\n\nsymbols:\n" (string-join symbols "\n"))
-                 ""))))))
+      (mapconcat
+       (lambda (file)
+         (condition-case one
+             (claude-code-ide-mcp--file-outline-one file)
+           (error (format "file: %s\nError: %s" file (error-message-string one)))))
+       (split-string file-path "," t "[ \t\n]+")
+       "\n\n")
     (error (format "Error: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-file-outline
     :name "file-outline"
-    :description "major-mode, treesit, and all symbols with line nums and signatures. Opens in background."
+    :description "major-mode, treesit, and all symbols with line numbers and signatures. Reads in the background, then closes again any buffer the call itself opened. Takes several files as one comma-separated list, so a path containing a comma cannot be passed; one unreadable file reports its own error and the rest still come back. \"treesit: unavailable\" plus a symbol list means imenu supplied the symbols -- that outline is still usable."
     :args '((:name "file_path"
              :type string
-             :description "Absolute path to file")))
+             :description "Absolute path to file, or several comma-separated paths")))
 
 (defun claude-code-ide-mcp-symbol-source (file-path line)
   "Return source code of the declaration at LINE in FILE-PATH.
 Uses tree-sitter to find exact declaration bounds when available."
   (condition-case err
       (let ((inhibit-redisplay t))
-        (with-current-buffer (or (claude-code-ide-mcp--refresh-visiting file-path)
-                                 (find-file-noselect file-path))
+        (claude-code-ide-mcp--with-temp-visit file-path
           (save-excursion
             (goto-char (point-min))
             (forward-line (1- line))

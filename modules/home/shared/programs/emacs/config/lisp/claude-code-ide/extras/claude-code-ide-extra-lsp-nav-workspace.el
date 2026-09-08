@@ -5,6 +5,7 @@
 (require 'claude-code-ide-mcp-server)
 (require 'claude-code-ide-extra-lsp-nav-position)
 (require 'claude-code-ide-extra-buffer-info)
+(require 'claude-code-ide-extra-search)
 
 (defun claude-code-ide-mcp--eglot-buffer-for-project (file-path)
   "Return a buffer with an active eglot server for FILE-PATH's project.
@@ -172,35 +173,64 @@ Prefers the symbol in the same directory as FILE-PATH, then any project-local ma
                     :line (1+ (plist-get start :line))
                     :col  (plist-get start :character)))))))))
 
+(defun claude-code-ide-mcp--semantic-refs (identifier def)
+  "Return formatted textDocument/references for IDENTIFIER at DEF, or nil.
+DEF is a location plist from `claude-code-ide-mcp--resolve-symbol-location'."
+  (claude-code-ide-mcp--at-position
+   (plist-get def :file)
+   (plist-get def :line)
+   (plist-get def :col)
+   (lambda ()
+     (let* ((server (eglot-current-server))
+            (result (eglot--request server :textDocument/references
+                                    (append (claude-code-ide-mcp--textdoc-position-params)
+                                            '(:context (:includeDeclaration :json-false)))))
+            (locations (cond
+                        ((null result) nil)
+                        ((vectorp result) (append result nil))
+                        (t (list result)))))
+       (when locations
+         (claude-code-ide-mcp--format-locations
+          (format "References to '%s'" identifier)
+          locations))))))
+
+(defun claude-code-ide-mcp--text-refs-report (identifier file-path)
+  "Textual whole-word reference report for IDENTIFIER in FILE-PATH's project."
+  (let* ((root (claude-code-ide-mcp--project-root-for file-path))
+         (cap claude-code-ide-mcp--text-refs-default-cap)
+         (found (claude-code-ide-mcp--identifier-text-refs identifier root cap))
+         (recs (car found)))
+    (if (null recs)
+        (format "No textual matches for '%s' under %s." identifier root)
+      (concat
+       (format "References to '%s' [textual fallback] (%d blocks):\n\n%s"
+               identifier (length recs)
+               (claude-code-ide-mcp--text-refs-render recs root cap))
+       (claude-code-ide-mcp--text-refs-omitted-note (cdr found))))))
+
 (defun claude-code-ide-mcp-lsp-find-references-by-name (identifier file-path)
   "Find all references to IDENTIFIER by name, without needing its file position.
-Resolves definition via workspace/symbol then calls textDocument/references."
+Resolves definition via workspace/symbol then calls textDocument/references.
+Falls back to a whole-word textual search whenever that cannot answer: no
+server, no definition, a rejected request, or an empty reference list."
   (condition-case err
-      (let ((def (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
-        (if (null def)
-            (format "Symbol '%s' not found in project. Try lsp-find-references with an explicit position." identifier)
-          (claude-code-ide-mcp--at-position
-           (plist-get def :file)
-           (plist-get def :line)
-           (plist-get def :col)
-           (lambda ()
-             (let* ((server (eglot-current-server))
-                    (result (eglot--request server :textDocument/references
-                                            (append (claude-code-ide-mcp--textdoc-position-params)
-                                                    '(:context (:includeDeclaration :json-false)))))
-                    (locations (cond
-                                ((null result) nil)
-                                ((vectorp result) (append result nil))
-                                (t (list result)))))
-               (claude-code-ide-mcp--format-locations
-                (format "References to '%s'" identifier)
-                locations))))))
+      (let* ((def (ignore-errors
+                    (claude-code-ide-mcp--resolve-symbol-location identifier file-path)))
+             (semantic (and def
+                            (ignore-errors
+                              (claude-code-ide-mcp--semantic-refs identifier def)))))
+        (or semantic
+            (concat (if def
+                        (format "No references from the server for '%s'.\n" identifier)
+                      (format "No definition resolved for '%s' via workspace/symbol.\n"
+                              identifier))
+                    (claude-code-ide-mcp--text-refs-report identifier file-path))))
     (error (format "Error finding references: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references-by-name
     :name "lsp-refs-by-name"
-    :description "All refs to symbol by name, no position needed. For fns/types; use lsp_refs for struct fields. Falls back with message."
+    :description "All refs to symbol by name, no position needed. For fns/types; use lsp-refs for struct fields. When server resolves nothing or returns no refs, falls back to whole-word text search marked [textual fallback]: one line per enclosing block with its matched lines."
     :args '((:name "identifier"
              :type string
              :description "Exact symbol name")
