@@ -113,7 +113,7 @@ pass."
          ((string-empty-p (string-trim out))
           (concat (format "No match for pattern under %s.\n\n" path)
                   (claude-code-ide-mcp--sg-explain pattern lang)))
-         (dry-run out)
+         (dry-run (concat out "\nDry run — nothing written.\n"))
          (t
           (let ((dirty (claude-code-ide-mcp--sg-dirty-files path)))
             (if dirty
@@ -136,7 +136,7 @@ pass."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-ast-rewrite
     :name "ast-rewrite"
-    :description "Structural find-and-replace over the syntax tree via the ast-grep CLI, not over buffer text. Prefer it over Edit whenever the same shape occurs more than once, indentation is uncertain, or lookalike text sits nearby -- the three ways a textual edit lands in the wrong place. Write pattern and rewrite as code fragments: $NAME binds a whole node and expands again in the rewrite (foo($A, $B) -> bar($B, $A)), $$$NAME binds a node list. Whitespace and line breaks are ignored, node kinds must agree, and text inside comments or strings never matches. This tool only rewrites -- search with grep-block. Args: pattern, rewrite, path (file or directory), lang (optional language name; needed to explain a failing pattern), globs (optional gitignore-style path filter, prefix ! to exclude), strictness (optional: cst | smart | ast | relaxed | signature | template), dry_run (optional; show the diff without writing). A dry pass always runs first: a pattern that matches nothing comes back with its own parse tree instead of silence, and nothing is written while a target file has unsaved changes in Emacs. Rewritten files are reverted in Emacs automatically."
+    :description "Structural find-and-replace over the syntax tree via the ast-grep CLI, not over buffer text. Prefer it over Edit whenever the same shape occurs more than once, indentation is uncertain, or lookalike text sits nearby -- the three ways a textual edit lands in the wrong place. Write pattern and rewrite as code fragments: $NAME binds a whole node and expands again in the rewrite (foo($A, $B) -> bar($B, $A)), $$$NAME binds a node list. Whitespace and line breaks are ignored, node kinds must agree, and text inside comments or strings never matches. This tool only rewrites -- search with grep-block. Args: pattern, rewrite, path (file or directory), lang (language name; needed to explain a failing pattern), globs (gitignore-style path filter, prefix ! to exclude), strictness (cst | smart | ast | relaxed | signature | template), dry_run (show the diff without writing). A dry pass always runs first: a pattern that matches nothing comes back with its own parse tree instead of silence, and nothing is written while a target file has unsaved changes in Emacs. Rewritten files are reverted in Emacs automatically."
     :args '((:name "pattern"
              :type string
              :description "Code fragment to match; $NAME binds one node, $$$NAME binds a node list")
@@ -148,16 +148,20 @@ pass."
              :description "File or directory to rewrite")
             (:name "lang"
              :type string
-             :description "Language of the pattern (optional; required to explain a pattern that matched nothing)")
+             :description "Language of the pattern; required to explain a pattern that matched nothing"
+             :optional t)
             (:name "globs"
              :type string
-             :description "gitignore-style path filter, ! to exclude (optional)")
+             :description "gitignore-style path filter, ! to exclude"
+             :optional t)
             (:name "strictness"
              :type string
-             :description "cst | smart | ast | relaxed | signature | template (optional)")
+             :description "cst | smart | ast | relaxed | signature | template"
+             :optional t)
             (:name "dry_run"
              :type boolean
-             :description "Show the diff without writing (optional)")))
+             :description "Show the diff without writing"
+             :optional t)))
 
 (provide 'claude-code-ide-extra-edit)
 ;;; claude-code-ide-extra-edit.el ends here

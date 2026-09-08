@@ -158,22 +158,27 @@ matching that regexp.  CAP limits how many files get symbols (default 40;
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-structure-tree
     :name "structure-tree"
-    :description "Depth-limited structure tree of a repository. Directories past the depth limit are summarized with their file/dir counts, never silently dropped. Honors .gitignore. Args: path (optional root, default project), depth (optional max directory levels, default 3, 0=unlimited), symbols (optional; add each file's top-level declarations with line numbers), pattern (optional regexp on the relative path), cap (optional max files expanded with symbols, default 40, 0=unlimited). Survey with a small depth, then re-run deeper on one path."
+    :description "Depth-limited structure tree of a repository. Directories past the depth limit are summarized with their file/dir counts, never silently dropped. Honors .gitignore. Args: path (root, default project), depth (max directory levels, default 3, 0=unlimited), symbols (add each file's top-level declarations with line numbers), pattern (regexp on the relative path), cap (max files expanded with symbols, default 40, 0=unlimited). Survey with a small depth, then re-run deeper on one path."
     :args '((:name "path"
              :type string
-             :description "Tree root dir (optional; default project root)")
+             :description "Tree root dir; default project root"
+             :optional t)
             (:name "depth"
              :type number
-             :description "Max directory levels to enter (optional; default 3, 0=unlimited)")
+             :description "Max directory levels to enter; default 3, 0=unlimited"
+             :optional t)
             (:name "symbols"
              :type boolean
-             :description "Add each file's top-level declarations with line numbers (optional)")
+             :description "Add each file's top-level declarations with line numbers"
+             :optional t)
             (:name "pattern"
              :type string
-             :description "Keep only relative paths matching this regexp (optional)")
+             :description "Keep only relative paths matching this regexp"
+             :optional t)
             (:name "cap"
              :type number
-             :description "Max files expanded with symbols (optional; default 40, 0=unlimited)")))
+             :description "Max files expanded with symbols; default 40, 0=unlimited"
+             :optional t)))
 
 (provide 'claude-code-ide-extra-tree)
 ;;; claude-code-ide-extra-tree.el ends here

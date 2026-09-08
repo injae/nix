@@ -74,13 +74,14 @@ and reported: those edits outrank the file."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-file-changed
     :name "file-changed"
-    :description "Tell Emacs and its language servers that a file changed on disk, so a later lsp-def/lsp-refs/getDiagnostics call sees the edit instead of stale text. A buffer visiting the file is reverted (eglot then sends textDocument/didChange); a file no buffer visits is announced to every language server owning it via workspace/didChangeWatchedFiles. A buffer with unsaved changes is left alone and reported. Call it after editing a file through anything other than Emacs -- eglot suppresses its own watch notification while a buffer visits the file, and drops watches entirely once eglot-max-file-watches is reached, so neither route is guaranteed. Args: file (absolute path), change (optional: created | changed (default) | deleted)."
+    :description "Tell Emacs and its language servers that a file changed on disk, so a later lsp-def/lsp-refs/getDiagnostics call sees the edit instead of stale text. A buffer visiting the file is reverted (eglot then sends textDocument/didChange); a file no buffer visits is announced to every language server owning it via workspace/didChangeWatchedFiles. A buffer with unsaved changes is left alone and reported. Call it after editing a file through anything other than Emacs -- eglot suppresses its own watch notification while a buffer visits the file, and drops watches entirely once eglot-max-file-watches is reached, so neither route is guaranteed. Args: file (absolute path), change (created | changed (default) | deleted)."
     :args '((:name "file"
              :type string
              :description "Absolute path of the file that changed")
             (:name "change"
              :type string
-             :description "created | changed (default) | deleted")))
+             :description "created | changed (default) | deleted"
+             :optional t)))
 
 (provide 'claude-code-ide-extra-sync)
 ;;; claude-code-ide-extra-sync.el ends here

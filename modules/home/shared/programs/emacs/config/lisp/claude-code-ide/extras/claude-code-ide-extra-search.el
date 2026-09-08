@@ -225,19 +225,22 @@ enclosing block source and reports the enclosing top-level declaration's range."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-grep-block
     :name "grep-block"
-    :description "ripgrep search; each hit expanded to its enclosing tree-sitter block source, with the top-level declaration's range. Blocks are tagged with node type; truncated results list omitted blocks as headers. Args: pattern (rg regex), path (optional root, default project), cap (optional max blocks, default 20, 0=unlimited), headers (optional; non-empty = headers-only survey, no source, cap ignored)."
+    :description "ripgrep search; each hit expanded to its enclosing tree-sitter block source, with the top-level declaration's range. Blocks are tagged with node type; truncated results list omitted blocks as headers. Args: pattern (rg regex), path (root, default project), cap (max blocks, default 20, 0=unlimited), headers (non-empty = headers-only survey, no source, cap ignored)."
     :args '((:name "pattern"
              :type string
              :description "ripgrep regex pattern")
             (:name "path"
              :type string
-             :description "Search root dir or file (optional; default project root)")
+             :description "Search root dir or file; default project root"
+             :optional t)
             (:name "cap"
              :type number
-             :description "Max distinct blocks (optional; default 20, 0=unlimited)")
+             :description "Max distinct blocks; default 20, 0=unlimited"
+             :optional t)
             (:name "headers"
              :type string
-             :description "Non-empty = headers-only survey: block type + signature + range for every hit, no source, cap ignored")))
+             :description "Non-empty = headers-only survey: block type + signature + range for every hit, no source, cap ignored"
+             :optional t)))
 
 (provide 'claude-code-ide-extra-search)
 ;;; claude-code-ide-extra-search.el ends here

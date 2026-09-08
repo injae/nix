@@ -34,7 +34,7 @@ Otherwise return all user-visible buffers ordered by recency."
      :args '((:name "buffer_name"
               :type string
               :optional t
-              :description "Buffer name (optional). Omit for all.")))
+              :description "Buffer name. Omit for all.")))
 
 (defun claude-code-ide-mcp-last-user-buffer ()
   "Return the most recently used buffer that is not internal or a claude-code buffer."

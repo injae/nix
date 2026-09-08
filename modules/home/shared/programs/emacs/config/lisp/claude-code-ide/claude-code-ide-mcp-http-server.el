@@ -136,7 +136,10 @@ with the appropriate session context."
              (body (ws-body request))
              ;; Extract session ID from URL path
              (url-session-id (claude-code-ide-mcp-http-server--extract-session-id-from-path headers))
-             (json-object (json-parse-string body :object-type 'alist))
+             ;; :false and :null are both non-nil in Elisp, so a JSON false
+             ;; argument would reach a tool as true without these.
+             (json-object (json-parse-string body :object-type 'alist
+                                             :false-object nil :null-object nil))
              (method (alist-get 'method json-object))
              (params (alist-get 'params json-object))
              (id (alist-get 'id json-object)))
