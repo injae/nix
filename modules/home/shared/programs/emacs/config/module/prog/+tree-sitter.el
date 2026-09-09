@@ -6,13 +6,18 @@
     :if (treesit-available-p)
     :preface
     ;; Function to install missing grammars
-    (defun my/install-treesit-grammars ()
-        "Install missing Tree-sitter grammars."
-        (interactive)
-        (dolist (grammar treesit-language-source-alist)
+    (defun my/install-treesit-grammars (&optional force)
+        "Install missing Tree-sitter grammars.
+With prefix argument FORCE, rebuild grammars that are already installed.
+Grammars go to the first writable `treesit-extra-load-path' entry, which is
+also where `treesit-auto-install-grammar' puts them; installing elsewhere
+would shadow that directory."
+        (interactive "P")
+        (let ((out-dir (seq-find #'file-writable-p treesit-extra-load-path)))
+            (dolist (grammar treesit-language-source-alist)
             (let ((lang (car grammar)))
-            (unless (treesit-language-available-p lang)
-                (treesit-install-language-grammar lang)))))
+            (when (or force (not (treesit-language-available-p lang)))
+                (treesit-install-language-grammar lang out-dir))))))
     :config
     (setq treesit-language-source-alist
         '((bash             "https://github.com/tree-sitter/tree-sitter-bash")
@@ -33,7 +38,7 @@
           (vue              "https://github.com/ikatyang/tree-sitter-vue")
           (yaml             "https://github.com/ikatyang/tree-sitter-yaml")))
     (setq treesit-font-lock-level 4)
-    (setq treesit-auto-install-grammar t)
+    (setq treesit-auto-install-grammar 'always)
     (setq treesit-enabled-modes t)
 )
 
