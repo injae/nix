@@ -84,6 +84,23 @@ report failure as-is, do not retry more than once.
 - **Check command** if given (e.g. `just check`). Else reviewer rediscovers it and files
   failure as "instruction defect".
 - **Self-report path** if given — "judge whether rebuttals in this report are correct".
+- **Paste, do not link, anything under `.claude/tmp/`.** That directory is gitignored, so a
+  reviewer reading the repo through `git show` cannot open it — a self-report or an earlier
+  round's findings referenced only by path is invisible to the run (observed 2026-09-09:
+  reviewer had to fall back on the summary that happened to be in the prompt). Inline the
+  parts that matter.
+- **Say which round this is and what the previous round asked for.** A later round re-reviews
+  premises: a commit can turn an earlier "harmless" call into a defect.
+- **Structure doc — pass it whenever the repo has one** (per-axis map of symbols, seams,
+  invariants; `docs/map/<axis>.md` here). Don't wait to be asked. Three jobs:
+  1. Orient from it instead of re-deriving structure.
+  2. **Judge whether the diff left it stale** — a new type, seam or invariant the map lacks is a
+     finding, same as a missing test. The repo's checker proves listed names exist; it cannot see
+     what the diff forgot to list.
+  3. **Close every `?` row** — the explorer marks rows it could not confirm; only the reviewer
+     closes them. Confirmed, wrong, or still unreachable. A `?` surviving a round unexamined is
+     itself a finding. Checker and explorer both miss a row's *meaning*, the one thing that makes
+     the map worth reading.
 
 ## Do not narrow the field of view
 
