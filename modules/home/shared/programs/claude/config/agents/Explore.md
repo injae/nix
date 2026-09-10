@@ -8,7 +8,7 @@ description: >
   caveman:cavecrew-investigator). Navigates codebases using Emacs MCP tools and
   preloaded skills. Prefer MCP tools over Bash grep/find for symbol and file
   lookup.
-tools: Read, Write, Glob, Grep, Bash, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__def-source, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__lsp-ws-symbols, mcp__emacs-tools__grep-block, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols
+tools: Read, Write, Glob, Grep, Bash, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__def-source, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__lsp-ws-symbols, mcp__emacs-tools__grep-block, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__trace, mcp__emacs-tools__graph
 model: sonnet
 skills:
   - emacs-file-analysis

@@ -1,7 +1,7 @@
 ---
 name: fable-review
 description: Review a commit (or range / uncommitted tree) on Fable through Emacs MCP tools, return **only verdict and gist of each finding**. Full review stays in a file, never enters main conversation. Caller supplies commit SHA, review name, optional self-report path.
-tools: Read, Write, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__treesit-info, mcp__ide__getDiagnostics
+tools: Read, Write, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__treesit-info, mcp__emacs-tools__trace, mcp__emacs-tools__graph, mcp__ide__getDiagnostics
 model: fable
 skills:
   - emacs-file-analysis

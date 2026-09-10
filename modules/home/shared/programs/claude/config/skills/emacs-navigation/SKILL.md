@@ -22,6 +22,8 @@ Multi-file or open-ended explore (find X, what call Y, map dir): use `Explore` a
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
 | Content search + enclosing block | `grep-block(pattern, path, cap, headers)` | Bash grep |
+| Clone index — blocks sharing normalized content, recorded as graph nodes | `trace(pattern, path, cap, ask, files)` | `grep-block` then read by hand |
+| What registers / orders / requires a symbol, read back with no LSP round trip | `graph(from, kinds, depth, direction, path)` | re-run `trace` |
 | What changed (commit / range / tree) | `review-changes(target, mode, path, cap)` | Bash git diff |
 | Repository structure, depth-limited | `structure-tree(path, depth, symbols, pattern, cap)` | Bash ls/find |
 | Structural rewrite | `ast-rewrite(pattern, rewrite, path)` | Edit |
