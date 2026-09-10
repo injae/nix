@@ -19,7 +19,10 @@
 )
 
 (use-package beacon
-    :hook (emacs-startup . beacon-mode))
+    :hook (emacs-startup . beacon-mode)
+    ;; A terminal rewrites its buffer and scrolls on every line of output, and
+    ;; beacon blinks on both by default.
+    :config (add-to-list 'beacon-dont-blink-major-modes 'ghostel-mode))
 
 (use-package diff-hl
     :hook
