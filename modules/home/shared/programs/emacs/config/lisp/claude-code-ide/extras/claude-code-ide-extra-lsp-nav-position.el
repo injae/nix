@@ -28,19 +28,23 @@ Returns the buffer."
         (find-file-noselect file-path))))
 
 (defun claude-code-ide-mcp--ensure-eglot (file-path)
-  "Ensure an eglot server is running for the current buffer.
+  "Return an eglot server for the current buffer, or nil when there is none.
 Starts one via eglot--connect directly if needed — eglot-ensure relies on
 post-command-hook and never fires in non-interactive (MCP) contexts.
-FILE-PATH is used only for error messages."
-  (unless (eglot-current-server)
-    (condition-case oops
-        (apply #'eglot--connect (eglot--guess-contact))
-      (error (error "Cannot start LSP for %s: %s" file-path (error-message-string oops))))
-    (cl-loop repeat 100
-             until (eglot-current-server)
-             do (sleep-for 0.1))
-    (unless (eglot-current-server)
-      (error "LSP server did not start for %s" file-path))))
+A major mode with no server configured returns nil rather than signalling, so
+that xref falls back to its own backend; elisp resolves fine without LSP.
+FILE-PATH is used only for messages."
+  (or (eglot-current-server)
+      (condition-case oops
+          (progn
+            (apply #'eglot--connect (eglot--guess-contact))
+            (cl-loop repeat 100
+                     until (eglot-current-server)
+                     do (sleep-for 0.1))
+            (or (eglot-current-server)
+                (progn (message "LSP server did not start for %s" file-path) nil)))
+        (error (message "No LSP for %s: %s" file-path (error-message-string oops))
+               nil))))
 
 (defun claude-code-ide-mcp--with-identifier (file-path identifier fn)
   "In FILE-PATH, search for IDENTIFIER, position cursor there, call FN."
