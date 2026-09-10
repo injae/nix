@@ -250,28 +250,40 @@ was left blank -- but every string, `\"\"' included, is non-nil in Elisp."
   (and value (not (equal value ""))))
 
 (defmacro claude-code-ide-mcp--with-temp-visit (file-path &rest body)
-  "Run BODY in a buffer visiting FILE-PATH, closing a buffer this call opened.
-A buffer that already visited FILE-PATH is left open, and so is one BODY
-leaves modified.  Read-only tools visit one buffer per file they touch, and a
-search across a large project would otherwise leave the whole Emacs session
-out of file descriptors."
+  "Run BODY in a buffer holding FILE-PATH, reusing one that already visits it.
+A file no buffer visits is read into a temporary buffer that runs the major
+mode but no mode hooks, so BODY still gets imenu and tree-sitter while copilot,
+eglot, flyspell and every globalized minor mode stay out of it.  Profiling one
+`grep-block' put 39% of the handler in `run-mode-hooks', paid once per matched
+file, and read-only tools touch many files per call.
+
+`delay-mode-hooks' cannot buy this: `normal-mode' rebinds it and flushes the
+delayed hooks itself, so the hooks run anyway.  Calling `set-auto-mode'
+directly is what keeps them deferred and unflushed."
   (declare (indent 1) (debug (form body)))
   (let ((file (make-symbol "file"))
-        (existing (make-symbol "existing"))
-        (buffer (make-symbol "buffer")))
+        (existing (make-symbol "existing")))
     `(let* ((,file ,file-path)
-            ;; Killing the buffer means the next call re-creates it, so a mode
-            ;; whose grammar and font-lock rules disagree logs its mismatch
-            ;; again on every read.  The mismatch is real but not this tool's,
-            ;; and repeating it drowns the warning buffer.
+            ;; A mode whose grammar and font-lock rules disagree logs its
+            ;; mismatch on every read.  The mismatch is real but not this
+            ;; tool's, and repeating it drowns the warning buffer.
             (warning-suppress-log-types
              (cons '(treesit-font-lock-rules-mismatch) warning-suppress-log-types))
-            (,existing (claude-code-ide-mcp--refresh-visiting ,file))
-            (,buffer (or ,existing (find-file-noselect ,file))))
-       (unwind-protect
-           (with-current-buffer ,buffer ,@body)
-         (unless (or ,existing (buffer-modified-p ,buffer))
-           (kill-buffer ,buffer))))))
+            (,existing (claude-code-ide-mcp--refresh-visiting ,file)))
+       (if ,existing
+           (with-current-buffer ,existing ,@body)
+         (with-temp-buffer
+           (insert-file-contents ,file)
+           ;; Set after the insert: a buffer that is already visiting a file
+           ;; would take a lock on it the moment the text changed.
+           (setq buffer-file-name ,file)
+           (unwind-protect
+               (progn (delay-mode-hooks (set-auto-mode))
+                      ,@body)
+             ;; `with-temp-buffer' kills this buffer, and killing a modified
+             ;; file-visiting one asks the user about saving it.
+             (setq buffer-file-name nil)
+             (set-buffer-modified-p nil)))))))
 
 ;;; Public Functions
 
