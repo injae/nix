@@ -61,7 +61,11 @@ FILE-PATH is used only for messages."
             (format "Identifier '%s' not found in %s" identifier file-path)))))))
 
 (defun claude-code-ide-mcp--at-position (file-path line column fn)
-  "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN."
+  "In FILE-PATH, move to LINE (1-based) COLUMN (0-based), call FN.
+COLUMN counts characters from the start of the line, not display columns: it
+is the count the language server speaks, and `move-to-column' -- which reads
+one tab as the several columns it occupies -- lands elsewhere on any
+tab-indented line."
   (let ((inhibit-redisplay t))
     (claude-code-ide-mcp-server-with-session-context nil
       (with-current-buffer (claude-code-ide-mcp--open-file-no-hooks file-path)
@@ -71,13 +75,22 @@ FILE-PATH is used only for messages."
           (when (and line (> line 0))
             (forward-line (1- line)))
           (when (and column (>= column 0))
-            (move-to-column column))
+            (goto-char (min (+ (line-beginning-position) column)
+                            (line-end-position))))
           (funcall fn))))))
 
 (defun claude-code-ide-mcp--textdoc-position-params ()
-  "Return LSP TextDocumentPositionParams for the current buffer and point."
-  `(:textDocument (:uri ,(eglot--path-to-uri (buffer-file-name)))
-    :position (:line ,(1- (line-number-at-pos)) :character ,(current-column))))
+  "Return LSP TextDocumentPositionParams for the current buffer and point.
+The position comes from eglot's own conversion.  The protocol counts
+characters, in UTF-16 code units at that, while `current-column' -- which
+this used to send -- counts display columns and reads one tab as four.  Emacs
+stayed consistent with itself, since `move-to-column' returns to the place
+`current-column' named, so the error showed only on the wire: every
+tab-indented line asked the server about a position several characters to the
+right of the symbol meant, and nearly every line of Go or Makefile is
+tab-indented."
+  `(:textDocument (:uri ,(eglot-path-to-uri (buffer-file-name)))
+    :position ,(eglot--pos-to-lsp-position (point))))
 
 (defun claude-code-ide-mcp--format-locations (label locations)
   "Format LSP Location[] LOCATIONS into a readable string under LABEL."
@@ -136,7 +149,7 @@ FILE-PATH is used only for messages."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-implementation
     :name "lsp-impl"
-    :description "Interface method impls at position (textDocument/implementation). Precise; use over lsp_proj_symbols. Line 1-based, col 0-based."
+    :description "Interface method impls at position (textDocument/implementation). Precise; use over lsp_proj_symbols. Line 1-based, col 0-based and counted in characters, so a leading tab is one column."
     :args '((:name "file_path"
              :type string
              :description "File containing symbol")
@@ -145,7 +158,7 @@ FILE-PATH is used only for messages."
              :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column (0-based)")))
+             :description "Column (0-based), counted in characters from the start of the line -- not a display column, so a leading tab counts as one")))
 
 (defun claude-code-ide-mcp-lsp-find-typeDefinition (file-path line column)
   "Find type definition at FILE-PATH LINE:COLUMN via eglot textDocument/typeDefinition."
@@ -166,7 +179,7 @@ FILE-PATH is used only for messages."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-typeDefinition
     :name "lsp-type-def"
-    :description "Type def at position (textDocument/typeDefinition). For vars/params. Falls back to lsp_def if gopls empty. Line 1-based, col 0-based."
+    :description "Type def at position (textDocument/typeDefinition). For vars/params. Falls back to lsp_def if gopls empty. Line 1-based, col 0-based and counted in characters, so a leading tab is one column."
     :args '((:name "file_path"
              :type string
              :description "File containing symbol")
@@ -175,7 +188,7 @@ FILE-PATH is used only for messages."
              :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column (0-based)")))
+             :description "Column (0-based), counted in characters from the start of the line -- not a display column, so a leading tab counts as one")))
 
 (defun claude-code-ide-mcp-lsp-find-references (file-path line column)
   "Find all references to the symbol at FILE-PATH LINE:COLUMN via eglot."
@@ -197,7 +210,7 @@ FILE-PATH is used only for messages."
 (claude-code-ide-make-tool
     :function #'claude-code-ide-mcp-lsp-find-references
     :name "lsp-refs"
-    :description "All refs at position (textDocument/references). Line 1-based, col 0-based. Use lsp_refs_by_name when only name known."
+    :description "All refs at position (textDocument/references). Line 1-based, col 0-based and counted in characters, so a leading tab is one column. Use lsp_refs_by_name when only name known."
     :args '((:name "file_path"
              :type string
              :description "File containing symbol")
@@ -206,7 +219,7 @@ FILE-PATH is used only for messages."
              :description "Line (1-based)")
             (:name "column"
              :type number
-             :description "Column (0-based)")))
+             :description "Column (0-based), counted in characters from the start of the line -- not a display column, so a leading tab counts as one")))
 
 (provide 'claude-code-ide-extra-lsp-nav-position)
 ;;; claude-code-ide-extra-lsp-nav-position.el ends here
