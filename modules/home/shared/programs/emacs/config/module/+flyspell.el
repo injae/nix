@@ -48,6 +48,10 @@
     (setenv "ENCHANT_CONFIG_DIR" (f-join user-mutable-emacs-directory "config/enchant"))
     :hook (emacs-startup . global-jinx-mode)
     :custom (jinx-languages "en_US ko_KR")
+            ;; Identifiers turn up in yaml, nix and every other config language,
+            ;; not just in the programming modes jinx ships in this list, and
+            ;; flyspell took aspell's --camel-case everywhere too.
+            (jinx-camel-modes t)
     :general (leader "sf" '(jinx-correct :wk "Spell Correct")
                      "sk" '((lambda () (interactive) (jinx-languages "ko_KR")) :wk "Spell Dictionary Korean")
                      "se" '((lambda () (interactive) (jinx-languages "en_US")) :wk "Spell Dictionary English"))
