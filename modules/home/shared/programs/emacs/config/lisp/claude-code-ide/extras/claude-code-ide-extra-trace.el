@@ -813,6 +813,145 @@ ENTRY is CALL's rules entry, from `claude-code-ide-mcp--trace-register-entry'."
   (and node treesit-defun-type-regexp
        (string-match-p treesit-defun-type-regexp (treesit-node-type node))))
 
+(defconst claude-code-ide-mcp--trace-window-max 4
+  "How many consecutive statements a clone window may cover.")
+
+(defconst claude-code-ide-mcp--trace-argument-fields '("arguments" "parameters")
+  "The fields under which a node holds the parts of one call or signature.
+Those parts are laid out by line as often as statements are, and taking them
+for statements puts a window over an argument list.")
+
+(defun claude-code-ide-mcp--trace-argument-list-p (node)
+  "Non-nil when NODE is what its parent calls its arguments or parameters."
+  (when-let* ((parent (treesit-node-parent node)))
+    (seq-some (lambda (field)
+                (when-let* ((slot (treesit-node-child-by-field-name parent field)))
+                  (treesit-node-eq slot node)))
+              claude-code-ide-mcp--trace-argument-fields)))
+
+(defun claude-code-ide-mcp--trace-statement-list-p (node)
+  "Non-nil when NODE lays its named children out the way a body lays statements.
+The list is what is judged, not one child of it, since a lone child says
+nothing either way.
+
+Where the lines fall is all this has to go on, so a body whose statements are
+all written on one line is not read as a list.  That costs windows there and
+nothing else: the climb carries on past it and the run comes out too short to
+record.  The test cannot be dropped, because the parts of a call sit on one
+line too and would otherwise be windowed as statements."
+  (and node
+       (not (claude-code-ide-mcp--trace-argument-list-p node))
+       (let ((children (claude-code-ide-mcp--trace-named-children node)))
+         (and (cdr children)
+              (seq-some (lambda (pair)
+                          (> (line-number-at-pos (treesit-node-start (cdr pair)))
+                             (line-number-at-pos (treesit-node-end (car pair)))))
+                        (seq-mapn #'cons children (cdr children)))))))
+
+(defun claude-code-ide-mcp--trace-listed-p (node)
+  "Non-nil when NODE is one statement of a list its parent lays out by line."
+  (claude-code-ide-mcp--trace-statement-list-p (treesit-node-parent node)))
+
+(defun claude-code-ide-mcp--trace-statement-level (node)
+  "Return the ancestor of NODE that stands as one statement among siblings.
+A run of statements is not a tree-sitter node, so a duplicated idiom spread
+over several of them has no block to hash and the enclosing block of a hit
+stops at the first one.  Climbing is what gives the run a starting point: the
+name a hit lands on sits inside a call which sits inside a statement, and
+only the last of those has the following statements as siblings.  A
+declaration ends the climb on either side, so the runs are of statements
+inside one body rather than of whole declarations."
+  (let ((cur node)
+        (done nil))
+    (while (not done)
+      (let ((parent (treesit-node-parent cur)))
+        (if (and parent
+                 (not (claude-code-ide-mcp--trace-listed-p cur))
+                 (not (claude-code-ide-mcp--trace-declaration-p cur))
+                 (not (claude-code-ide-mcp--trace-declaration-p parent)))
+            (setq cur parent)
+          (setq done t))))
+    cur))
+
+(defun claude-code-ide-mcp--trace-sibling-run (node count)
+  "Return NODE and up to COUNT-1 named siblings that follow it, comments aside.
+A comment is a named node, so counting one spends a slot on text the hash is
+taken without, and the run of statements comes out shorter than it says."
+  (let ((run (list node))
+        (cur node))
+    (while (and (< (length run) count)
+                (setq cur (treesit-node-next-sibling cur t)))
+      (unless (string-match-p "comment" (treesit-node-type cur))
+        (push cur run)))
+    (nreverse run)))
+
+(defun claude-code-ide-mcp--trace-window-record (file root nodes query-id imports)
+  "Return the record hashing NODES, a run of consecutive siblings of FILE.
+ROOT is what the path is relative to, QUERY-ID names the query that found the
+run and IMPORTS are the names the file brings into scope.  Nil when the run
+normalizes to nothing, as a run of comments does."
+  (let ((text (string-join
+               (mapcar #'claude-code-ide-mcp--trace-normalized-text nodes) " ")))
+    (unless (string-empty-p (string-trim text))
+      (let* ((head (car nodes))
+             (tail (car (last nodes)))
+             (rel (file-relative-name file root))
+             (decl (claude-code-ide-mcp--trace-declaration head))
+             (path (if decl (claude-code-ide-mcp--trace-symbol-path decl) ""))
+             (inner (claude-code-ide-mcp--trace-inner-path head decl))
+             (base (if (string-empty-p path) rel (concat rel "::" path)))
+             ;; A run headed by the declaration itself sits at no path below
+             ;; one, and writing the separator anyway leaves an id that reads
+             ;; as though its tail were lost.
+             (at (if (string-empty-p inner) "" (concat ":" inner))))
+        (list :k "node"
+              :id (format "%s@window%d%s" base (length nodes) at)
+              :file rel
+              :line (line-number-at-pos (treesit-node-start head))
+              :span (1+ (- (line-number-at-pos (treesit-node-end tail))
+                           (line-number-at-pos (treesit-node-start head))))
+              :kind (format "window%d" (length nodes))
+              :hash (claude-code-ide-mcp--trace-hash text)
+              ;; Where the run starts, which is the same place at every
+              ;; length: one duplicated run clones as a window of two, of
+              ;; three and of four, and this is what tells the reader those
+              ;; three groups are one finding.
+              :anchor (concat base at)
+              :uses (vconcat
+                     (delete-dups
+                      (mapcan (lambda (node)
+                                (copy-sequence
+                                 (claude-code-ide-mcp--trace-uses node imports)))
+                              nodes)))
+              :ev "treesit"
+              :q query-id)))))
+
+(defun claude-code-ide-mcp--trace-window-records (file root node query-id imports)
+  "Return the clone windows anchored at the statement NODE sits in.
+FILE, ROOT, QUERY-ID and IMPORTS are as for
+`claude-code-ide-mcp--trace-window-record'.  A window runs forward from that
+statement, never backward, so what is recorded is the runs the seed itself
+begins rather than every run it appears somewhere inside.
+
+A run of declarations is a run like any other and is recorded as one.  Such a
+run never clones -- the declared names are part of the hashed text, so two
+copies of the same pair of functions differ by their names -- and a seed
+aimed at declarations therefore spends windows on nothing.  Two narrower
+rules were tried and withdrawn: refusing runs headed by a declaration took
+every window Nix has, since `nix-ts-mode' calls every `a = b;' binding one,
+and refusing runs headed by something carrying a statement list was safe only
+because `tree-sitter-rust' wraps a statement `if' in another node, which a
+grammar whose `if' holds its block directly does not."
+  (let ((run (claude-code-ide-mcp--trace-sibling-run
+              (claude-code-ide-mcp--trace-statement-level node)
+              claude-code-ide-mcp--trace-window-max))
+        (out '()))
+    (dolist (len (number-sequence 2 (length run)))
+      (when-let* ((record (claude-code-ide-mcp--trace-window-record
+                           file root (seq-take run len) query-id imports)))
+        (push record out)))
+    (nreverse out)))
+
 (defun claude-code-ide-mcp--trace-attribute-owner (item)
   "Return the declaration ITEM speaks for.
 An attribute either wraps its declaration or precedes it, and which one is a
@@ -1102,6 +1241,8 @@ encloses -- and :empty, blocks whose text is nothing but comments.  QUERY-ID
 names the query that produced MATCHES."
   (let ((by-file (make-hash-table :test 'equal))
         (records '())
+        (windows '())
+        (window-ids (make-hash-table :test 'equal))
         (seen-files '())
         (unparsed 0)
         (empty 0)
@@ -1117,6 +1258,7 @@ names the query that produced MATCHES."
            (save-excursion
              (let* ((seen (make-hash-table :test 'equal))
                     (covered (make-hash-table :test 'equal))
+                    (statement-only (make-hash-table :test 'equal))
                     (blocks '())
                     (attributes (claude-code-ide-mcp--trace-attribute-table))
                     (imports (claude-code-ide-mcp--trace-import-names)))
@@ -1150,6 +1292,7 @@ names the query that produced MATCHES."
                                              file root node query-id text
                                              imports))
                                (puthash key record seen)
+                               (puthash key t statement-only)
                                (push (list key node record) blocks))))
                          ;; Every match reads its own statement, including one
                          ;; whose block another match recorded: two calls in a
@@ -1159,12 +1302,30 @@ names the query that produced MATCHES."
                            (let ((inner (or (claude-code-ide-mcp--trace-statement-node
                                              line col node)
                                             node)))
+                             ;; A block that never grew past the statement the
+                             ;; seed matched is that statement and nothing
+                             ;; else, and a literal seed makes those alike
+                             ;; wherever they sit, so the answer says which
+                             ;; groups are of that kind.
+                             (let ((level (claude-code-ide-mcp--trace-statement-level
+                                           inner)))
+                               (unless (and (>= (treesit-node-start node)
+                                                (treesit-node-start level))
+                                            (<= (treesit-node-end node)
+                                                (treesit-node-end level)))
+                                 (puthash key nil statement-only)))
                              ;; Covered is the range relations were read from,
                              ;; which for a declaration stops at its signature.
                              (push (cons (treesit-node-start inner)
                                          (claude-code-ide-mcp--trace-relation-end
                                           inner))
                                    (gethash key covered))
+                             (dolist (window
+                                      (claude-code-ide-mcp--trace-window-records
+                                       file root inner query-id imports))
+                               (unless (gethash (plist-get window :id) window-ids)
+                                 (puthash (plist-get window :id) t window-ids)
+                                 (push window windows)))
                              (ignore-errors
                                (claude-code-ide-mcp--trace-edges-at
                                 inner record attributes root query-id box
@@ -1174,6 +1335,8 @@ names the query that produced MATCHES."
                ;; read, so the records are finished here, not where built.
                (dolist (cell (nreverse blocks))
                  (push (append (nth 2 cell)
+                               (when (gethash (nth 0 cell) statement-only)
+                                 (list :seed t))
                                (list :unread
                                      (vconcat
                                       (claude-code-ide-mcp--trace-unread-names
@@ -1182,6 +1345,10 @@ names the query that produced MATCHES."
                        records))))))))
      by-file)
     (list :records (nreverse records)
+          ;; Windows are kept apart from the blocks: they answer the clone
+          ;; question and nothing else, no edge starts at one, and counting
+          ;; them as blocks would spend the cap on derivations.
+          :windows (nreverse windows)
           ;; The declarations edges start at are stored too, but kept out of
           ;; :records: those answer the clone question and are what the block
           ;; cap counts, and a registering plugin is neither.
@@ -1274,6 +1441,7 @@ so its provenance survives the rebuild."
         (when collected
           (setq records (append records
                                 (plist-get collected :records)
+                                (plist-get collected :windows)
                                 (plist-get collected :endpoints)))
           (setq edges (append edges (plist-get collected :edges)))
           (setq files (append files (plist-get collected :files))))))
@@ -1740,7 +1908,57 @@ quietly so the locator and the coverage keep up."
 
 (defun claude-code-ide-mcp--trace-group-span (group)
   "Return how many lines GROUP's blocks cover, or 1 when they do not say."
-  (or (plist-get (car (cdr group)) :span) 1))
+  (or (plist-get (car (plist-get group :records)) :span) 1))
+
+(defun claude-code-ide-mcp--trace-group-run-length (group)
+  "Return how many statements GROUP's windows hold, or 0 for a block.
+Lines alone cannot order two views of one run: statements spanning several
+lines each make a run of two as tall as a run of four, and folding the wider
+view into the narrower one would report the run as shorter than it is."
+  (let ((kind (plist-get (car (plist-get group :records)) :kind)))
+    (if (and kind (string-match "\\`window\\([0-9]+\\)\\'" kind))
+        (string-to-number (match-string 1 kind))
+      0)))
+
+(defun claude-code-ide-mcp--trace-group-seed-p (group)
+  "Non-nil when GROUP's blocks never grew past the statement the seed matched.
+How alike such a group is was settled by the pattern, not found: a literal
+seed makes every one of those statements agree wherever it sits.  Saying so
+is what keeps the group from reading as a discovery."
+  (seq-every-p (lambda (rec) (plist-get rec :seed)) (plist-get group :records)))
+
+(defun claude-code-ide-mcp--trace-fold-windows (groups)
+  "Return GROUPS, widest first, with narrower views of one run folded into it.
+
+A duplicated run clones at every length, and the lengths do not hold the same
+sites: a site whose fourth statement differs joins the run of three and not
+the run of four.  Asking the sites to agree therefore folds nothing, and the
+same run prints as three findings.  What names a run is where it starts, so a
+group starting anywhere an earlier group started is that run seen narrower.
+
+It is folded rather than dropped.  How far down the sites agree -- four
+statements in thirteen places, two in fifteen -- is the finding itself, so
+the narrower view keeps its own count and hash and is reported underneath."
+  (let ((owner (make-hash-table :test 'equal))
+        (boxes '()))
+    (dolist (group groups)
+      (let* ((anchors (delq nil (mapcar (lambda (rec) (plist-get rec :anchor))
+                                        (plist-get group :records))))
+             (host (seq-some (lambda (anchor) (gethash anchor owner)) anchors)))
+        (if host
+            (setcar host
+                    (plist-put (car host) :shorter
+                               (append (plist-get (car host) :shorter)
+                                       (list (list (claude-code-ide-mcp--trace-group-span
+                                                    group)
+                                                   (length (plist-get group :records))
+                                                   (plist-get group :hash))))))
+          (setq host (list group))
+          (push host boxes))
+        (dolist (anchor anchors)
+          (unless (gethash anchor owner)
+            (puthash anchor host owner)))))
+    (mapcar #'car (nreverse boxes))))
 
 (defun claude-code-ide-mcp--trace-clone-groups (records)
   "Group RECORDS by content hash, widest group first, singletons dropped.
@@ -1757,44 +1975,66 @@ second is the answer."
       (push rec (gethash (plist-get rec :hash) by-hash)))
     (maphash (lambda (hash recs)
                (when (cdr recs)
-                 (push (cons hash (nreverse recs)) groups)))
+                 (push (list :hash hash :records (nreverse recs)) groups)))
              by-hash)
-    (sort groups
-          (lambda (a b)
-            (let ((sa (claude-code-ide-mcp--trace-group-span a))
-                  (sb (claude-code-ide-mcp--trace-group-span b)))
-              (if (= sa sb)
-                  (> (length (cdr a)) (length (cdr b)))
-                (> sa sb)))))))
+    (claude-code-ide-mcp--trace-fold-windows
+     (sort groups
+           (lambda (a b)
+             (let ((sa (claude-code-ide-mcp--trace-group-span a))
+                   (sb (claude-code-ide-mcp--trace-group-span b))
+                   (ra (claude-code-ide-mcp--trace-group-run-length a))
+                   (rb (claude-code-ide-mcp--trace-group-run-length b)))
+               (cond ((/= sa sb) (> sa sb))
+                     ((/= ra rb) (> ra rb))
+                     (t (> (length (plist-get a :records))
+                           (length (plist-get b :records)))))))))))
 
 (defun claude-code-ide-mcp--trace-render-answer (records)
   "Render the clone answer for RECORDS."
   (let* ((groups (claude-code-ide-mcp--trace-clone-groups records))
-         (grouped (apply #'+ (mapcar (lambda (g) (length (cdr g))) groups))))
+         ;; Folded views are counted here too: they were grouped, and calling
+         ;; them unique would say a node nobody printed stands alone.
+         (grouped (apply #'+ (mapcar (lambda (group)
+                                       (+ (length (plist-get group :records))
+                                          (apply #'+ (mapcar #'cadr
+                                                             (plist-get group :shorter)))))
+                                     groups))))
     (cond
      ((null records)
       "answer: absent -- the seed matched nothing, recorded as such\n")
      ((null groups)
-      (format "answer: 0 clone-groups over %d blocks (all unique)\n"
+      (format "answer: 0 clone-groups over %d hashed nodes (all unique)\n"
               (length records)))
      (t
-      (format "answer: %d clone-groups over %d blocks\n%s%s"
+      (format "answer: %d clone-groups over %d hashed nodes\n%s%s"
               (length groups) (length records)
               (mapconcat
                (lambda (group)
-                 (let ((span (claude-code-ide-mcp--trace-group-span group)))
-                   (format "  #%s  %dx  %s  %s%s\n"
-                           (car group) (length (cdr group))
-                           (format "%d lines" span)
+                 (let ((recs (plist-get group :records)))
+                   (format "  #%s  %dx  %d lines  %s%s%s\n%s"
+                           (plist-get group :hash) (length recs)
+                           (claude-code-ide-mcp--trace-group-span group)
                            (string-join
                             (delete-dups (mapcar (lambda (r) (plist-get r :kind))
-                                                 (cdr group)))
+                                                 recs))
                             "/")
+                           (if (claude-code-ide-mcp--trace-group-seed-p group)
+                               "  the statement the seed matched"
+                             "")
                            (concat "  "
                                    (mapconcat (lambda (r) (plist-get r :id))
-                                              (cdr group) "  ")))))
+                                              recs "  "))
+                           (if-let* ((shorter (plist-get group :shorter)))
+                               (format "      same run, shorter: %s\n"
+                                       (mapconcat
+                                        (lambda (cell)
+                                          (format "%dx %d lines #%s"
+                                                  (nth 1 cell) (nth 0 cell)
+                                                  (nth 2 cell)))
+                                        shorter " . "))
+                             ""))))
                groups "")
-              (format "  %d blocks unique\n" (- (length records) grouped)))))))
+              (format "  %d nodes unique\n" (- (length records) grouped)))))))
 
 (defun claude-code-ide-mcp--trace-render-edges (resolved fresh)
   "Render the edge summary for RESOLVED, of which FRESH are not yet stored."
@@ -1864,22 +2104,22 @@ Printing it is what keeps the rest of the answer from reading as the whole."
                          claude-code-ide-mcp--trace-unread-nodes-shown)
                "")))))
 
-(defun claude-code-ide-mcp--trace-render (records counts query store
+(defun claude-code-ide-mcp--trace-render (records windows counts query store
                                                   collected resolved fresh-edges
                                                   refreshed)
   "Render the whole trace report.
-RECORDS are the node records, COUNTS the plist from
-`claude-code-ide-mcp--trace-classify', QUERY the query record, STORE the
-store path, COLLECTED the plist from `claude-code-ide-mcp--trace-collect',
-RESOLVED the plist from `claude-code-ide-mcp--trace-resolve' and FRESH-EDGES
-those it added."
+RECORDS are the node records, WINDOWS the statement runs hashed alongside
+them, COUNTS the plist from `claude-code-ide-mcp--trace-classify', QUERY the
+query record, STORE the store path, COLLECTED the plist from
+`claude-code-ide-mcp--trace-collect', RESOLVED the plist from
+`claude-code-ide-mcp--trace-resolve' and FRESH-EDGES those it added."
   (concat
-   (claude-code-ide-mcp--trace-render-answer records)
+   (claude-code-ide-mcp--trace-render-answer (append records windows))
    (claude-code-ide-mcp--trace-render-edges resolved fresh-edges)
    (claude-code-ide-mcp--trace-render-refresh refreshed)
-   (format "query: %s  rg '%s'  path=%s  -> %d blocks in %d files\n"
+   (format "query: %s  rg '%s'  path=%s  -> %d blocks and %d statement windows in %d files\n"
            (plist-get query :id) (plist-get query :pattern)
-           (plist-get query :path) (length records)
+           (plist-get query :path) (length records) (length windows)
            (length (delete-dups (mapcar (lambda (r) (plist-get r :file)) records))))
    (format "appended: nodes %d new, %d changed, %d context-changed, %d moved, %d unchanged (not re-appended)\n"
            (length (plist-get counts :new))
@@ -1894,9 +2134,10 @@ those it added."
                             "  "))
      "")
    (format "store: %s\n" store)
-   (format "frontier: %d matches with no tree-sitter block, %d comment-only blocks, %d files put under the language server%s\n"
+   (format "frontier: %d matches with no tree-sitter block, %d comment-only blocks, %d statement windows left out by the cap, %d files put under the language server%s\n"
            (plist-get collected :unparsed)
            (plist-get collected :empty)
+           (- (length (plist-get collected :windows)) (length windows))
            (plist-get resolved :files)
            (if (plist-get resolved :stopped)
                (format ", resolution stopped with %d endpoints left as names -- the blocks and the answer above are complete"
@@ -1934,6 +2175,8 @@ leave the scope they sit in."
                (records (if (> cap 0)
                             (seq-take merged cap)
                           merged))
+               (windows (let ((all (plist-get collected :windows)))
+                          (if (> cap 0) (seq-take all cap) all)))
                (resolved (claude-code-ide-mcp--trace-resolve
                           (append (plist-get refreshed :edges)
                                   (plist-get collected :edges))
@@ -1952,6 +2195,7 @@ leave the scope they sit in."
                          (claude-code-ide-mcp--trace-dedupe-nodes
                           (append (plist-get refreshed :records)
                                   records
+                                  windows
                                   (plist-get collected :endpoints)
                                   (plist-get resolved :nodes)))
                          known)
@@ -2010,14 +2254,14 @@ leave the scope they sit in."
                                  :by "rg exited 1: searched, matched nothing")))
                    (list (claude-code-ide-mcp--trace-scan-record root))))
           (claude-code-ide-mcp--trace-render
-           records counts query store collected
+           records windows counts query store collected
            resolved fresh-edges refreshed)))
     (error (format "Error tracing: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
  :function #'claude-code-ide-mcp-trace
  :name "trace"
- :description "Search a seed pattern, grow every hit to its enclosing tree-sitter block, and record each block as a graph node in a per-project JSONL store. A node is identified by file, declaration path and, when it sits below a declaration, its position inside it -- never a line number -- and carries a hash of its text with comments and whitespace removed, so blocks sharing a hash are clones however they are named. Each clone group names the node kind, since a duplicated idiom is usually an inner block rather than a whole function. Comment-only blocks are refused. Every registration, ordering, attribute and signature the seed reaches becomes an edge, whose endpoints the language server resolves at the reference itself, and an endpoint it will not resolve stays a bare name rather than passing as a resolved one. Relations are read from the statement each match sits in, not from the whole block, so a one-line match does not have every name of its enclosing function recorded as something the seed reached; what the block holds outside those statements is listed as `unread' -- named, never followed, and offered as the next seed. Answers the clone query directly and reports how many nodes and edges were appended, so the caller can check the write instead of trusting it. Args: pattern (rg regex seed), path (search root, default project root), cap (max blocks, default 200, 0=unlimited), ask (the question this query answers, stored with it). Every file the seed matches is read -- scope a broad seed with path rather than expecting the tool to stop early. The report ends with what the run did not reach; read it before calling an answer complete."
+ :description "Search an rg pattern, grow each hit to its enclosing tree-sitter block, and record the blocks and the relations they reach as nodes and edges in a per-project store `graph' then reads. Answers the clone question: blocks with the same text, comments and whitespace aside, are grouped, and so are runs of consecutive statements, each run printed once at its longest with its shorter views under it. A group marked `the statement the seed matched' is what the pattern forced, not a finding. An endpoint the language server will not resolve stays a bare name; what a block holds that nothing followed is listed as `unread' and makes the next seed. Escape `(' in the pattern. Every file the pattern matches is read, so scope a broad seed with path. The report ends with what the run did not reach -- read it before calling an answer complete. Args: pattern (rg regex), path (search root, default project root), cap (max blocks, and separately max statement windows, default 200 each, 0=unlimited), ask (the question this query answers, stored with it)."
  :args '((:name "pattern"
           :type string
           :description "rg regex to seed the trace")
@@ -2027,7 +2271,7 @@ leave the scope they sit in."
           :optional t)
          (:name "cap"
           :type number
-          :description "Max blocks turned into nodes; default 200, 0=unlimited"
+          :description "Max blocks turned into nodes, and separately max statement windows; default 200 each, 0=unlimited"
           :optional t)
          (:name "ask"
           :type string
@@ -2314,7 +2558,7 @@ comes to look like a fact about the code."
 (claude-code-ide-make-tool
  :function #'claude-code-ide-mcp-graph
  :name "graph"
- :description "Read the graph `trace' recorded, with no language-server round trip and without opening any code. Give it a node id or a bare name to see what registers, orders, requires or takes that thing, and what it takes in turn; leave the name out to see what the store already holds, which is the cheap way to find out whether a question has been answered before. Every edge line carries its evidence kind and the id of the query that produced it, and those queries are printed underneath so a reviewer can re-run them instead of trusting the answer. Emptiness is reported three ways -- never traced, traced with no such edge, or a name matching several nodes -- because those are different facts. A node also says what it holds that nobody has followed, again in three states: names still outstanding, nothing outstanding, or never measured, so the edges it does carry cannot read as everything it has. Args: from (node id or name; omit for a summary), kinds (comma-separated edge kinds), depth (hops, default 1), direction (in | out | both), path (project, default the current one)."
+ :description "Read what `trace' recorded. No language server, no file opened. Give a node id or a bare name to see what registers, orders, requires or takes it, and what it takes in turn; omit it for a summary of what the store holds, which says whether a question has been answered before. Each edge line carries its evidence kind and the query that produced it, and those queries are printed underneath to re-run. Emptiness comes three ways -- never traced, traced with no such edge, or a name matching several nodes -- and each node says what it holds that nobody followed, likewise as outstanding, none left, or never measured. Args: from (node id or name; omit for a summary), kinds (comma-separated edge kinds), depth (hops, default 1), direction (in | out | both), path (project, default the current one)."
  :args '((:name "from"
           :type string
           :description "Node id or bare name; omit to summarise the store"
