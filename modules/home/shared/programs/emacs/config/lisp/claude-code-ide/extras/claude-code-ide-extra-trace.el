@@ -18,41 +18,62 @@
 ;; it.  No grammar's node types are named here.  The per-language table holds
 ;; two things a grammar cannot say: which methods register, and what an
 ;; attribute name means.  Without it the language layer still comes out.
+;;
+;; Relations are read from the statement a match sits in, so a block normally
+;; holds names the seed never reached.  Those are written on the node as
+;; `unread' -- named, not followed, offered as the next seed.  The field is
+;; absent, empty or filled, and those are three facts: unmeasured, nothing
+;; left, this is what is left.
 
 ;;; Constraints:
 
-;; Scale, unsolved.  A seed over a whole repository derives relations in the
-;; tens of thousands: a match on a call spanning several lines grows to the
-;; function around it, and every name in that function is then read as if the
-;; seed had reached it.  See `claude-code-ide-mcp--trace-statement-node'.
-;; Scope by `path' meanwhile.
+;; One seed still derives relations in the thousands.  Scope with `path'.
 ;;
-;; Depth and frontier, designed, not built.  A call should walk one hop and
-;; hand back the endpoints it did not follow, as ids, for the caller to pass
-;; to `from'.  Revisits are already free -- file hashes, the two-pass
-;; resolver and record deduplication see to that.
+;; Nothing bounds how many files a seed reads, and a buffer per file stays
+;; open for the whole call, so a wide seed can exhaust file descriptors.
 ;;
-;; A running Emacs keeps functions this file no longer defines, so deleting
-;; one while its callers remain passes a whole session and breaks on the next
-;; start.  It has.  Run check-fresh-load.el.
+;; The frontier is half built: `unread' names the next hop, but as names
+;; rather than node ids, so a caller seeds one of them by hand.
 ;;
-;; `treesit-query-capture' without a region is not "everything": it returns
-;; fewer captures than the same query given a region spanning the file, and
-;; says nothing about the difference.  Pass point-min and point-max.
+;; Anything that bounds a result by taking a prefix needs an order of its
+;; own.  ripgrep's walkers are parallel and its output order is not stable.
 ;;
-;; `json-serialize' returns unibyte.  In a multibyte buffer each byte of a
-;; non-ASCII field becomes a raw character that no coding system encodes, and
-;; Emacs stops mid-call to ask the user which to use.
+;; `treesit-query-capture' without a region returns fewer captures than the
+;; same query given one spanning the file, and says nothing about the
+;; difference.  Pass point-min and point-max.
 ;;
-;; Dispatch is synchronous -- running time is a freeze, and there is no
-;; asynchronous path to reach for.
+;; `json-serialize' returns unibyte.  Write it from a unibyte buffer, or a
+;; non-ASCII field stops the call to ask which coding system its raw bytes
+;; want.
+;;
+;; A display column is not an LSP `:character'.  Wire positions come from
+;; `eglot--pos-to-lsp-position'; nothing here may use `current-column'.
+;;
+;; A buffer opened here must carry `default-directory', or `project-current'
+;; -- and so eglot -- resolves the file to whatever project the caller stood
+;; in.
+;;
+;; How many endpoints resolve is not a property of the code.  The server
+;; answers nothing for a position in one run and answers it in the next, and
+;; an unanswered reference is stored as the same bare name as an unresolvable
+;; one.
+;;
+;; Dispatch is synchronous -- running time is a freeze.
 ;;
 ;; The rules table is a `defvar': editing it leaves a loaded session alone.
 ;;
 ;; A running Emacs reads the deployed copy under ~/.emacs.d/lisp/, not the
-;; working tree; `claude-code-ide-reload-mcp-tools' reverts to it.
+;; working tree, and keeps functions this file no longer defines.  Load the
+;; working tree to test it; run check-fresh-load.el before trusting a
+;; deletion.
 ;;
-;; The CPU profiler records nothing in this build.  Measure by hand.
+;; This Emacs sets `lisp-indent-offset' to 4, so `indent-region' and the
+;; apheleia formatter reindent this file away from its own style.  Bind it to
+;; nil first.
+;;
+;; Measure with the tree's buffers killed, the server warm and the versions
+;; interleaved.  Buffer and server state move a trace's wall clock more than
+;; any change to this file does.
 
 ;;; Code:
 
@@ -67,13 +88,6 @@
 
 (defconst claude-code-ide-mcp--trace-block-cap 200
   "Default maximum number of blocks a single trace turns into nodes.")
-
-(defconst claude-code-ide-mcp--trace-file-cap 100
-  "Default maximum number of distinct files a single trace visits.
-The collector holds one buffer per file, so an uncapped seed would exhaust
-the file descriptors of the whole Emacs session.  A question that has to be
-answered in full raises this through the tool's own argument, since a capped
-answer is not the whole answer even when the report says which files it left.")
 
 (defconst claude-code-ide-mcp--trace-hash-length 12
   "Number of leading hex characters kept from a node's content hash.")
@@ -101,17 +115,86 @@ documentation the way a checked-in map would be."
                               (directory-file-name (expand-file-name root)))
     (expand-file-name "projects" (expand-file-name "~/.claude")))))
 
+(defvar claude-code-ide-mcp--trace-visits nil
+  "Buffers the trace running now reads its files through.
+A cons of a file-to-buffer table and the list of buffers this trace opened,
+which are the only ones it is allowed to close.")
+
+(defmacro claude-code-ide-mcp--trace-with-visits (&rest body)
+  "Run BODY with one buffer per file, shared by everything in it, then close.
+
+The collector and the resolver read the same files, and putting a major mode
+on one is a large part of a trace, so they share a buffer rather than moding
+it twice.  `claude-code-ide-mcp--with-temp-visit' cannot: its buffer never
+registers as visiting the file, so the resolver would not find it.
+
+Closing is half the point -- the resolver used to leave a buffer open per
+file it resolved through."
+  (declare (indent 0) (debug t))
+  `(let ((claude-code-ide-mcp--trace-visits
+          (cons (make-hash-table :test 'equal) nil)))
+     (unwind-protect (progn ,@body)
+       (dolist (buffer (cdr claude-code-ide-mcp--trace-visits))
+         (when (and (buffer-live-p buffer)
+                    ;; Nothing here modifies a buffer, but killing a modified
+                    ;; file-visiting one asks the user about saving it, and a
+                    ;; tool call is no place to be asked.
+                    (not (buffer-modified-p buffer)))
+           (kill-buffer buffer))))))
+
+(defun claude-code-ide-mcp--trace-visit (file)
+  "Return a buffer visiting FILE, opening one for this trace if needed.
+A buffer that already visits FILE is reused and left alone; one opened here
+is registered with the trace, which closes it at the end.  Only run inside
+`claude-code-ide-mcp--trace-with-visits'.
+
+A real file-visiting buffer, so `find-buffer-visiting' finds it, but moded
+without its hooks: eglot is asked for by name where it is wanted, and
+copilot, flymake and dir-local reading are never wanted here."
+  (let* ((table (car claude-code-ide-mcp--trace-visits))
+         (known (and table (gethash file table))))
+    (if (buffer-live-p known)
+        known
+      (let ((buffer
+             (or (claude-code-ide-mcp--refresh-visiting file)
+                 (let ((new (create-file-buffer file))
+                       ;; A mode whose grammar and font-lock rules disagree
+                       ;; logs its mismatch on every read.  The mismatch is
+                       ;; real but not this tool's, and repeating it drowns
+                       ;; the warning buffer.
+                       (warning-suppress-log-types
+                        (cons '(treesit-font-lock-rules-mismatch)
+                              warning-suppress-log-types)))
+                   (with-current-buffer new
+                     ;; VISIT, so the file's modtime comes with its text and
+                     ;; `verify-visited-file-modtime' does not revert on reuse.
+                     (insert-file-contents file t)
+                     (setq buffer-file-truename
+                           (abbreviate-file-name (file-truename file)))
+                     ;; `project-current' reads this, and eglot reads
+                     ;; `project-current': without it the buffer keeps the
+                     ;; caller's directory and Go files get asked of whatever
+                     ;; server that project has.
+                     (setq default-directory (file-name-directory file))
+                     (delay-mode-hooks (set-auto-mode)))
+                   (push new (cdr claude-code-ide-mcp--trace-visits))
+                   new))))
+        (when table (puthash file buffer table))
+        buffer))))
+
 (defun claude-code-ide-mcp--trace-known (store)
   "Return what STORE already holds, read in the order it was written.
-The plist carries :nodes id to hash, :node-files and :node-queries beside it,
-:edges by identity, :queries in the order they were asked, and :scan, the
-last look at the tree.  A `gone' record removes the node it names, which is
-why the file is replayed rather than scanned for the newest line per id."
+The plist carries :nodes id to hash, :node-files, :node-unread and
+:node-queries beside it, :edges by identity, :queries in the order they were
+asked, and :scan, the last look at the tree.  A `gone' record removes the
+node it names, which is why the file is replayed rather than scanned for the
+newest line per id."
   (let ((nodes (make-hash-table :test 'equal))
         (node-files (make-hash-table :test 'equal))
         (node-lines (make-hash-table :test 'equal))
         (node-spans (make-hash-table :test 'equal))
         (node-uses (make-hash-table :test 'equal))
+        (node-unread (make-hash-table :test 'equal))
         (node-queries (make-hash-table :test 'equal))
         (edges (make-hash-table :test 'equal))
         (edge-list '())
@@ -140,6 +223,7 @@ why the file is replayed rather than scanned for the newest line per id."
                   (puthash id (plist-get rec :line) node-lines)
                   (puthash id (plist-get rec :span) node-spans)
                   (puthash id (plist-get rec :uses) node-uses)
+                  (puthash id (plist-get rec :unread) node-unread)
                   (puthash id (plist-get rec :q) node-queries))
                  ((equal kind "gone")
                   (remhash id nodes)
@@ -147,6 +231,7 @@ why the file is replayed rather than scanned for the newest line per id."
                   (remhash id node-lines)
                   (remhash id node-spans)
                   (remhash id node-uses)
+                  (remhash id node-unread)
                   (remhash id node-queries))
                  ((equal kind "edge")
                   (unless (gethash (claude-code-ide-mcp--trace-edge-key rec) edges)
@@ -166,6 +251,7 @@ why the file is replayed rather than scanned for the newest line per id."
           :node-lines node-lines
           :node-spans node-spans
           :node-uses node-uses
+          :node-unread node-unread
           :node-queries node-queries
           :edges edges
           :edge-list (nreverse edge-list)
@@ -178,6 +264,27 @@ why the file is replayed rather than scanned for the newest line per id."
           :absent (seq-remove (lambda (a) (member (plist-get a :claim) retracted))
                               (nreverse absent))
           :scan scan)))
+
+(defun claude-code-ide-mcp--trace-parse (out)
+  "Parse rg --vimgrep output OUT into a list of (FILE LINE . COL) match cells.
+The shared parser drops the column; the column is what tells two calls on one
+line apart.  COL is ripgrep's own: a one-based byte offset.
+
+Sorted, because ripgrep's walkers are parallel and the block cap keeps a
+prefix of whatever order they finished in."
+  (let ((matches '()))
+    (dolist (ln (split-string out "\n" t))
+      (when (string-match "\\`\\(.*?\\):\\([0-9]+\\):\\([0-9]+\\):" ln)
+        (push (cons (match-string 1 ln)
+                    (cons (string-to-number (match-string 2 ln))
+                          (string-to-number (match-string 3 ln))))
+              matches)))
+    (sort matches
+          (lambda (a b)
+            (let ((one (car a)) (two (car b)))
+              (cond ((not (equal one two)) (string< one two))
+                    ((/= (cadr a) (cadr b)) (< (cadr a) (cadr b)))
+                    (t (< (cddr a) (cddr b)))))))))
 
 (defun claude-code-ide-mcp--trace-search (pattern path)
   "Return (MATCHES . ERROR) for PATTERN under PATH.
@@ -193,7 +300,7 @@ keep those two apart."
                    (setq status (call-process "rg" nil t nil
                                               "--vimgrep" "--" pattern root))))))
       (if (memq status '(0 1))
-          (cons (claude-code-ide-mcp--grep-block-parse out) nil)
+          (cons (claude-code-ide-mcp--trace-parse out) nil)
         (cons nil (string-trim (or out (format "rg exited with %s" status))))))))
 
 (defun claude-code-ide-mcp--trace-file-hash (file)
@@ -283,46 +390,58 @@ same hash."
                  (line-number-at-pos (treesit-node-start n)))))
        t))))
 
-(defun claude-code-ide-mcp--trace-statement-node (line)
-  "Return the smallest node that holds all of LINE, or nil.
-
-Meant to grow a match to the statement around it rather than to the block
-around that, so a one-line match does not bring its enclosing function along
-with every name in it.
-
-It does not do that, and narrowing to it changed the relation count by
-nothing.  The boundary asked for is the smallest node holding the whole
-matched LINE, and where a call is written across several lines no such node
-is smaller than the function: a middle line like
-
-    f(
-        a,
-        b,
-    );
-
-has nothing between it and the enclosing block.  One measured case came back
-as a seventy-line span holding 279 uses -- the block reader's own answer.
-
-Take the boundary from the match position instead: `treesit-node-at' there,
-then out to the first call or declaration."
+(defun claude-code-ide-mcp--trace-match-position (line col)
+  "Return the buffer position of the match at LINE and COL.
+COL is ripgrep's column: a one-based count of bytes, not of characters, so a
+line holding anything outside ASCII before the match lands short of it when
+the number is added to a character position."
   (save-excursion
     (goto-char (point-min))
     (forward-line (1- line))
-    (back-to-indentation)
+    (let ((pos (and (numberp col)
+                    (ignore-errors
+                      (byte-to-position (+ (position-bytes (point)) (1- col)))))))
+      (min (max (or pos (progn (back-to-indentation) (point)))
+                (line-beginning-position))
+           (line-end-position)))))
+
+(defun claude-code-ide-mcp--trace-statement-node (line col ceiling)
+  "Return what the match at LINE and COL sits in, under CEILING, or nil.
+
+Relations are read from this node rather than from CEILING, the block the
+clone hash needs, so a match does not have every name of its enclosing
+function read as if the seed had reached it.
+
+A match in a declaration's signature is the declaration -- the holes and
+types a signature declares are lost by stopping at one parameter.  Every
+other match grows from its position to the first call, or to the last node
+still below CEILING, whichever comes first.  All three rules earn their keep:
+asking for the smallest node holding the whole line narrows nothing, since a
+line in the middle of a multi-line call has no node below the block; growing
+to a call or declaration alone leaves the body and takes the declaration,
+which is wider than the block; and the column is what picks between two calls
+written on one line."
+  (let ((pos (claude-code-ide-mcp--trace-match-position line col)))
     (when-let* ((node (and (fboundp 'treesit-node-at)
                            (treesit-parser-list)
-                           (treesit-node-at (point)))))
-      (let ((bol (line-beginning-position))
-            (eol (line-end-position)))
-        (or (treesit-parent-until
-             node
-             (lambda (n)
-               (and (treesit-node-check n 'named)
-                    (treesit-node-parent n)
-                    (<= (treesit-node-start n) bol)
-                    (>= (treesit-node-end n) eol)))
-             t)
-            node)))))
+                           (save-excursion
+                             (goto-char pos)
+                             (treesit-node-at (point))))))
+      (let ((decl (treesit-parent-until
+                   node #'claude-code-ide-mcp--trace-declaration-p t)))
+        (if (and decl (< pos (claude-code-ide-mcp--trace-signature-end decl)))
+            decl
+          (or (treesit-parent-until
+               node
+               (lambda (n)
+                 (and (treesit-node-check n 'named)
+                      (treesit-node-parent n)
+                      (or (treesit-node-child-by-field-name n "arguments")
+                          (and ceiling
+                               (treesit-node-eq (treesit-node-parent n)
+                                                ceiling)))))
+               t)
+              node))))))
 
 (defun claude-code-ide-mcp--trace-declaration (node)
   "Return NODE, or its nearest ancestor, that declares a name.  Nil when none."
@@ -361,7 +480,10 @@ declaration path alone cannot tell two of them apart."
   "Return the store record describing NODE of FILE, relative to ROOT.
 TEXT is NODE's normalized text, QUERY-ID names the query that found it, and
 IMPORTS are the names this file brings into scope, of which the record keeps
-the ones NODE actually mentions."
+the ones NODE actually mentions.
+
+The record carries no `:unread': coverage is only known once every match in
+the file has been read, so the collector adds that field itself."
   (let* ((rel (file-relative-name file root))
          (decl (claude-code-ide-mcp--trace-declaration node))
          (path (if decl (claude-code-ide-mcp--trace-symbol-path decl) ""))
@@ -372,15 +494,12 @@ the ones NODE actually mentions."
                   base
                 (format "%s@%s:%s" base (treesit-node-type node) inner))
           :file rel
-          ;; A locator, never an identity: it is not in the id, not in the
-          ;; hash, and not compared.  Lines move for reasons the hash cannot
-          ;; see -- a comment added above shifts them all -- so it is
-          ;; rewritten on every trace and read only to open the file.
+          ;; A locator, never an identity: not in the id, not in the hash,
+          ;; never compared.  Lines move under edits the hash cannot see.
           :line (line-number-at-pos (treesit-node-start node))
-          ;; How much code the node covers.  A seed is a literal, so every
-          ;; block that grew no further than the matched line is identical to
-          ;; every other by construction -- a tautology that would otherwise
-          ;; sort to the top of the clone answer as its largest finding.
+          ;; How much code the node covers.  The clone answer orders by this,
+          ;; since a block that grew no further than the matched line is
+          ;; identical to every other such block by construction.
           :span (1+ (- (line-number-at-pos (treesit-node-end node))
                        (line-number-at-pos (treesit-node-start node))))
           :kind (treesit-node-type node)
@@ -525,13 +644,16 @@ asked once per call, and a file's calls are proportional to its captures."
     (nreverse out)))
 
 (defun claude-code-ide-mcp--trace-ref (node)
-  "Return an endpoint plist naming NODE's text and where it sits."
+  "Return an endpoint plist naming NODE's text and where it sits.
+The column counts characters from the start of the line.  `current-column'
+counts display columns, which is not what the server is asked for and not
+what a tab is worth."
   (list :name (treesit-node-text node t)
         :file (buffer-file-name)
         :line (line-number-at-pos (treesit-node-start node))
         :col (save-excursion
                (goto-char (treesit-node-start node))
-               (current-column))))
+               (- (point) (line-beginning-position)))))
 
 (defun claude-code-ide-mcp--trace-import-nodes ()
   "Return the current buffer's import declarations, or nil when unknown here.
@@ -743,6 +865,16 @@ edges start at, and IMPORTS are the names the file brings into scope."
                       :to (claude-code-ide-mcp--trace-ref node))
                 (car box)))))))
 
+(defun claude-code-ide-mcp--trace-relation-end (node)
+  "Return where NODE's own relations stop.
+For a declaration that is the end of its signature: what it declares is the
+holes, their types and the name it binds, while what its body does belongs
+to the blocks inside it, which are nodes of their own.  Without this a match
+on a signature line reads the whole function as relations of the signature."
+  (if (claude-code-ide-mcp--trace-declaration-p node)
+      (claude-code-ide-mcp--trace-signature-end node)
+    (treesit-node-end node)))
+
 (defun claude-code-ide-mcp--trace-calls-around (node)
   "Return the calls NODE takes part in, both inside it and above it.
 A call written on one line sits below the block the seed matched, while a
@@ -758,7 +890,8 @@ alone would collapse a chain to its first link."
                     (puthash key t seen)
                     (push call out)))))
       (dolist (name (claude-code-ide-mcp--trace-feature-nodes
-                     'function (treesit-node-start node) (treesit-node-end node)))
+                     'function (treesit-node-start node)
+                     (claude-code-ide-mcp--trace-relation-end node)))
         (when-let* ((call (claude-code-ide-mcp--trace-call-of name)))
           (remember call)))
       ;; Upward only as far as the call that directly holds NODE.  Walking to
@@ -837,10 +970,38 @@ a property.  Every relation in the language graph starts at one of these."
   (let ((out '()))
     (dolist (role '(function type variable property))
       (dolist (name (claude-code-ide-mcp--trace-feature-nodes
-                     role (treesit-node-start node) (treesit-node-end node)))
+                     role (treesit-node-start node)
+                     (claude-code-ide-mcp--trace-relation-end node)))
         (push (cons name role) out)))
     (sort out (lambda (a b) (< (treesit-node-start (car a))
                                (treesit-node-start (car b)))))))
+
+(defun claude-code-ide-mcp--trace-unread-names (node covered)
+  "Return the names inside NODE that no span in COVERED holds.
+COVERED is a list of (START . END), the statements this trace read relations
+from.  A name outside all of them is one the seed never reached: naming it
+costs a string, following it costs a server round trip, and saying nothing
+about it would let a node carrying three lines' relations read as a node with
+nothing more in it.
+
+Only calls and types count, since those are what the `ref' edge records."
+  (let ((seen (make-hash-table :test 'equal))
+        (out '()))
+    (dolist (role '(function type))
+      (dolist (name (claude-code-ide-mcp--trace-feature-nodes
+                     role (treesit-node-start node) (treesit-node-end node)))
+        (let ((start (treesit-node-start name))
+              (end (treesit-node-end name)))
+          (when (and (claude-code-ide-mcp--trace-name-node-p name)
+                     (not (seq-find (lambda (span)
+                                      (and (>= start (car span))
+                                           (<= end (cdr span))))
+                                    covered)))
+            (let ((text (treesit-node-text name t)))
+              (unless (gethash text seen)
+                (puthash text t seen)
+                (push text out)))))))
+    (nreverse out)))
 
 (defun claude-code-ide-mcp--trace-leaves-scope-p (name calls)
   "Non-nil when NAME sits in an argument of one of CALLS.
@@ -935,7 +1096,7 @@ QUERY-ID names the query, and LOCAL-SCOPE keeps scope-bound references."
     table))
 
 (defun claude-code-ide-mcp--trace-collect (matches root query-id &optional local-scope)
-  "Turn MATCHES, a list of (FILE . LINE), into node records under ROOT.
+  "Turn MATCHES, a list of (FILE LINE . COL), into node records under ROOT.
 Returns a plist of :records, :unparsed -- matches no tree-sitter block
 encloses -- and :empty, blocks whose text is nothing but comments.  QUERY-ID
 names the query that produced MATCHES."
@@ -949,12 +1110,14 @@ names the query that produced MATCHES."
     (dolist (m matches)
       (push (cdr m) (gethash (car m) by-file)))
     (maphash
-     (lambda (file lines)
+     (lambda (file ats)
        (let ((inhibit-redisplay t))
-         (claude-code-ide-mcp--with-temp-visit file
+         (with-current-buffer (claude-code-ide-mcp--trace-visit file)
            (claude-code-ide-mcp--trace-with-feature-cache
            (save-excursion
              (let* ((seen (make-hash-table :test 'equal))
+                    (covered (make-hash-table :test 'equal))
+                    (blocks '())
                     (attributes (claude-code-ide-mcp--trace-attribute-table))
                     (imports (claude-code-ide-mcp--trace-import-names)))
                (push (list :k "file"
@@ -963,34 +1126,60 @@ names the query that produced MATCHES."
                            :imports (vconcat imports)
                            :at (format-time-string "%FT%T%z"))
                      seen-files)
-               (dolist (line (sort (copy-sequence lines) #'<))
-                 (if-let* ((node (claude-code-ide-mcp--trace-block-node line)))
-                     (let ((key (cons (treesit-node-start node)
-                                      (treesit-node-end node))))
-                       (unless (gethash key seen)
-                         (puthash key t seen)
-                         (let ((text (claude-code-ide-mcp--trace-normalized-text
-                                      node)))
-                           (if (string-empty-p text)
-                               (setq empty (1+ empty))
-                             (let ((record (claude-code-ide-mcp--trace-node-record
-                                            file root node query-id text
-                                            imports)))
-                               (push record records)
-                               ;; Relations are read from the statement the
-                               ;; match sits in; the block above it is the
-                               ;; unit the clone hash needs, and reading
-                               ;; relations at that size pulls in every name
-                               ;; of an enclosing function the seed never
-                               ;; named.
-                               (ignore-errors
-                                 (claude-code-ide-mcp--trace-edges-at
-                                  (or (claude-code-ide-mcp--trace-statement-node
-                                       line)
-                                      node)
-                                  record attributes root query-id box
-                                  node-box imports local-scope)))))))
-                   (setq unparsed (1+ unparsed))))))))))
+               ;; By line and then column: the cells arrive reversed from the
+               ;; push above, and a sort on the line alone is stable, so two
+               ;; matches on one line would be read right to left.
+               (dolist (at (sort (copy-sequence ats)
+                                 (lambda (a b)
+                                   (or (< (car a) (car b))
+                                       (and (= (car a) (car b))
+                                            (< (cdr a) (cdr b)))))))
+                 (let ((line (car at))
+                       (col (cdr at)))
+                   (if-let* ((node (claude-code-ide-mcp--trace-block-node line)))
+                       (let* ((key (cons (treesit-node-start node)
+                                         (treesit-node-end node)))
+                              (record (gethash key seen)))
+                         (unless record
+                           (let ((text (claude-code-ide-mcp--trace-normalized-text
+                                        node)))
+                             (if (string-empty-p text)
+                                 (progn (setq empty (1+ empty))
+                                        (puthash key 'empty seen))
+                               (setq record (claude-code-ide-mcp--trace-node-record
+                                             file root node query-id text
+                                             imports))
+                               (puthash key record seen)
+                               (push (list key node record) blocks))))
+                         ;; Every match reads its own statement, including one
+                         ;; whose block another match recorded: two calls in a
+                         ;; block are two questions.  Repeats go in
+                         ;; `claude-code-ide-mcp--trace-dedupe-edges'.
+                         (unless (or (null record) (eq record 'empty))
+                           (let ((inner (or (claude-code-ide-mcp--trace-statement-node
+                                             line col node)
+                                            node)))
+                             ;; Covered is the range relations were read from,
+                             ;; which for a declaration stops at its signature.
+                             (push (cons (treesit-node-start inner)
+                                         (claude-code-ide-mcp--trace-relation-end
+                                          inner))
+                                   (gethash key covered))
+                             (ignore-errors
+                               (claude-code-ide-mcp--trace-edges-at
+                                inner record attributes root query-id box
+                                node-box imports local-scope)))))
+                     (setq unparsed (1+ unparsed)))))
+               ;; Coverage is only known once every match in the file has been
+               ;; read, so the records are finished here, not where built.
+               (dolist (cell (nreverse blocks))
+                 (push (append (nth 2 cell)
+                               (list :unread
+                                     (vconcat
+                                      (claude-code-ide-mcp--trace-unread-names
+                                       (nth 1 cell)
+                                       (gethash (nth 0 cell) covered)))))
+                       records))))))))
      by-file)
     (list :records (nreverse records)
           ;; The declarations edges start at are stored too, but kept out of
@@ -1073,8 +1262,11 @@ so its provenance survives the rebuild."
         (asked '()))
     (dolist (query (seq-take (reverse (plist-get known :queries))
                              claude-code-ide-mcp--trace-replay-cap))
-      (let* ((matches (claude-code-ide-mcp--grep-block-search
-                       (plist-get query :pattern) file))
+      ;; The trace's own search, not the shared one: the collector reads a
+      ;; match as (FILE LINE . COL) and takes its boundary from the column,
+      ;; which the shared parser throws away.
+      (let* ((matches (car (claude-code-ide-mcp--trace-search
+                            (plist-get query :pattern) file)))
              (collected (and matches
                              (claude-code-ide-mcp--trace-collect
                               matches root (plist-get query :id)))))
@@ -1168,31 +1360,62 @@ Returns a plist of :records :edges :gone :deleted :changed :replayed and
   (funcall (if (fboundp 'eglot-uri-to-path) 'eglot-uri-to-path 'eglot--uri-to-path)
            uri))
 
-(defun claude-code-ide-mcp--trace-definition-at (file line col)
-  "Return (TARGET-FILE . TARGET-LINE) for what is defined at FILE LINE COL.
-The server is asked at the reference itself rather than by name, because a
-name query cannot tell a definition from a re-export of it, and an endpoint
-that names the wrong file is the failure this graph exists to prevent."
-  (ignore-errors
-    (claude-code-ide-mcp--at-position
-     file line col
-     (lambda ()
-       (when-let* ((server (eglot-current-server))
-                   (raw (condition-case nil
-                            (eglot--request
-                             server :textDocument/definition
-                             (claude-code-ide-mcp--textdoc-position-params)
-                             :timeout 10)
-                          (error nil)))
+(defun claude-code-ide-mcp--trace-definitions-in (file positions)
+  "Ask the server what FILE's POSITIONS define, in one visit to FILE.
+POSITIONS are (LINE . COL) cells; the answer is a table from each of them to
+a (TARGET-FILE . TARGET-LINE) pair, with the positions the server would not
+answer simply absent.
+
+The server is asked at the reference itself rather than by name, since a name
+query cannot tell a definition from a re-export of it.  That is one request
+per reference and unavoidable; one buffer visit per reference is not, and is
+what this exists to avoid -- the file is visited, checked and named once.
+
+Positions are sorted and walked forward: the caller's order is a string sort,
+and the line is carried along because `line-number-at-pos' counts from the
+start of the buffer on every call.  A request that errors leaves its position
+out; a quit travels, because the caller reads it as the interruption it is."
+  (let ((out (make-hash-table :test 'equal))
+        (inhibit-redisplay t))
+    (claude-code-ide-mcp-server-with-session-context nil
+      (with-current-buffer (claude-code-ide-mcp--trace-visit file)
+        (when-let* ((server (claude-code-ide-mcp--ensure-eglot file))
+                    (uri (eglot-path-to-uri (buffer-file-name))))
+          (save-excursion
+            (goto-char (point-min))
+            (let ((here 1))
+              (dolist (pos (sort (copy-sequence positions)
+                                 (lambda (a b)
+                                   (or (< (car a) (car b))
+                                       (and (= (car a) (car b))
+                                            (< (cdr a) (cdr b)))))))
+                (forward-line (- (car pos) here))
+                (setq here (car pos))
+                (goto-char (min (+ (line-beginning-position) (cdr pos))
+                                (line-end-position)))
+                (when-let*
+                    ((raw (condition-case nil
+                              (eglot--request
+                               server :textDocument/definition
+                               (list :textDocument (list :uri uri)
+                                     ;; eglot's conversion: the protocol
+                                     ;; counts UTF-16 code units.
+                                     :position (eglot--pos-to-lsp-position
+                                                (point)))
+                               :timeout 10)
+                            (error nil)))
                    (hit (cond ((vectorp raw) (and (> (length raw) 0) (aref raw 0)))
                               ((null raw) nil)
                               (t raw)))
-                   (uri (or (plist-get hit :targetUri) (plist-get hit :uri)))
+                   (target (or (plist-get hit :targetUri) (plist-get hit :uri)))
                    (range (or (plist-get hit :targetSelectionRange)
                               (plist-get hit :targetRange)
                               (plist-get hit :range))))
-         (cons (claude-code-ide-mcp--trace-uri-to-path uri)
-               (1+ (plist-get (plist-get range :start) :line))))))))
+                  (puthash pos
+                           (cons (claude-code-ide-mcp--trace-uri-to-path target)
+                                 (1+ (plist-get (plist-get range :start) :line)))
+                           out))))))))
+    out))
 
 (defun claude-code-ide-mcp--trace-declaration-records-at (file lines root query-id)
   "Return a table of LINE to declaration record for FILE, visiting it once.
@@ -1202,7 +1425,7 @@ lines wanted from a file are answered in a single visit."
   (let ((out (make-hash-table :test 'eql)))
     (when (and file (file-readable-p file))
       (let ((inhibit-redisplay t))
-        (claude-code-ide-mcp--with-temp-visit file
+        (with-current-buffer (claude-code-ide-mcp--trace-visit file)
           (claude-code-ide-mcp--trace-with-feature-cache
             ;; The imports are read here too.  Two producers build a record
             ;; for the same declaration -- this one and the edge source -- and
@@ -1300,24 +1523,35 @@ already computable, and an endpoint nobody got to resolve is exactly the
     ;; rather than throwing away a trace whose blocks are all collected.
     (condition-case nil
         (progn
-          (dolist (key order)
-            (let* ((end (gethash key refs))
-                   (file (plist-get end :file)))
+          ;; Grouped by the file the reference sits in: that file is opened,
+          ;; checked and named once instead of once per reference.
+          (let ((by-source (make-hash-table :test 'equal))
+                (sources '()))
+            (dolist (key order)
+              (let* ((end (gethash key refs))
+                     (file (plist-get end :file)))
+                (unless (gethash file by-source) (push file sources))
+                (push (cons key (cons (plist-get end :line) (plist-get end :col)))
+                      (gethash file by-source))))
+            (dolist (file (nreverse sources))
               (puthash file t visited)
-              (let ((loc (claude-code-ide-mcp--trace-definition-at
-                          file (plist-get end :line) (plist-get end :col))))
-                (puthash key
-                         (cond
-                          ((null loc) nil)
-                          ;; A definition outside the project is real but not
-                          ;; this graph's to hold: a node id reaching into a
-                          ;; package cache would key on a path that changes
-                          ;; with every upgrade.
-                          ((not (string-prefix-p root
-                                                 (expand-file-name (car loc))))
-                           'external)
-                          (t loc))
-                         locations))))
+              (let* ((cells (nreverse (gethash file by-source)))
+                     (found (claude-code-ide-mcp--trace-definitions-in
+                             file (mapcar #'cdr cells))))
+                (dolist (cell cells)
+                  (let ((loc (gethash (cdr cell) found)))
+                    (puthash (car cell)
+                             (cond
+                              ((null loc) nil)
+                              ;; A definition outside the project is real but
+                              ;; not this graph's to hold: a node id reaching
+                              ;; into a package cache would key on a path that
+                              ;; changes with every upgrade.
+                              ((not (string-prefix-p root
+                                                     (expand-file-name (car loc))))
+                               'external)
+                              (t loc))
+                             locations))))))
           (let ((by-file (make-hash-table :test 'equal)))
             (maphash (lambda (_key loc)
                        (when (consp loc)
@@ -1424,17 +1658,48 @@ the same edge is derived more than once within a single trace."
           (plist-get record :from)
           (plist-get record :to)))
 
+(defun claude-code-ide-mcp--trace-merge-unread (records known)
+  "Return RECORDS with each :unread reconciled against what KNOWN holds.
+The intersection of what this run left unread with what the store left
+unread is what nobody has followed, so the field only ever shrinks.  A
+changed hash means the stored list is about other text, and this run's answer
+stands alone.
+
+A record that measured nothing inherits the stored list instead.  Coverage
+belongs to the node, not to the producer that happened to write it: the same
+id arrives as a block one run and as the far end of an edge the next, and
+only the block reads what it holds.  Without this the endpoint is classified
+as a change, written back without the field, and the node reads unmeasured
+from then on."
+  (mapcar
+   (lambda (rec)
+     (let* ((id (plist-get rec :id))
+            (mine (plist-get rec :unread))
+            (theirs (gethash id (plist-get known :node-unread)))
+            (same (equal (gethash id (plist-get known :nodes))
+                         (plist-get rec :hash))))
+       (cond
+        ((not (and theirs same)) rec)
+        (mine (plist-put (copy-sequence rec)
+                         :unread
+                         (vconcat (seq-intersection (append mine nil)
+                                                    (append theirs nil)))))
+        (t (plist-put (copy-sequence rec) :unread theirs)))))
+   records))
+
 (defun claude-code-ide-mcp--trace-classify (records known changed-imports)
   "Split RECORDS against what KNOWN holds, given CHANGED-IMPORTS by file.
 Returns a plist of :new :changed :context :moved and :unchanged record lists.
 
-A `context' node is the one this whole mechanism exists for: its own text is
-untouched, so its hash agrees, but an import it names now resolves somewhere
-else, and reporting it as unchanged would be a lie about meaning.  A `moved'
-node only shifted lines, and is written back quietly so the locator keeps up."
+A `context' node is what this mechanism exists for: its text is untouched, so
+its hash agrees, but an import it names now resolves elsewhere, and calling
+it unchanged would be a lie about meaning.  A `moved' node is the same code
+in a different place, or with less of it left unread; it is written back
+quietly so the locator and the coverage keep up."
   (let ((hashes (plist-get known :nodes))
         (lines (plist-get known :node-lines))
         (uses (plist-get known :node-uses))
+        (unread (plist-get known :node-unread))
         (new '()) (changed '()) (context '()) (moved '()) (unchanged '()))
     (dolist (rec records)
       (let* ((id (plist-get rec :id))
@@ -1456,7 +1721,15 @@ node only shifted lines, and is written back quietly so the locator keeps up."
                    ;; how much code it covers, and the clone answer orders by
                    ;; exactly that, so it is quietly written back with one.
                    (null (gethash id (plist-get known :node-spans)))
-                   (not (equal (gethash id lines) (plist-get rec :line))))
+                   (not (equal (gethash id lines) (plist-get rec :line)))
+                   ;; Presence first, contents second.  An empty vector and an
+                   ;; absent field both flatten to nil, and they mean
+                   ;; different things: measured with nothing left, against
+                   ;; never measured.
+                   (not (eq (null (gethash id unread))
+                            (null (plist-get rec :unread))))
+                   (not (equal (append (gethash id unread) nil)
+                               (append (plist-get rec :unread) nil))))
                (push rec moved))
               (t (push rec unchanged)))))
     (list :new (nreverse new)
@@ -1554,15 +1827,52 @@ second is the answer."
           (length (plist-get refreshed :gone))
           (plist-get refreshed :replayed)))
 
-(defun claude-code-ide-mcp--trace-render (records counts query store omitted
+(defconst claude-code-ide-mcp--trace-unread-nodes-shown 10
+  "How many nodes with unfollowed names one trace report lists by name.")
+
+(defconst claude-code-ide-mcp--trace-unread-names-shown 8
+  "How many of a node's unfollowed names one trace report prints.")
+
+(defun claude-code-ide-mcp--trace-render-unread (records)
+  "Render what RECORDS name inside themselves and nobody has followed.
+Printing it is what keeps the rest of the answer from reading as the whole."
+  (let* ((left (seq-filter (lambda (rec) (> (length (plist-get rec :unread)) 0))
+                           records))
+         (names (apply #'+ (mapcar (lambda (rec) (length (plist-get rec :unread)))
+                                   left))))
+    (if (null left)
+        ""
+      (format "unread: %d names in %d of these blocks, never followed -- seed one of them to go a hop further\n%s"
+              names (length left)
+              (mapconcat
+               (lambda (rec)
+                 (let ((held (append (plist-get rec :unread) nil)))
+                   (format "  %s  %s%s\n"
+                           (plist-get rec :id)
+                           (string-join
+                            (seq-take held
+                                      claude-code-ide-mcp--trace-unread-names-shown)
+                            " ")
+                           (if (> (length held)
+                                  claude-code-ide-mcp--trace-unread-names-shown)
+                               (format " +%d"
+                                       (- (length held)
+                                          claude-code-ide-mcp--trace-unread-names-shown))
+                             ""))))
+               (seq-take (seq-sort-by (lambda (rec) (length (plist-get rec :unread)))
+                                      #'> left)
+                         claude-code-ide-mcp--trace-unread-nodes-shown)
+               "")))))
+
+(defun claude-code-ide-mcp--trace-render (records counts query store
                                                   collected resolved fresh-edges
                                                   refreshed)
   "Render the whole trace report.
 RECORDS are the node records, COUNTS the plist from
 `claude-code-ide-mcp--trace-classify', QUERY the query record, STORE the
-store path, OMITTED the file count dropped by the cap, COLLECTED the plist
-from `claude-code-ide-mcp--trace-collect', RESOLVED the plist from
-`claude-code-ide-mcp--trace-resolve' and FRESH-EDGES those it added."
+store path, COLLECTED the plist from `claude-code-ide-mcp--trace-collect',
+RESOLVED the plist from `claude-code-ide-mcp--trace-resolve' and FRESH-EDGES
+those it added."
   (concat
    (claude-code-ide-mcp--trace-render-answer records)
    (claude-code-ide-mcp--trace-render-edges resolved fresh-edges)
@@ -1584,17 +1894,17 @@ from `claude-code-ide-mcp--trace-collect', RESOLVED the plist from
                             "  "))
      "")
    (format "store: %s\n" store)
-   (format "frontier: %d files omitted by cap, %d matches with no tree-sitter block, %d comment-only blocks, %d files put under the language server%s\n"
-           omitted
+   (format "frontier: %d matches with no tree-sitter block, %d comment-only blocks, %d files put under the language server%s\n"
            (plist-get collected :unparsed)
            (plist-get collected :empty)
            (plist-get resolved :files)
            (if (plist-get resolved :stopped)
                (format ", resolution stopped with %d endpoints left as names -- the blocks and the answer above are complete"
                        (plist-get resolved :left))
-             ""))))
+             ""))
+   (claude-code-ide-mcp--trace-render-unread records)))
 
-(defun claude-code-ide-mcp-trace (pattern &optional path cap ask files local_scope)
+(defun claude-code-ide-mcp-trace (pattern &optional path cap ask local_scope)
   "Trace PATTERN through the project and record what it finds as graph nodes.
 Every hit grows to its enclosing tree-sitter block, which becomes a node
 identified by file, declaration path and, for a block below a declaration,
@@ -1603,105 +1913,111 @@ hash of its text after comments and whitespace are removed, so blocks sharing
 a hash are clones however they are named.  New and changed nodes are
 appended to the project's JSONL store, and the report states how many, so the
 caller never has to take the write on trust.  PATH narrows the search root,
-CAP bounds the blocks examined (default 200, 0 = unlimited), FILES bounds the
-files visited (default 100, 0 = unlimited) and ASK records the question this
-query answers."
+CAP bounds the blocks examined (default 200, 0 = unlimited) and ASK records
+the question this query answers.  LOCAL_SCOPE keeps the references that never
+leave the scope they sit in."
   (condition-case err
-      (let* ((probe (claude-code-ide-mcp--trace-search pattern path))
-             (cap (if (numberp cap) cap claude-code-ide-mcp--trace-block-cap))
-             (files (if (numberp files) files claude-code-ide-mcp--trace-file-cap))
-             (root (claude-code-ide-mcp--trace-project-root
-                    (claude-code-ide-mcp--grep-block-root path)))
-             (store (claude-code-ide-mcp--trace-store-file root))
-             (query-id (format-time-string "q%Y%m%dT%H%M%S%3N"))
-             (limited (claude-code-ide-mcp--limit-matches-by-file
-                       (car probe)
-                       files))
-             (known (claude-code-ide-mcp--trace-known store))
-             (refreshed (claude-code-ide-mcp--trace-refresh root known))
-             (collected (claude-code-ide-mcp--trace-collect
-                         (car limited) root query-id
-                         (claude-code-ide-mcp--flag-set-p local_scope)))
-             (records (if (> cap 0)
-                          (seq-take (plist-get collected :records) cap)
-                        (plist-get collected :records)))
-             (resolved (claude-code-ide-mcp--trace-resolve
-                        (append (plist-get refreshed :edges)
-                                (plist-get collected :edges))
-                        root query-id))
-             (file-records (claude-code-ide-mcp--trace-dedupe-files
-                            (append (plist-get refreshed :files)
-                                    (plist-get collected :files))
-                            known))
-             (counts (claude-code-ide-mcp--trace-classify
-                      (claude-code-ide-mcp--trace-dedupe-nodes
-                       (append (plist-get refreshed :records)
-                               records
-                               (plist-get collected :endpoints)
-                               (plist-get resolved :nodes)))
-                      known
-                      (claude-code-ide-mcp--trace-changed-imports
-                       file-records known)))
-             ;; Deduped before it is counted, because this number is the
-             ;; caller's receipt for what reached the store.  Reporting the
-             ;; raw derivations instead says 618 where 310 were written.
-             (fresh-edges (claude-code-ide-mcp--trace-dedupe-edges
-                           (seq-remove
-                            (lambda (edge)
-                              (gethash (claude-code-ide-mcp--trace-edge-key edge)
-                                       (plist-get known :edges)))
-                            (plist-get resolved :edges))))
-             (query (list :k "query" :id query-id :tool "rg"
-                          :pattern pattern
-                          :path (or path "")
-                          :ask (or ask "")
-                          :n (length records)
-                          :at (format-time-string "%FT%T%z"))))
-        (when (cdr probe)
-          ;; A search that could not run is not a search that found nothing,
-          ;; so no absence is written for it.  What is written is a
-          ;; retraction: an earlier run of this same pattern, before the exit
-          ;; status was read, may have recorded its silence as a proof of
-          ;; absence, and finding out that the pattern cannot be searched at
-          ;; all is exactly the evidence that withdraws it.
-          (when (seq-find (lambda (a)
-                            (and (equal (plist-get a :claim) pattern)
-                                 (null (plist-get a :by))))
-                          (plist-get known :absent))
-            (claude-code-ide-mcp--trace-append
-             store
-             (list (list :k "retracted" :claim pattern :q query-id
-                         :reason (cdr probe)
-                         :at (format-time-string "%FT%T%z")))))
-          (error "Search did not run: %s" (cdr probe)))
-        (claude-code-ide-mcp--trace-append
-         store
-         (append (list query)
-                 file-records
-                 (plist-get refreshed :gone)
-                 (plist-get counts :new)
-                 (plist-get counts :changed)
-                 (plist-get counts :context)
-                 (plist-get counts :moved)
-                 fresh-edges
-                 (unless (or records (plist-get resolved :edges))
-                   ;; An absence carries what proved it.  Without that field
-                   ;; there is no way to tell a search that ran and found
-                   ;; nothing from one that never ran -- and a record written
-                   ;; before this tool read ripgrep's exit status is exactly
-                   ;; the second kind, so readers must be able to spot one.
-                   (list (list :k "absent" :q query-id :claim pattern
-                               :by "rg exited 1: searched, matched nothing")))
-                 (list (claude-code-ide-mcp--trace-scan-record root))))
-        (claude-code-ide-mcp--trace-render
-         records counts query store (cdr limited) collected
-         resolved fresh-edges refreshed))
+      (claude-code-ide-mcp--trace-with-visits
+        (let* ((probe (claude-code-ide-mcp--trace-search pattern path))
+               (cap (if (numberp cap) cap claude-code-ide-mcp--trace-block-cap))
+               (root (claude-code-ide-mcp--trace-project-root
+                      (claude-code-ide-mcp--grep-block-root path)))
+               (store (claude-code-ide-mcp--trace-store-file root))
+               (query-id (format-time-string "q%Y%m%dT%H%M%S%3N"))
+               (known (claude-code-ide-mcp--trace-known store))
+               (refreshed (claude-code-ide-mcp--trace-refresh root known))
+               (collected (claude-code-ide-mcp--trace-collect
+                           (car probe) root query-id
+                           (claude-code-ide-mcp--flag-set-p local_scope)))
+               (merged (claude-code-ide-mcp--trace-merge-unread
+                        (plist-get collected :records) known))
+               (records (if (> cap 0)
+                            (seq-take merged cap)
+                          merged))
+               (resolved (claude-code-ide-mcp--trace-resolve
+                          (append (plist-get refreshed :edges)
+                                  (plist-get collected :edges))
+                          root query-id))
+               (file-records (claude-code-ide-mcp--trace-dedupe-files
+                              (append (plist-get refreshed :files)
+                                      (plist-get collected :files))
+                              known))
+               (counts (claude-code-ide-mcp--trace-classify
+                        ;; Every producer goes through the merge, not just the
+                        ;; ones that measure coverage: an endpoint record for
+                        ;; a block already in the store must carry that
+                        ;; block's `:unread' forward rather than erase it.
+                        ;; Deduped first, so a block record wins the id.
+                        (claude-code-ide-mcp--trace-merge-unread
+                         (claude-code-ide-mcp--trace-dedupe-nodes
+                          (append (plist-get refreshed :records)
+                                  records
+                                  (plist-get collected :endpoints)
+                                  (plist-get resolved :nodes)))
+                         known)
+                        known
+                        (claude-code-ide-mcp--trace-changed-imports
+                         file-records known)))
+               ;; Deduped before it is counted, because this number is the
+               ;; caller's receipt for what reached the store.  Reporting the
+               ;; raw derivations instead says 618 where 310 were written.
+               (fresh-edges (claude-code-ide-mcp--trace-dedupe-edges
+                             (seq-remove
+                              (lambda (edge)
+                                (gethash (claude-code-ide-mcp--trace-edge-key edge)
+                                         (plist-get known :edges)))
+                              (plist-get resolved :edges))))
+               (query (list :k "query" :id query-id :tool "rg"
+                            :pattern pattern
+                            :path (or path "")
+                            :ask (or ask "")
+                            :n (length records)
+                            :at (format-time-string "%FT%T%z"))))
+          (when (cdr probe)
+            ;; A search that could not run is not a search that found nothing,
+            ;; so no absence is written for it.  What is written is a
+            ;; retraction: an earlier run of this same pattern, before the exit
+            ;; status was read, may have recorded its silence as a proof of
+            ;; absence, and finding out that the pattern cannot be searched at
+            ;; all is exactly the evidence that withdraws it.
+            (when (seq-find (lambda (a)
+                              (and (equal (plist-get a :claim) pattern)
+                                   (null (plist-get a :by))))
+                            (plist-get known :absent))
+              (claude-code-ide-mcp--trace-append
+               store
+               (list (list :k "retracted" :claim pattern :q query-id
+                           :reason (cdr probe)
+                           :at (format-time-string "%FT%T%z")))))
+            (error "Search did not run: %s" (cdr probe)))
+          (claude-code-ide-mcp--trace-append
+           store
+           (append (list query)
+                   file-records
+                   (plist-get refreshed :gone)
+                   (plist-get counts :new)
+                   (plist-get counts :changed)
+                   (plist-get counts :context)
+                   (plist-get counts :moved)
+                   fresh-edges
+                   (unless (or records (plist-get resolved :edges))
+                     ;; An absence carries what proved it.  Without that field
+                     ;; there is no way to tell a search that ran and found
+                     ;; nothing from one that never ran -- and a record written
+                     ;; before this tool read ripgrep's exit status is exactly
+                     ;; the second kind, so readers must be able to spot one.
+                     (list (list :k "absent" :q query-id :claim pattern
+                                 :by "rg exited 1: searched, matched nothing")))
+                   (list (claude-code-ide-mcp--trace-scan-record root))))
+          (claude-code-ide-mcp--trace-render
+           records counts query store collected
+           resolved fresh-edges refreshed)))
     (error (format "Error tracing: %s" (error-message-string err)))))
 
 (claude-code-ide-make-tool
  :function #'claude-code-ide-mcp-trace
  :name "trace"
- :description "Search a seed pattern, grow every hit to its enclosing tree-sitter block, and record each block as a graph node in a per-project JSONL store. A node is identified by file, declaration path and, when it sits below a declaration, its position inside it -- never a line number -- and carries a hash of its text with comments and whitespace removed, so blocks sharing a hash are clones however they are named. Each clone group names the node kind, since a duplicated idiom is usually an inner block rather than a whole function. Comment-only blocks are refused. Every registration, ordering, attribute and signature the seed reaches becomes an edge, whose endpoints the language server resolves at the reference itself, and an endpoint it will not resolve stays a bare name rather than passing as a resolved one. Answers the clone query directly and reports how many nodes and edges were appended, so the caller can check the write instead of trusting it. Args: pattern (rg regex seed), path (search root, default project root), cap (max blocks, default 200, 0=unlimited), ask (the question this query answers, stored with it), files (max files visited, default 100, 0=unlimited). The report ends with what the run did not reach; read it before calling an answer complete."
+ :description "Search a seed pattern, grow every hit to its enclosing tree-sitter block, and record each block as a graph node in a per-project JSONL store. A node is identified by file, declaration path and, when it sits below a declaration, its position inside it -- never a line number -- and carries a hash of its text with comments and whitespace removed, so blocks sharing a hash are clones however they are named. Each clone group names the node kind, since a duplicated idiom is usually an inner block rather than a whole function. Comment-only blocks are refused. Every registration, ordering, attribute and signature the seed reaches becomes an edge, whose endpoints the language server resolves at the reference itself, and an endpoint it will not resolve stays a bare name rather than passing as a resolved one. Relations are read from the statement each match sits in, not from the whole block, so a one-line match does not have every name of its enclosing function recorded as something the seed reached; what the block holds outside those statements is listed as `unread' -- named, never followed, and offered as the next seed. Answers the clone query directly and reports how many nodes and edges were appended, so the caller can check the write instead of trusting it. Args: pattern (rg regex seed), path (search root, default project root), cap (max blocks, default 200, 0=unlimited), ask (the question this query answers, stored with it). Every file the seed matches is read -- scope a broad seed with path rather than expecting the tool to stop early. The report ends with what the run did not reach; read it before calling an answer complete."
  :args '((:name "pattern"
           :type string
           :description "rg regex to seed the trace")
@@ -1716,10 +2032,6 @@ query answers."
          (:name "ask"
           :type string
           :description "The question this query answers; stored alongside it"
-          :optional t)
-         (:name "files"
-          :type number
-          :description "Max distinct files visited; default 100, 0=unlimited. Raise it when the question needs every site, since a capped answer is not the whole answer"
           :optional t)))
 
 ;;; graph: read what trace wrote, without touching code or a language server.
@@ -1753,16 +2065,27 @@ and a name matching several nodes is reported as such rather than guessed at."
 
 (defun claude-code-ide-mcp--graph-touching (id kinds direction known)
   "Return the edges of KINDS in KNOWN that touch ID in DIRECTION.
-Each comes back as (SIDE . EDGE), SIDE being `in' or `out'."
-  (let ((out '()))
+Each comes back as (SIDE JOIN EDGE): SIDE is `in' or `out', JOIN is `id' when
+the endpoint is this node's id and `name' when it is only this node's name.
+
+An endpoint the server would not resolve is stored as a bare name, so an
+edge into a node is written with the node's id at one end and a plain name at
+the other.  Matching on the id alone answers nothing for the incoming
+direction -- a store whose endpoints all stayed names answers nothing at all
+-- while matching the name silently claims a resolution nobody made.  Both
+are returned and the join is reported."
+  (let ((alias (and (gethash id (plist-get known :nodes))
+                    (claude-code-ide-mcp--graph-name-of id)))
+        (out '()))
     (dolist (edge (plist-get known :edge-list))
       (when (or (null kinds) (member (plist-get edge :kind) kinds))
-        (when (and (memq direction '(out both))
-                   (equal (plist-get edge :from) id))
-          (push (cons 'out edge) out))
-        (when (and (memq direction '(in both))
-                   (equal (plist-get edge :to) id))
-          (push (cons 'in edge) out))))
+        (dolist (side '(out in))
+          (when (memq direction (list side 'both))
+            (let ((end (plist-get edge (if (eq side 'out) :from :to)))
+                  (kind (plist-get edge (if (eq side 'out) :from_kind :to_kind))))
+              (cond ((equal end id) (push (list side 'id edge) out))
+                    ((and alias (equal kind "name") (equal end alias))
+                     (push (list side 'name edge) out))))))))
     (nreverse out)))
 
 (defun claude-code-ide-mcp--graph-locator (id known)
@@ -1771,8 +2094,36 @@ Each comes back as (SIDE . EDGE), SIDE being `in' or `out'."
         (line (gethash id (plist-get known :node-lines))))
     (if (and file line) (format "  %s:%d" file line) "")))
 
-(defun claude-code-ide-mcp--graph-edge-line (side edge known level)
-  "Render EDGE seen from SIDE at LEVEL, reading locators out of KNOWN."
+(defun claude-code-ide-mcp--graph-unread-line (id known)
+  "Return what ID holds that no query has followed, read out of KNOWN.
+Three answers, kept apart like the store's other silences: names still
+outstanding, nothing outstanding, and nobody having looked.  A node recorded
+only as the far end of an edge is the third."
+  (let ((held (gethash id (plist-get known :node-unread))))
+    (cond
+     ((null (gethash id (plist-get known :nodes))) "")
+     ((null held)
+      "  unread: unmeasured -- this node was recorded without reading what it holds\n")
+     ((zerop (length held))
+      "  unread: none -- every call and type in this node has been followed\n")
+     (t
+      (let ((names (append held nil)))
+        (format "  unread: %d never followed -- %s%s\n"
+                (length names)
+                (string-join
+                 (seq-take names claude-code-ide-mcp--trace-unread-names-shown)
+                 " ")
+                (if (> (length names)
+                       claude-code-ide-mcp--trace-unread-names-shown)
+                    (format " +%d"
+                            (- (length names)
+                               claude-code-ide-mcp--trace-unread-names-shown))
+                  "")))))))
+
+(defun claude-code-ide-mcp--graph-edge-line (side join edge known level)
+  "Render EDGE seen from SIDE at LEVEL, reading locators out of KNOWN.
+JOIN is how the edge was reached: `id' or `name', and a name join is said so,
+since it rests on the two ends sharing a name rather than on a resolution."
   (let* ((other (if (eq side 'in) (plist-get edge :from) (plist-get edge :to)))
          (kind (if (eq side 'in)
                    (plist-get edge :from_kind)
@@ -1780,7 +2131,7 @@ Each comes back as (SIDE . EDGE), SIDE being `in' or `out'."
          (mark (cond ((equal kind "node") "")
                      ((equal kind "external") "  (external)")
                      (t "  (unresolved name)"))))
-    (format "%s%s %-10s %s%s%s   [%s %s]"
+    (format "%s%s %-10s %s%s%s%s   [%s %s]"
             (make-string (* 2 level) ?\s)
             (if (eq side 'in) "<-" "->")
             (plist-get edge :kind)
@@ -1789,6 +2140,7 @@ Each comes back as (SIDE . EDGE), SIDE being `in' or `out'."
                 (claude-code-ide-mcp--graph-locator other known)
               "")
             mark
+            (if (eq join 'name) "  (matched by name)" "")
             (plist-get edge :ev)
             (plist-get edge :q))))
 
@@ -1801,15 +2153,17 @@ answer rests on, so the caller can print the queries a reviewer would re-run."
         ((walk (node level)
            (when (and (< level depth) (not (gethash node seen)))
              (puthash node t seen)
-             (dolist (pair (claude-code-ide-mcp--graph-touching
+             (dolist (cell (claude-code-ide-mcp--graph-touching
                             node kinds direction known))
-               (let* ((edge (cdr pair))
-                      (other (if (eq (car pair) 'in)
+               (let* ((side (nth 0 cell))
+                      (join (nth 1 cell))
+                      (edge (nth 2 cell))
+                      (other (if (eq side 'in)
                                  (plist-get edge :from)
                                (plist-get edge :to))))
                  (puthash (plist-get edge :q) t used)
                  (push (claude-code-ide-mcp--graph-edge-line
-                        (car pair) edge known level)
+                        side join edge known level)
                        lines)
                  (walk other (1+ level)))))))
       (walk id 0))
@@ -1938,6 +2292,7 @@ comes to look like a fact about the code."
                          (claude-code-ide-mcp--graph-locator id known)
                          (let ((hash (gethash id (plist-get known :nodes))))
                            (if hash (format "  #%s" hash) "  (endpoint only)")))
+                 (claude-code-ide-mcp--graph-unread-line id known)
                  (if lines
                      (concat (string-join shown "\n") "\n")
                    (format "  no %s edge here -- traced, and there is none\n"
@@ -1959,7 +2314,7 @@ comes to look like a fact about the code."
 (claude-code-ide-make-tool
  :function #'claude-code-ide-mcp-graph
  :name "graph"
- :description "Read the graph `trace' recorded, with no language-server round trip and without opening any code. Give it a node id or a bare name to see what registers, orders, requires or takes that thing, and what it takes in turn; leave the name out to see what the store already holds, which is the cheap way to find out whether a question has been answered before. Every edge line carries its evidence kind and the id of the query that produced it, and those queries are printed underneath so a reviewer can re-run them instead of trusting the answer. Emptiness is reported three ways -- never traced, traced with no such edge, or a name matching several nodes -- because those are different facts. Args: from (node id or name; omit for a summary), kinds (comma-separated edge kinds), depth (hops, default 1), direction (in | out | both), path (project, default the current one)."
+ :description "Read the graph `trace' recorded, with no language-server round trip and without opening any code. Give it a node id or a bare name to see what registers, orders, requires or takes that thing, and what it takes in turn; leave the name out to see what the store already holds, which is the cheap way to find out whether a question has been answered before. Every edge line carries its evidence kind and the id of the query that produced it, and those queries are printed underneath so a reviewer can re-run them instead of trusting the answer. Emptiness is reported three ways -- never traced, traced with no such edge, or a name matching several nodes -- because those are different facts. A node also says what it holds that nobody has followed, again in three states: names still outstanding, nothing outstanding, or never measured, so the edges it does carry cannot read as everything it has. Args: from (node id or name; omit for a summary), kinds (comma-separated edge kinds), depth (hops, default 1), direction (in | out | both), path (project, default the current one)."
  :args '((:name "from"
           :type string
           :description "Node id or bare name; omit to summarise the store"
