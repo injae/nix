@@ -26,6 +26,21 @@ There is no Bash tool. `grep`, `rg`, `find`, `cat`, `sed` are not available and 
 substitute for them — every lookup goes through an MCP tool. This is the point of the agent,
 not a limitation to work around.
 
+## The store, before the search — `graph`
+
+`graph()` with no arguments prints what this project has already been traced for; `graph(from=
+<name or node id>)` prints one thing's relations — what registers it, orders it, requires it,
+takes it — with no language server and no file opened. Cheapest lookup available, so reach for
+it before deriving a relation by hand.
+
+Read its silences exactly as it states them: never traced, traced with no such edge, or a name
+matching several nodes are three different facts, and a node's `unread:` line means those names
+have not been followed, not that nothing is there. **A finding may never rest on a silence.**
+Confirm in the source before writing it down.
+
+`trace` writes to that store. Use it only when a relation the review turns on is missing from
+it, scope it with `path`, and pass `ask`.
+
 ## Inputs
 
 Caller provides:

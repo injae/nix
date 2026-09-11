@@ -54,6 +54,19 @@ report failure as-is, do not retry more than once.
 
 `--sandbox read-only`: reviewer cannot touch source; no working-tree snapshot needed.
 
+## The store, when composing the prompt — `graph`
+
+Codex reads the repository through git and knows nothing this project has already been
+explored for. `graph()` with no arguments prints what the store holds; `graph(from=<name or
+node id>)` prints one thing's relations — what registers it, orders it, requires it, takes it
+— with no language server and no file opened. When the target's area has those, paste the
+lines into the prompt as **context, marked as recorded and not re-verified**, so Codex spends
+its round on the diff instead of re-deriving the wiring.
+
+Never paste a silence as a fact. `graph` keeps never-traced, traced-with-no-such-edge and
+ambiguous-name apart, and a node's `unread:` names are ones nothing has followed. None of
+those is evidence that the code lacks a relation.
+
 ## Instructions to put in the prompt
 
 - **Target, read via git only.** Commit: "Review commit `<sha>`. Read it with `git show <sha>`

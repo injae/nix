@@ -24,6 +24,28 @@ For "what calls X" or "definition plus every call site" use symbol-graph (depth 
 For "what changed" questions use review-changes (summary → blocks → diff), never Bash git diff/show.
 Never suggest fixes. Locate and report only.
 
+## Ask the store before you search — `graph`, then `trace`
+
+`graph()` with no arguments prints what this project has already been asked and what it
+holds. It reads one file, needs no language server, and is the cheapest call available:
+**run it first on any exploration that is not a single named lookup.** A question already
+answered there costs nothing — say so and spend the budget on what the store lacks.
+
+`trace(pattern, path, ask)` answers a question and records it: blocks, their clone hashes,
+the relations the seed reached, and the names it did not follow. Use it when the answer is
+worth having next session — an area that will be explored again, or a claim a reviewer must
+re-check. Pass `ask`: it stores the question beside the query, and a seed without one leaves
+data nobody can interpret. Scope with `path` — every file the seed matches is read.
+
+Read the report's `unread:` lines as your remaining leads, not as noise: relations come from
+the statement each match sits in, so the blocks usually hold names nothing has followed yet.
+Those names belong in the `tmp/` file under "leads you did not chase", with their node ids,
+so the next session can `graph(from=<id>)` or seed one of them directly.
+
+`graph` keeps three silences apart, and so must your report: never traced, traced with no
+such edge, and a name matching several nodes. Reporting the first as the second turns a gap
+in the search into a claim about the code.
+
 ## Read the repo's structure doc first, when it has one
 
 Some repos keep a per-axis map (`docs/map/<axis>.md` in this one) with fixed tables — symbols

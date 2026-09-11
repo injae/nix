@@ -22,8 +22,8 @@ Multi-file or open-ended explore (find X, what call Y, map dir): use `Explore` a
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
 | Content search + enclosing block | `grep-block(pattern, path, cap, headers)` | Bash grep |
-| Clone index — blocks sharing normalized content, recorded as graph nodes | `trace(pattern, path, cap, ask, files)` | `grep-block` then read by hand |
-| What registers / orders / requires a symbol, read back with no LSP round trip | `graph(from, kinds, depth, direction, path)` | re-run `trace` |
+| Record an exploration — clones, relations, and what was left unread | `trace(pattern, path, cap, ask)` | `grep-block` then read by hand |
+| Read back what `trace` recorded, no LSP round trip, no code opened | `graph(from, kinds, depth, direction, path)` | re-run `trace` |
 | What changed (commit / range / tree) | `review-changes(target, mode, path, cap)` | Bash git diff |
 | Repository structure, depth-limited | `structure-tree(path, depth, symbols, pattern, cap)` | Bash ls/find |
 | Structural rewrite | `ast-rewrite(pattern, rewrite, path)` | Edit |
@@ -186,6 +186,62 @@ cannot answer `callees`. Output always name which path made it.
 Prefer `symbol-graph` over `lsp-refs-by-name` when you need caller
 identity or context, not just location.
 
+## Recorded exploration — `trace` then `graph`
+
+`trace` answer a question **and leave the answer behind**. `graph` read it back
+with no language server and no file opened. Use them when question outlive
+one call: same area explored again next session, or answer that reviewer must
+re-check.
+
+```
+graph()                      no args = what has this project already answered?
+                             ← ALWAYS check first. Cheapest call in the table.
+trace(pattern, path, ask)    seed a question, record blocks + relations
+graph(from=<node id>)        read one node's relations back
+```
+
+**`ask` is not optional in practice** — it store the question beside the
+query, so next reader know what the seed was for. Seed without `ask` leave
+data nobody can interpret.
+
+**Scope with `path`.** No file cap any more: every file the seed match get
+read, and one buffer per file stay open for the whole call. Repository-wide
+seed on a common word (`ctx`, `err`) derive relations in the thousands.
+
+### What `trace` report, and what to do with each line
+
+```
+answer: N clone-groups over M blocks     blocks sharing normalized text
+                                         (comments + whitespace removed)
+edges: N (arg, ref, param, contains,     relations the seed reached
+          registers, requires, ...)      + how many endpoint stayed bare names
+unread: N names in M blocks              ← the other half of the answer
+  <node id>  Foo Bar baz +12             names inside those blocks that NO
+                                         query has followed yet
+frontier: ...                            what the run could not reach
+```
+
+`unread` is the next seed. Relations come from the statement each match sit
+in, not the whole block, so a block normally hold names the seed never
+reached. Pick one and `trace` it, or `graph(from=<node id>)` to see what is
+known.
+
+### Three states, never blur them
+
+```
+graph from=X  →  "absent: no node or endpoint named X"   nobody traced it
+              →  "no <kind> edge here -- traced, and there is none"
+              →  "ambiguous: X names N nodes"            pick an id
+node line     →  "unread: 3 never followed -- Foo Bar baz"
+              →  "unread: none"                          fully read
+              →  "unread: unmeasured"                    recorded as an edge
+                                                         endpoint only
+```
+
+"Traced and empty" is a fact about the code. "Never traced" is a fact about
+the search. Read one as the other and a gap in exploration become a claim
+about the repository.
+
 ## Chained pipelines
 
 **Interface change impact** ("If I remove method X, what breaks?")
@@ -208,6 +264,6 @@ Long:  imenu-symbols(file) → field line+col → lsp-refs → symbol-source
 
 ## LSP / eglot notes
 
-- Line 1-based, column 0-based
+- Line 1-based, column 0-based and counted in **characters** from line start — not a display column, so a leading tab is one column, not four
 - `lsp-type-def` limitation: gopls doesn't support typeDefinition for interfaces/struct fields → fall back to `lsp-def`
 - LSP tool auto-start eglot on first call — no prereq need. Use `open-file-lsp` only to pre-warm server before batch of LSP query.
