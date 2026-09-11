@@ -92,7 +92,12 @@
                                                      "NIX_SSL_CERT_FILE"
                                                      "SSL_CERT_FILE"
                                                      "REQUEST_CA_BUNDLE"
-                                                     "NIX_CONFIG_DIR"))
+                                                     "NIX_CONFIG_DIR"
+                                                     ;; jinx compiles its module against enchant,
+                                                     ;; and enchant finds its dictionaries through
+                                                     ;; the XDG data directories.
+                                                     "PKG_CONFIG_PATH"
+                                                     "XDG_DATA_DIRS"))
                 (exec-path-from-shell-arguments '("-l"))
                 (exec-path-from-shell-check-startup-files nil)
                 (exec-path-from-shell-debug nil)

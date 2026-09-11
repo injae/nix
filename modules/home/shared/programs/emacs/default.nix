@@ -63,7 +63,15 @@ in
       glibtool
       rassumfrassum
       enchant
+      # Headers and the .pc file jinx compiles against, named again below. A
+      # store path in an environment variable is no garbage collection root.
+      enchant.dev
     ]);
+
+  # jinx builds its module against enchant through pkg-config, and nixpkgs keeps
+  # the .pc file in the "dev" output. A profile has no setup hook to announce
+  # that, and does not even link lib/pkgconfig, so name the path here.
+  home.sessionVariables.PKG_CONFIG_PATH = "${pkgs.enchant.dev}/lib/pkgconfig\${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}";
 
   programs.zsh = {
     initContent =
