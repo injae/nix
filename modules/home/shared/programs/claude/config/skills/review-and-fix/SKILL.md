@@ -1,9 +1,9 @@
 ---
 name: review-and-fix
 description: >
-  코드 리뷰 결과를 이슈 단위로 순서대로 안내·수정하는 인터랙티브 워크플로우.
-  /review 결과를 받아 CRITICAL → HIGH → MEDIUM 순으로 각 이슈를 Emacs 버퍼에서 보여주고,
-  사용자 확인 후 수정 → 빌드/테스트 검증 → 커밋까지 진행한다.
+  Interactive workflow that walks through review findings one issue at a time and fixes them.
+  Takes a /review result, shows each issue in an Emacs buffer in CRITICAL → HIGH → MEDIUM order,
+  and after the user confirms, applies the fix, verifies the build and tests, and commits.
 triggers:
   - "수정해줘"
   - "리뷰하고 수정해줘"
@@ -17,139 +17,144 @@ version: 1.0.0
 
 # Review-and-Fix Skill
 
-`/review` 결과 기반으로 이슈를 하나씩 설명하고 수정하는 인터랙티브 워크플로우. 사용자 확인/결정이 매 이슈마다 필요하다.
+An interactive workflow that explains and fixes issues one at a time, based on a `/review`
+result. Every issue needs the user's confirmation or decision.
+
+The user is addressed in Korean, as the global instructions require; the templates below give the
+shape, not the language.
 
 ---
 
-## 전제 조건
+## Prerequisite
 
-실행 전 `/emacs-dev`가 먼저 실행되어 있어야 한다.
-`/emacs-dev`가 `mcp__emacs-tools__*` 도구를 로드하므로 `goto-line` 사용 가능 상태여야 한다.
-
----
-
-## 워크플로우
-
-## Step 1 — 이슈 목록 확인
-
-- 현재 대화에 `/review` 결과가 있으면 사용.
-- 없으면 `/review`를 먼저 실행.
-- 이슈를 severity 순으로 정렬: `CRITICAL → HIGH → MEDIUM → LOW`.
+`/emacs-dev` must have run first. It loads the `mcp__emacs-tools__*` tools, so `goto-line` has to
+be available.
 
 ---
 
-## Step 2 — 이슈 큐 구성
+## Workflow
 
-이슈 목록을 내부 큐로 만들고, 각 이슈마다 Step 3을 반복.
+## Step 1 — Collect the issues
+
+- Use the `/review` result already in the conversation.
+- If there is none, run `/review` first.
+- Sort by severity: `CRITICAL → HIGH → MEDIUM → LOW`.
 
 ---
 
-## Step 3 — 이슈 안내 루프 (사용자 확인 1회당 1이슈)
+## Step 2 — Build the queue
 
-각 이슈는 반드시 아래 순서로 처리.
+Turn the list into an internal queue and repeat Step 3 for each issue.
 
-### Step 3-1 (Emacs mode) — 네비게이션
+---
 
-`goto-line` 호출:
+## Step 3 — The issue loop (one issue per confirmation)
+
+Handle every issue in this order.
+
+### Step 3-1 (Emacs mode) — Navigate
+
+Call `goto-line`:
 
 ```text
-file_path: /절대/경로/파일.go
-line: 문제 코드의 첫 라인 (1-based)
+file_path: /absolute/path/file.go
+line: first line of the offending code (1-based)
 ```
 
-코드 창을 찾아 파일을 열고, 대상 라인을 창 상단 근처(5번째 줄)에 배치.
+Find the code window, open the file, and place the target line near the top (the fifth line).
 
-### Step 3-2 — 이슈 설명
+### Step 3-2 — Explain the issue
 
-아래 형식으로 설명:
+Use this shape:
 
 ```text
-## [SEVERITY] ID: 제목
-📍 파일: `경로/파일.go:라인`
+## [SEVERITY] ID: title
+📍 file: `path/file.go:line`
 
-### 문제
-무엇이 잘못됐는지 한 문장.
+### Problem
+One sentence on what is wrong.
 
-### 실행 경로
-버그 발생 경로를 코드 라인 인용으로 단계별 설명.
-예: "1. A() 호출 → 2. B 채널 쓰기 시도 → 3. 수신자 없으면 영원히 블로킹"
+### Path to the bug
+Walk the execution path with quoted code lines.
+e.g. "1. A() is called → 2. writes to channel B → 3. blocks forever when no receiver exists"
 
-### 수정 방향
-바꿀 내용 + 이유.
+### Direction of the fix
+What changes, and why.
 
-### diff 미리보기
+### diff preview
 ```diff
-- 기존 코드
-+ 수정 코드
+- old code
++ new code
 ```
 
-진행: **'응 진행해줘'** / 스킵: **'스킵'**
+Proceed: **'응 진행해줘'** / Skip: **'스킵'**
 ```
 
-### Step 3-3 — 사용자 응답 대기
+### Step 3-3 — Wait for the user
 
-응답 전 다음 작업 금지.
+Do nothing else until they answer.
 
-- 긍정 응답 (`응 진행해줘`) → 수정 적용
-- 스킵/부정/논의 응답 → 이유 메모 후 다음 이슈
+- Yes (`응 진행해줘`) → apply the fix
+- Skip, no, or a discussion → note the reason and move to the next issue
 
-### Step 3-4 — 수정 적용
+### Step 3-4 — Apply the fix
 
-`Edit` 도구로 코드 수정.
+Edit the code with the `Edit` tool.
 
-### Step 3-5 — 빌드/테스트 검증
+### Step 3-5 — Verify build and tests
 
-언어별 명령 순서:
+Per language, in order:
 - Go: `go build ./...` → `go test ./...`
-- TypeScript: `tsc --noEmit` → `npm test` (또는 프로젝트 테스트 명령)
+- TypeScript: `tsc --noEmit` → `npm test` (or the project's test command)
 - Python: `python -m py_compile` → `pytest`
 
-실패 시 즉시 원인 분석/수정. 모두 통과 후 다음 이슈.
+On failure, diagnose and fix at once. Move on only when everything passes.
 
 ---
 
-## Step 4 (Emacs mode) — 논리적 커밋 그룹화
+## Step 4 (Emacs mode) — Group into logical commits
 
-관련 수정이 쌓이거나 사용자가 커밋 요청하면 수행.
+Do this when related fixes have piled up, or when the user asks for a commit.
 
-1. 파일 스테이징 — `git-stage`를 파일별 호출 (`file_path` 지정).
-2. 커밋 버퍼 준비 — `git-prepare-commit` 호출:
-   - `message`: `fix(패키지): 변경 내용 요약`
-   - 버퍼를 열고 메시지를 채우기만 함. 커밋 완료는 하지 않음.
-3. 여기서 멈추고 사용자 안내:
-   > "커밋 메시지를 확인하고 `C-c C-c`로 커밋해주세요. 완료 후 다음 진행을 알려주세요."
-4. 사용자 완료 신호까지 대기.
-
----
-
-## 이슈 설명 품질 기준
-
-- **실행 경로 필수**: A → B → C 실행에서 어떤 조건으로 문제 발생하는지 명시.
-- **코드 인용 포함**: 관련 라인 번호 + 스니펫 포함.
-- **영향 범위 명시**: 언제/어떤 조건에서 실제 발생하는지.
-- **수정 후 동작 설명**: 왜 해결되는지.
-- 설명 부족 지적 이력 고려: 항상 충분한 맥락 제공.
+1. Stage the files — call `git-stage` once per file (pass `file_path`).
+2. Prepare the commit buffer — call `git-prepare-commit`:
+   - `message`: `fix(package): summary of the change`
+   - It only opens the buffer and fills the message in. It does not commit.
+3. Stop here and tell the user:
+   > "Check the commit message and commit with `C-c C-c`. Tell me when it is done."
+4. Wait for their signal.
 
 ---
 
-## 스킵/논의 처리
+## What a good issue explanation contains
 
-사용자가 스킵하거나 "의도된 동작"이라 말하면:
+- **The execution path, always**: which condition along A → B → C produces the problem.
+- **Quoted code**: the relevant line numbers plus the snippet.
+- **Blast radius**: when and under what conditions it actually fires.
+- **Behavior after the fix**: why the change resolves it.
+- The user has asked for fuller explanations before: give enough context every time.
 
-- 단순 스킵: 이유 메모 후 다음 이슈.
-- 논리 결함이 남는 의도 동작(예: goroutine 누수, 데드락 가능성, 리소스 미해제):
-  1. 결함 조건/영향을 한 번 더 설명하고 재확인.
-  2. 유지 결정이면 의도 주석 추가:
+---
+
+## Skips and pushback
+
+When the user skips an issue or calls it intended behavior:
+
+- A plain skip: note the reason and move on.
+- Intended behavior that leaves a real defect (a goroutine leak, a possible deadlock, a resource
+  never released):
+  1. State the condition and the impact once more and ask again.
+  2. If they still want it kept, add a comment recording the intent:
 
      ```go
-     // NOTE: <결함 내용> — <의도된 이유 또는 설계 결정>
+     // NOTE: <the defect> — <why it is intended, or the design decision>
      ```
 
-  3. 주석 추가 후 다음 이슈로 이동. 스킵 이슈 재언급 금지.
+  3. Move to the next issue. Do not raise a skipped issue again.
 
 ---
 
-## Step 5 — 모든 이슈 완료 후
+## Step 5 — After the last issue
 
-- 미커밋 파일 남아 있으면 커밋 제안.
-- 커밋 완료 후 수정 요약(완료/스킵 목록) 보고.
+- If uncommitted files remain, offer to commit.
+- Once committed, report a summary of what was fixed and what was skipped.

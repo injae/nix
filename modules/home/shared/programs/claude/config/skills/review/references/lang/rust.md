@@ -1,52 +1,56 @@
-# Rust 언어 특화 체크리스트
+# Rust Language Checklist
 
-공통 Stage 체크리스트에 아래 항목을 추가한다.
-
----
-
-## Stage 2 — 보안
-
-- `rand::random()` / `rand::thread_rng()`을 보안 목적 난수 생성에 사용하는가? (`rand::rngs::OsRng` 또는 `getrandom` 권장)
-- `unsafe` 블록에서 포인터 역참조 시 유효성 검증이 없는가?
-- FFI 경계에서 외부 데이터를 검증 없이 사용하는가?
-- `serde`로 역직렬화 시 입력 크기 제한이 없는가?
+Add the items below to the shared stage checklists.
 
 ---
 
-## Stage 3 — 리소스 관리
+## Stage 2 — Security
 
-**메모리**
-- `Rc<RefCell<T>>`의 순환 참조가 발생할 수 있는가? (`Weak` 참조 활용 여부)
-- `Arc<T>` 참조 카운트가 예상보다 오래 유지되어 메모리를 점유하는가?
-- `Box::leak()`으로 의도적으로 누수시킨 메모리가 문서화되어 있는가?
-
-**파일 & I/O**
-- `File`, `BufReader`, `BufWriter`가 RAII(`Drop`)로 자동 닫히는 것을 신뢰하는가? (명시적 `flush()` 누락 여부 확인)
-- `BufWriter`를 `drop()` 전에 `flush()`하지 않아 데이터가 손실될 수 있는가?
-
-**비동기 (tokio / async-std)**
-- 태스크 핸들(`JoinHandle`)이 `await`되지 않고 버려지는가? (결과 및 패닉 무시)
+- Is `rand::random()` / `rand::thread_rng()` used for security-relevant randomness? (Prefer
+  `rand::rngs::OsRng` or `getrandom`.)
+- Does an `unsafe` block dereference a pointer without checking its validity?
+- Is external data used unchecked across an FFI boundary?
+- Does `serde` deserialization run with no bound on input size?
 
 ---
 
-## Stage 4 — 동시성 & 성능
+## Stage 3 — Resource management
 
-**레이스 컨디션**
-- `unsafe` 코드에서 `Send` / `Sync` 트레잇을 수동으로 구현할 때 안전성 증명이 있는가?
-- `Mutex<T>` 대신 `RefCell<T>`을 멀티스레드 환경에서 사용하는가?
+**Memory**
+- Can `Rc<RefCell<T>>` form a reference cycle (is `Weak` used where it should be)?
+- Does an `Arc<T>` refcount stay alive longer than expected and hold memory?
+- Is memory leaked deliberately with `Box::leak()` documented as such?
 
-**데드락**
-- `Mutex::lock()`이 중첩되어 같은 스레드에서 두 번 잠기는가? (재진입 불가)
-- 여러 `Mutex`를 항상 동일한 순서로 획득하는가?
-- `RwLock` 읽기 락 보유 중 쓰기 락을 획득하려 하는가?
+**Files & I/O**
+- Does the code rely on RAII (`Drop`) to close `File`, `BufReader`, `BufWriter` — and is an
+  explicit `flush()` missing?
+- Can data be lost because a `BufWriter` is not flushed before it is dropped?
 
-**비동기 (tokio)**
-- `tokio::spawn`된 태스크 안에서 `std::thread::sleep()` 등 블로킹 함수를 호출하는가? (`tokio::time::sleep` 권장)
-- CPU-bound 작업을 `tokio::task::spawn_blocking()` 없이 async 태스크에서 실행하는가?
-- `tokio::select!`에서 취소 안전하지 않은 Future를 사용하는가?
+**Async (tokio / async-std)**
+- Is a `JoinHandle` dropped without being awaited, discarding its result and any panic?
 
-**성능**
-- `String` 연결을 루프에서 `+` 또는 `push_str`로 반복하는가? (`String::with_capacity` 사전 할당 고려)
-- `clone()`이 hot path에서 불필요하게 호출되는가?
-- `Vec`에 대용량 데이터를 push할 때 `with_capacity`로 사전 할당하는가?
-- 반복자 체인에 불필요한 중간 컬렉션(`.collect()`)이 있는가?
+---
+
+## Stage 4 — Concurrency & performance
+
+**Races**
+- When `Send` / `Sync` is implemented by hand in `unsafe` code, is the safety argument stated?
+- Is `RefCell<T>` used across threads where `Mutex<T>` belongs?
+
+**Deadlock**
+- Is `Mutex::lock()` nested so the same thread locks twice (no reentrancy)?
+- Are several `Mutex`es always acquired in the same order?
+- Does the code take an `RwLock` write lock while holding a read lock?
+
+**Async (tokio)**
+- Does a `tokio::spawn`ed task call a blocking function such as `std::thread::sleep()`? (Use
+  `tokio::time::sleep`.)
+- Is CPU-bound work run in an async task without `tokio::task::spawn_blocking()`?
+- Does `tokio::select!` use a future that is not cancel-safe?
+
+**Performance**
+- Are `String`s built in a loop with `+` or repeated `push_str` (consider
+  `String::with_capacity`)?
+- Is `clone()` called needlessly on a hot path?
+- Is `Vec` pre-allocated with `with_capacity` when pushing a large amount of data?
+- Does an iterator chain build a needless intermediate collection (`.collect()`)?
