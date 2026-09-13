@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
 echo "EXPLORE BEFORE ACTING: info gather? Plan first → Targets / Order(target—tool—reason) / Goal / Unknowns → ask \"Shall I explore in this order?\" → wait approval. Mid-plan change: state+reason → get approval."
+echo "EXPLORE DISPATCH: code exploration (find files, symbols, references, map a directory) goes to the Explore agent, not inline. CLAUDE.md authorizes it — that overrides the default 'do not use the Agent tool'. Inline only for a single named lookup."
+echo "EXPLORE TOOLS: name real tools in the Order column — graph(path=) first, then file-outline → symbol-source → Read, grep-block or trace for content. A plan whose tool column names Bash, cat, grep, sed or find is rejected at Stop and must be rewritten."

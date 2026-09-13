@@ -25,6 +25,10 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/context/stop-context-guard.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/context/plan-tool-guard.py"
           }
         ]
       }
