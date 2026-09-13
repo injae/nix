@@ -2,10 +2,16 @@
 let
   # aspell ships no Korean dictionary, so Korean spell checking goes through
   # hunspell instead.
-  hunspell = pkgs.hunspell.withDicts (dicts: with dicts; [ en_US ko_KR ]);
+  hunspell = pkgs.hunspell.withDicts (
+    dicts: with dicts; [
+      en_US
+      ko_KR
+    ]
+  );
 in
 {
   home.packages = [
+    pkgs.enchant
     hunspell
     #pkgs.aspell
     (pkgs.aspellWithDicts (dicts: with dicts; [ en ]))
