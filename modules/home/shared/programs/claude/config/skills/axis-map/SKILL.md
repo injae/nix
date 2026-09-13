@@ -1,117 +1,97 @@
 ---
 name: axis-map
-description: 저장소의 축 구조를 에이전트가 파싱할 수 있는 고정 표(`docs/map/<축>.md`)로 남기고, 그 표가 코드와 갈렸는지 검사한다. 탐색 결과가 대화와 함께 증발해 다음 세션이 같은 탐색을 반복할 때, 또는 지도를 갱신·검사할 때 연다.
+description: Keep a repository's invariants as a checked table (`docs/map/<axis>.md`), each rule naming the test that guards it, and check that those tests exist. Open it when writing down a rule the code must keep, or when updating or checking a map.
 ---
 
-# 축 지도 — 탐색 결과가 사는 자리
+# Axis map — the rules a checker can confirm
 
-탐색은 비싸다(한 번에 70k 토큰을 쓰고 25줄만 남는다). 그 결과가 **대화에만** 있으면 세션이
-끝날 때 사라지고 다음 세션이 같은 것을 다시 판다. 지도는 그 손실을 막는 자리다.
+One table per axis: a rule, and the test that guards it. Nothing else.
 
-**산문이 아니라 표다.** 사람도 읽지만 **에이전트가 파싱한다** — 그래서 칸이 고정이고 줄번호가 없다.
+**It is a table, not prose.** People read it, but **agents parse it** — hence fixed columns and no
+line numbers.
 
-## 어디에 무엇을
+## What goes where
 
-`docs/map/<축>.md` — 축 하나에 한 장. `<축>`은 그 저장소 최상위 모듈 이름을 쓴다.
+`docs/map/<axis>.md` — one page per axis. `<axis>` is the name of a top-level module of that
+repository.
 
 ```markdown
 ---
 axis: plant
-head: c93ad399          # 이 지도가 선 커밋(짧은 SHA)
 root: src/plant/
 ---
-
-## symbols
-
-| name | kind | file | one-line | at |
-|---|---|---|---|---|
-| `PlantDefValue` | type | src/plant/catalog.rs | 한 종의 런타임 값 | 794a9eb28fa9 |
-| `accepts_now` | fn | src/plant/catalog.rs | 지금 이 부위가 이 일을 받나 | ? |
-
-## seams
-
-| from | via | to |
-|---|---|---|
-| `PlantWork` | SystemParam | `JobValidParams` |
 
 ## invariants
 
 | rule | guarded-by |
 |---|---|
-| 결실일 때만 딴다 | `picking_is_refused_on_a_day_the_bush_bears_nothing` |
+| picking happens only when it bears | `picking_is_refused_on_a_day_the_bush_bears_nothing` |
 ```
 
-### `at` — 그 행을 **언제 확증했나**
+**Conventions**
 
-`git hash-object <file>` 앞 12자. 그 행을 확증할 때 본 **파일의 blob 해시**다. 세 상태로 갈린다:
+- **No line numbers.** Lines rot; names rot less. Find the position when you need it.
+- **Test names in backticks.** That is all the checker looks at. For a `Type::method` form, it
+  searches on the last segment.
+- **No prose.** "Why it came to be this way" belongs in the design docs (`docs/design/`) and the
+  PR body.
+- `guarded-by` is **an actual test name**. A rule with nothing keeping it is not a rule — and has
+  no row here.
 
-| 값 | 뜻 | 누가 닫나 |
-|---|---|---|
-| `?` 또는 빈 칸 | 탐색이 **확증 못 했다** — 선언을 안 열었거나 수를 안 셌다 | **리뷰어** |
-| 해시 불일치 | 확증한 뒤 **그 파일이 바뀌었다** | 그 커밋의 리뷰 |
-| 일치 | 확증됐고 안 바뀌었다 | — |
+## The rule that decides what belongs
 
-**확증은 선언을 연 것**이다. `lsp-proj-symbols` 히트나 grep 한 줄은 **단서지 확증이 아니다**.
+**Keep only what the checker can confirm.**
 
-**왜 행 단위인가**: `head:` 하나로 축 전체를 물리면 그 디렉터리에 커밋 하나만 나도 지도 전부가
-「다시 봐라」가 되어 신호가 뭉개진다(실측: `plant.md`가 그 경고를 매번 냈고 아무도 안 봤다).
+`guarded-by` is a test name: rename or delete the guard and the gate turns red. That is the whole
+reason this table survives.
 
-**정밀도는 파일 단위로 충분하다.** 선언 단위가 더 정확하지만, 파일 해시는 **거짓 침묵이 없고
-거짓 경보만 있다** — 무관한 변경으로 행이 리뷰 큐에 다시 드는 것은 안전한 방향이다.
+Three things used to live here and no longer do, because nothing confirmed them:
 
-`seams`·`invariants`엔 `at`이 없다. 그쪽은 출처 파일이 아니라 심볼·테스트 이름을 물고,
-그 실재는 검사기가 매번 직접 본다.
+- **`symbols`** — name, kind, file, a one-line description, and an `at` hash saying when the row
+  was confirmed. Measured: 42 of `plant.md`'s 43 rows were unconfirmed, so "0 mismatches" meant
+  "nobody looked". The descriptions were checked by nothing at all.
+- **`seams`** — hand-written edges between symbols. One row still named a type the branch had
+  deleted.
+- **`head:`** — a commit SHA in the front matter. `check.py` never read it, and it went stale by
+  hand twice in one session.
 
-**규약**
+In one session (2026-09-12 to 13) these produced four `map-check` failures from line numbers an
+explorer had written into rows, and two Codex review rounds filed map staleness as findings while
+finding no code defect in the map's area. Stripping two maps took them from 113 and 90 lines to
+34 and 33.
 
-- **줄번호 금지.** 줄은 썩고 이름은 덜 썩는다. 위치가 필요하면 그때 찾는다.
-- **심볼은 백틱.** 검사기가 그것만 본다. `Type::method` 꼴이면 마지막 조각으로 찾는다.
-- **산문 금지.** 「왜 이렇게 됐나」는 설계 문서(`docs/design/`)와 PR 본문 몫이다. 지도는
-  **어디에 무엇이 있나**만 답한다.
-- `kind`는 그 생태계 말로: `type` · `fn` · `enum` · `component` · `resource` · `system` ·
-  `systemparam` · `axis` 등.
-- `guarded-by`는 **실제 테스트 이름**이다. 규칙만 적고 지키는 것이 없으면 그 규칙은 없는 것이다.
+**Structure questions go to `graph()` and `trace`.** That is what the store is for: it records
+what was actually traced, and it keeps never-traced apart from traced-and-empty. A hand-written
+table of symbols cannot.
 
-## 검사 — 지도는 검사가 있어야 산다
+**The `?` row is gone with them.** It was a way to admit "exploration could not confirm this", for
+a reviewer to close later — `transition.md` was carrying 29 of them, every one a symbol. An
+invariant either names a test or does not belong in the table.
+
+## Checking — a map lives only if it is checked
 
 ```bash
-python3 ~/.claude/skills/axis-map/check.py [저장소_루트]
+python3 ~/.claude/skills/axis-map/check.py [repo_root]
 ```
 
-인자를 안 주면 현재 디렉터리를 본다. 무엇을 보나:
+With no argument it looks at the current directory. It asks one question of every row: is
+`guarded-by` a real test name (`fn <name>`) somewhere under `src/`. A mismatch exits 1.
 
-| 표 | 검사 |
-|---|---|
-| `symbols` | `name`이 그 `file` 안에 실재하나 |
-| `seams` | 양쪽 심볼이 `src/` 안에 실재하나 |
-| `invariants` | `guarded-by`가 실제 테스트 이름인가(`fn <이름>`) |
-| `at` | **행 단위 신뢰도.** 미확증(`?`·빈 칸)과 확증 뒤 바뀐 행을 갈라 **경고만** 낸다 — 리뷰가 닫을 큐다 |
+**Put it in the repository's standing checks** (`just check`, `make check`, CI, whatever) — a rule
+with no check is not kept.
 
-어긋나면 exit 1. `at` 경고는 **exit 1이 아니다** — 미확증은 결함이 아니라 **아직 안 본 것**이고,
-그것으로 `check`를 막으면 지도를 안 쓰게 된다.
+**What the check cannot see:**
+1. **What is missing.** It only asks whether the names written down exist — put "did this diff
+   leave the map stale?" in the review instructions.
+2. **Meaning.** A test can exist while the rule beside it is wrong (measured: "`shed_dead_plants`
+   — produces no yield" was **a description rather than a rule**, so nobody kept it).
 
-**저장소의 상시 검사에 넣어라**(`just check`·`make check`·CI 무엇이든) —
-검사가 없는 규칙은 지켜지지 않는다.
+## Who writes it
 
-**이 검사가 못 보는 것 둘:**
-1. **빠뜨린 것.** 적힌 이름이 실재하는지만 본다 — 리뷰 지시서에 「이 diff가 지도를 낡게 뒀나」를 넣어라.
-2. **뜻.** 이름이 살아 있어도 그 한 줄이 틀릴 수 있다(실측: 「`shed_dead_plants` — 산출은 안 낸다」가
-   **규칙이 아니라 서술**이라 아무도 안 지켰다). `at`이 그 줄을 언제 확인했는지만 말한다.
+The workstream that establishes a rule writes its row, with the test that guards it, in the same
+change. A rule arriving without its test does not go in the table — it goes in the work.
 
-## 누가 쓰나 — 읽는 쪽과 쓰는 쪽을 가른다
+## When the first page is made
 
-| 누구 | 무엇 |
-|---|---|
-| 탐색 에이전트(`Explore` 등) | 코드를 파기 **전에** 읽고, 알아낸 것을 **지도에 직접 쓴다**. 확증 못 한 행은 `at`을 `?`로. 전문은 `.claude/tmp/explore-<주제>.md` |
-| 리뷰 에이전트 | 구조를 다시 유도하지 말고 지도로 방향을 잡는다. **diff가 지도를 낡게 뒀으면 지적**하고, **`?` 행을 닫는다**(확증·오류·여전히 못 봄) |
-| 메인(구현자) | 전사하지 않는다 — 구현으로 생긴 행을 더하고, `at`을 채우고, 남은 `?`를 **리뷰에 넘긴다** |
-
-**쓰는 쪽과 닫는 쪽이 다르다.** 탐색이 쓰고 리뷰가 닫는다. 한 주체가 둘 다 하면 자기가 쓴 것을
-자기가 승인하게 되고, 그때 미확증이 조용히 정본이 된다.
-
-**탐색자가 지도를 직접 쓰지 않는다.** 확인 안 된 메모가 정본이 되면 지도가 거짓말을 시작한다.
-
-## 언제 첫 장을 만드나
-
-전 축을 한 번에 만들지 마라. **그 축을 건드리는 워크스트림이 그 축의 첫 장을 만든다.** 그래야
-지도에 오르는 것이 방금 전수로 확인한 것이 된다.
+Do not build every axis at once. **The workstream that touches an axis makes that axis's first
+page.**
