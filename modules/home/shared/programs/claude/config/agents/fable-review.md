@@ -28,7 +28,10 @@ not a limitation to work around.
 
 ## The store, before the search — `graph`
 
-`graph()` with no arguments prints what this project has already been traced for; `graph(from=
+`graph(path=<the repository under review>)` prints what that project has already been traced for
+— **always pass the path**: called from a subagent or any other working directory, an unnamed
+`graph` can read a different project's store and report this one as never explored (measured
+2026-09-12). `graph(from=
 <name or node id>)` prints one thing's relations — what registers it, orders it, requires it,
 takes it — with no language server and no file opened. Cheapest lookup available, so reach for
 it before deriving a relation by hand.

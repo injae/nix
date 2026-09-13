@@ -26,9 +26,11 @@ Never suggest fixes. Locate and report only.
 
 ## Ask the store before you search — `graph`, then `trace`
 
-`graph()` with no arguments prints what this project has already been asked and what it
-holds. It reads one file, needs no language server, and is the cheapest call available:
-**run it first on any exploration that is not a single named lookup.** A question already
+`graph(path=<the project being explored>)` prints what that project has already been asked and
+what it holds. It reads one file, needs no language server, and is the cheapest call available:
+**run it first on any exploration that is not a single named lookup.** **Always pass the path** —
+called from a subagent or any other working directory, an unnamed `graph` can read a different
+project's store and report this one as never explored (measured 2026-09-12). A question already
 answered there costs nothing — say so and spend the budget on what the store lacks.
 
 `trace(pattern, path, ask)` answers a question and records it: blocks, their clone hashes,
