@@ -184,7 +184,8 @@ Count close paren at end of macro body: last `)` of macro call must sit on `mapc
    ```
 3. Add tool to navigation table in `emacs-navigation` skill (`emacs-navigation/SKILL.md`).
 4. Add it to `tools:` allowlist of every agent that must reach it —
-   `agents/Explore.md`, `agents/fable-review.md`, `agents/codex-review.md`.
+   `agents/Explore.md`, `agents/fable-review.md`.
    List is explicit: tool missing from one is invisible to that agent.
+   `codex-review` is a skill, not an agent — no entry needed.
 5. Load file: `elisp-load`, then `claude-code-ide-reload-mcp-tools` to
    re-register. New `:name` reach CLI only in new session.

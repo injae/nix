@@ -10,7 +10,7 @@ Never write derived path direct. Check non-negotiable, even mid-task.
 ## Session start
 
 `SessionStart` hook inject env-specific skill/instructions:
-- Always → `/emacs-dev` (Emacs detected 시 prefix 추가)
+- Always → `/emacs-dev` (prefix added when Emacs is detected)
 - `NIX_CONFIG_DIR` set → `/nix-system`
 - `~/.claude/CLAUDE.local.md` exists → inject file content
 
@@ -40,7 +40,7 @@ During exploration: if new approach not in plan needed, state new approach + rea
 
 Code exploration (find files, symbols, references, map directory) go through `Explore` agent — user-defined Emacs MCP-aware override, not inline grep. Dispatch counts as user-authorized subagent use.
 
-Code review of commit, range, or uncommitted tree go through `codex-review` agent, which run review on Codex and return only verdict plus one line per finding. If Codex unavailable — usage limit hit, CLI missing, run failed — fall back to `fable-review` agent, same review contract on Fable. Say which one made result. Dispatch either counts as user-authorized subagent use.
+Code review of commit, range, or uncommitted tree go through `/codex-review` skill — four steps in this conversation, no subagent: write prompt, run Codex, read result file, report verdict plus one line per finding. If Codex unavailable — usage limit hit, CLI missing, run failed — fall back to `fable-review` agent, same review contract on Fable. Say which one made result. Dispatching `fable-review` counts as user-authorized subagent use.
 
 ## Think Before Coding
 

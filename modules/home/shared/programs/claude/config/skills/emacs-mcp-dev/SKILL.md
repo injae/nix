@@ -87,8 +87,9 @@ Claude Code's ToolSearch reflects session-start state — new names only appear 
 2. If the tool is useful for code navigation, add it to the quick-reference table in
    `emacs-navigation/SKILL.md` with its signature and fallback.
 3. Add it to the `tools:` allowlist of every agent that should reach it —
-   `agents/Explore.md`, `agents/fable-review.md`, `agents/codex-review.md`. Those
-   lists are explicit: a tool missing from one is invisible to that agent, with no error.
+   `agents/Explore.md`, `agents/fable-review.md`. Those lists are explicit: a tool missing
+   from one is invisible to that agent, with no error. `codex-review` is a skill, not an
+   agent — it reaches no MCP tool itself and needs no entry.
 4. Re-register at runtime: `elisp-load` the file, then
    `M-x claude-code-ide-reload-mcp-tools`. A new `:name` reaches the CLI only in a
    new session.
