@@ -104,8 +104,10 @@ changed files" turned a one-commit review into a whole-tree audit.
 
 ## Step 2 — Run Codex
 
-Foreground, `timeout` 600000. No `run_in_background`, no separate `sleep`. A round takes 2–10
-minutes.
+**Background job** (`run_in_background: true`), no separate `sleep`. A round takes 2–10 minutes,
+and a foreground run blocks the conversation for all of it. The harness re-invokes you when the
+command exits; do not poll for it. Keep working or answer the user in the meantime, and go to
+Step 3 only after the completion notification.
 
 ```bash
 codex exec --approve-for-me -C <repo> --color never \
