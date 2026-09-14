@@ -75,7 +75,9 @@ python3 ~/.claude/skills/axis-map/check.py [repo_root]
 ```
 
 With no argument it looks at the current directory. It asks one question of every row: is
-`guarded-by` a real test name (`fn <name>`) somewhere under `src/`. A mismatch exits 1.
+`guarded-by` a real test name (`fn <name>`) somewhere under `src/` or `tests/`. A mismatch exits 1.
+Both roots are searched because a rule about production wiring — schedule order, plugin
+registration — can only be guarded from `tests/`.
 
 **Put it in the repository's standing checks** (`just check`, `make check`, CI, whatever) — a rule
 with no check is not kept.

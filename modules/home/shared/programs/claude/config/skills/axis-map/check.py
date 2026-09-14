@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 MAPS = ROOT / "docs" / "map"
-SRC = ROOT / "src"
+TEST_ROOTS = [ROOT / "src", ROOT / "tests"]
 
 TICKED = re.compile(r"`([^`]+)`")
 
@@ -34,8 +34,11 @@ def symbol_leaf(text: str) -> str:
 
 
 def defined_anywhere(symbol: str) -> bool:
+    roots = [str(root) for root in TEST_ROOTS if root.is_dir()]
+    if not roots:
+        return False
     found = subprocess.run(
-        ["rg", "--quiet", "--word-regexp", "--", symbol, str(SRC)],
+        ["rg", "--quiet", "--word-regexp", "--", symbol, *roots],
         check=False,
     )
     return found.returncode == 0
