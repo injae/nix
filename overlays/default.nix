@@ -39,6 +39,7 @@ in
   superpowers-plugin = self.callPackage "${packages}/superpowers-plugin.nix" { };
   caveman-plugin = self.callPackage "${packages}/caveman-plugin.nix" { };
   codex-plugin = self.callPackage "${packages}/codex-plugin.nix" { };
+  graft = self.callPackage "${packages}/graft.nix" { };
   #lima-additional-guestagents =
   #  self.callPackage "${packages}/lima_additional_guestagents_1_1_1.nix"
   #    { };
