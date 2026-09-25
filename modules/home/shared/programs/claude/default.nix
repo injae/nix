@@ -1,22 +1,33 @@
 { lib, pkgs, ... }:
 let
-  mergeMcpServers = pkgs.writeScript "claude-merge-mcp-servers.py" ''
-    import json, os
-
-    path = os.path.expanduser("~/.claude.json")
-    d = json.load(open(path)) if os.path.exists(path) else {}
-    d.setdefault("mcpServers", {})["emacs-tools"] = {
-        "type": "stdio",
-        "command": "sh",
-        "args": ["-c", "exec python3 \"$HOME/.claude/scripts/emacs-mcp-bridge.py\""],
-        "env": {}
-    }
-    json.dump(d, open(path, "w"), indent=2)
-  '';
+  mcpServers = (pkgs.formats.json { }).generate "claude-mcp-servers.json" {
+    mcpServers = {
+      emacs-tools = {
+        type = "stdio";
+        command = "sh";
+        args = [
+          "-c"
+          "exec python3 \"$HOME/.claude/scripts/emacs-mcp-bridge.py\""
+        ];
+        env = { };
+      };
+      graft = {
+        type = "stdio";
+        command = lib.getExe pkgs.graft;
+        args = [ "mcp" ];
+        env = { };
+      };
+    };
+  };
 in
 {
+  home.packages = [ pkgs.graft ];
+
   home.file.".claude" = {
-    source = ./config;
+    source = lib.cleanSourceWith {
+      src = ./config;
+      filter = path: _: path != toString ./config/settings.json;
+    };
     recursive = true;
   };
 
@@ -39,6 +50,12 @@ in
   home.file.".claude/skills/codex".source = pkgs.codex-plugin;
 
   home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ${pkgs.python3}/bin/python3 ${mergeMcpServers}
+    ${pkgs.python3}/bin/python3 ${./merge-json.py} ~/.claude.json ${mcpServers}
+  '';
+
+  # Claude Code writes runtime choices (/effort, /model) back to settings.json,
+  # so it must be a real file: managed keys win, local-only keys survive.
+  home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.python3}/bin/python3 ${./merge-json.py} ~/.claude/settings.json ${./config/settings.json}
   '';
 }
