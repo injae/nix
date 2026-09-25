@@ -38,7 +38,7 @@ Present plan, ask "Shall I explore in this order?" → wait approval or correcti
 
 During exploration: if new approach not in plan needed, state new approach + reason → get approval before apply.
 
-Code exploration (find files, symbols, references, map directory) go through `Explore` agent — user-defined Emacs MCP-aware override, not inline grep. Dispatch counts as user-authorized subagent use.
+Dispatch `Explore` — user-defined Emacs MCP-aware override — only for a table whose every row need a judgement, across ten file or more, that go into the plan as a table. Dispatch counts as user-authorized subagent use. Single-answer question ("who call X", "what is in this file", "where is this string") is inline, one MCP call — never inline grep.
 
 Code review of commit, range, or uncommitted tree go through `/codex-review` skill — four steps in this conversation, no subagent: write prompt, run Codex, read result file, report verdict plus one line per finding. If Codex unavailable — usage limit hit, CLI missing, run failed — fall back to `fable-review` agent, same review contract on Fable. Say which one made result. Dispatching `fable-review` counts as user-authorized subagent use.
 

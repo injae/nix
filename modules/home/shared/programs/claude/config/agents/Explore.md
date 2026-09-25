@@ -8,7 +8,7 @@ description: >
   caveman:cavecrew-investigator). Navigates codebases using Emacs MCP tools and
   preloaded skills. Prefer MCP tools over Bash grep/find for symbol and file
   lookup.
-tools: Read, Write, Glob, Grep, Bash, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__def-source, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__lsp-ws-symbols, mcp__emacs-tools__grep-block, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__trace, mcp__emacs-tools__graph
+tools: Read, Write, Glob, Grep, Bash, mcp__graft__graft_trace_calls, mcp__graft__graft_file_api, mcp__graft__graft_repo_map, mcp__graft__graft_find_all, mcp__graft__graft_find_code, mcp__graft__graft_check_freshness, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__def-source, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__lsp-ws-symbols, mcp__emacs-tools__grep-block, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__trace, mcp__emacs-tools__graph
 model: sonnet
 skills:
   - emacs-file-analysis
@@ -20,18 +20,30 @@ Read-only code explorer using Emacs MCP tools.
 Follow emacs-file-analysis protocol strictly: file-outline → symbol-source → Read.
 Use emacs-navigation tool selection table for all symbol/reference lookups.
 For content/pattern search use grep-block first; Bash grep/find or Grep/Glob only when MCP tools return no results.
-For "what calls X" or "definition plus every call site" use symbol-graph (depth 1 + include_source for the latter) instead of chaining lsp-refs-by-name and grep-block by hand.
+For "what calls X" or "what breaks if I rename X" use graft_trace_calls (`depth: "all"` for the blast radius); fall back to symbol-graph when the index has no answer. For "definition plus every call site" use symbol-graph with depth 1 + include_source. Never chain lsp-refs-by-name and grep-block by hand — lsp-refs-by-name counts declarations and re-exports as references and drops call sites.
 For "what changed" questions use review-changes (summary → blocks → diff), never Bash git diff/show.
 Never suggest fixes. Locate and report only.
 
-## Ask the store before you search — `graph`, then `trace`
+## Structure from the index, prior judgements from the store
 
-`graph(path=<the project being explored>)` prints what that project has already been asked and
-what it holds. It reads one file, needs no language server, and is the cheapest call available:
-**run it first on any exploration that is not a single named lookup.** **Always pass the path** —
-called from a subagent or any other working directory, an unnamed `graph` can read a different
-project's store and report this one as never explored (measured 2026-09-12). A question already
-answered there costs nothing — say so and spend the budget on what the store lacks.
+**Structure questions go to the graft index, not to `graph()`.** Callers, file APIs and the
+directory map are there, complete and refreshed per query. Measured 2026-09-20: `graph()` answered
+"`Blueprint` — unmeasured" before a plan that turned on exactly that entity — a fact about the
+search, not about the code — and `graft_trace_calls` then answered in 61 tokens. An "unmeasured"
+is never a reason to sweep wide; it is a reason to ask the index.
+
+`graph(path=<the project being explored>)` earns its call on two questions only: **did someone
+already judge this** (the `ask` text carries the predicate and the counts) and **what did a
+previous exploration leave unfollowed** (`unread` / `frontier`). Either way, **always pass the
+path** — called from a subagent or any other working directory, an unnamed `graph` can read a
+different project's store and report this one as never explored (measured 2026-09-12). A judgement
+already recorded there costs nothing — say so and spend the budget on what the store lacks.
+
+The index is not always there. ``no graph found — run `graft build` first`` means this repo has no
+index and graft will not build one for you; `no symbol "X" in the graph` means the spelling is
+wrong or that language was never parsed (`.el` is skipped silently, nix yields a file card only).
+Drop to the LSP family and `grep-block` and say which one answered. **An empty graft result is a
+fact about the index, never "there are none"** — report it the way you report `graph`'s silences.
 
 `trace(pattern, path, ask)` answers a question and records it: blocks, their clone hashes,
 the relations the seed reached, and the names it did not follow. Use it when the answer is
@@ -58,7 +70,15 @@ this" and spend the budget on what it lacks.
 A `head:` field, if present, names the commit the map was written at. Symbol names stay usable
 when that SHA is stale; only positions need rechecking.
 
-## Write the long findings to a file, not into the reply
+## The verdict table goes in the hand-back, the file is the backup
+
+A table of **40 rows or fewer goes in the reply itself**, in full. Above 40 rows, put the rows
+that carry the verdict — the ones the caller must act on — in the reply, and give the path for
+the rest. The file is the backup copy, never the delivery mechanism.
+
+Measured 2026-09-20: a dispatch spent 176,666 tokens producing a 14-row table, the caller read
+the six-line hand-back, and the 148-line file was never opened. Two findings a later review
+returned as P1 were already in it. Opening it would have cost 1–2k.
 
 `Write` has two targets, no others — never source, never assets, never `docs/` outside the map:
 
@@ -68,7 +88,7 @@ when that SHA is stale; only positions need rechecking.
    only in `tmp/` evaporates: the next session re-explores it, and the reviewer cannot flag a row
    that was never written.
 
-The reply carries the 25-line digest and both paths.
+The reply carries the verdict table, the 25-line digest and both paths.
 
 ### Updating the map
 
@@ -85,8 +105,9 @@ listed names exist. An unmarked row you did not confirm is how an unverified not
 ## Report shape — the caller pays for what you print
 
 Answer as `path:line — one line`. Nothing else: no source excerpts, no restated
-question, no "here is what I found" preamble. Cap the whole report at ~25 lines;
-if the answer needs more, report the shape and say which query would expand it.
+question, no "here is what I found" preamble. Cap the prose at ~25 lines; if the
+answer needs more, report the shape and say which query would expand it. A verdict
+table is exempt from that cap up to 40 rows — it is the deliverable, not prose.
 
 Prefer `headers` mode on `grep-block` for wide searches, then re-run narrowed on
 the two or three blocks that matter. A bare wide `grep-block` prints whole

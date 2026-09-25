@@ -1,7 +1,7 @@
 ---
 name: fable-review
 description: Review a commit (or range / uncommitted tree) on Fable through Emacs MCP tools, return **only verdict and gist of each finding**. Full review stays in a file, never enters main conversation. Caller supplies commit SHA, review name, optional self-report path.
-tools: Read, Write, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__treesit-info, mcp__emacs-tools__trace, mcp__emacs-tools__graph, mcp__ide__getDiagnostics
+tools: Read, Write, mcp__graft__graft_trace_calls, mcp__graft__graft_file_api, mcp__graft__graft_repo_map, mcp__graft__graft_find_all, mcp__graft__graft_find_code, mcp__graft__graft_check_freshness, mcp__emacs-tools__review-changes, mcp__emacs-tools__file-outline, mcp__emacs-tools__symbol-source, mcp__emacs-tools__def-source, mcp__emacs-tools__grep-block, mcp__emacs-tools__lsp-def, mcp__emacs-tools__lsp-refs, mcp__emacs-tools__lsp-refs-by-name, mcp__emacs-tools__symbol-graph, mcp__emacs-tools__lsp-impl, mcp__emacs-tools__lsp-type-def, mcp__emacs-tools__lsp-proj-symbols, mcp__emacs-tools__xref-apropos, mcp__emacs-tools__imenu-symbols, mcp__emacs-tools__open-file-lsp, mcp__emacs-tools__project-info, mcp__emacs-tools__treesit-info, mcp__emacs-tools__trace, mcp__emacs-tools__graph, mcp__ide__getDiagnostics
 model: fable
 skills:
   - emacs-file-analysis
@@ -26,15 +26,27 @@ There is no Bash tool. `grep`, `rg`, `find`, `cat`, `sed` are not available and 
 substitute for them — every lookup goes through an MCP tool. This is the point of the agent,
 not a limitation to work around.
 
-## The store, before the search — `graph`
+## Structure from the index, prior judgements from the store
 
-`graph(path=<the repository under review>)` prints what that project has already been traced for
-— **always pass the path**: called from a subagent or any other working directory, an unnamed
-`graph` can read a different project's store and report this one as never explored (measured
-2026-09-12). `graph(from=
+Callers, file APIs and the directory map come from the graft index — complete and refreshed per
+query. Measured 2026-09-20: `graph()` answered "`Blueprint` — unmeasured" before a plan that
+turned on exactly that entity; that is a fact about the search, not about the code, and
+`graft_trace_calls` then answered in 61 tokens. An "unmeasured" sends you to the index, never
+into a wide sweep.
+
+`graph(path=<the repository under review>)` earns its call on two questions: **did someone
+already judge this** (the `ask` text carries the predicate and the counts) and **what did a
+previous exploration leave unfollowed** (`unread` / `frontier`). **Always pass the path**: called
+from a subagent or any other working directory, an unnamed `graph` can read a different project's
+store and report this one as never explored (measured 2026-09-12). `graph(from=
 <name or node id>)` prints one thing's relations — what registers it, orders it, requires it,
-takes it — with no language server and no file opened. Cheapest lookup available, so reach for
-it before deriving a relation by hand.
+takes it — with no language server and no file opened.
+
+The index is not always there. ``no graph found — run `graft build` first`` means this repo has no
+index and graft will not build one for you; `no symbol "X" in the graph` means the spelling is
+wrong or that language was never parsed (`.el` is skipped silently, nix yields a file card only).
+Drop to the LSP family and `grep-block`. **An empty graft result is a fact about the index, never
+"there are none"** — it is a silence, and a finding may never rest on one.
 
 Read its silences exactly as it states them: never traced, traced with no such edge, or a name
 matching several nodes are three different facts, and a node's `unread:` line means those names
@@ -80,7 +92,7 @@ calls it, what implements it — comes from MCP navigation over the working tree
 | What is in this file? | `file-outline` |
 | Full body of a declaration | `symbol-source` (line from `file-outline`) |
 | Definition + body in one call | `def-source` |
-| Who calls this? | `lsp-refs-by-name`, or `lsp-refs` for a field/position |
+| Who calls this? | `graft_trace_calls` — `depth: "all"` for a rename's blast radius. Fall back to `lsp-refs` for a field/position; `lsp-refs-by-name` is a second opinion only, it counts declarations and re-exports as references and drops call sites |
 | What implements this interface? | `lsp-impl` |
 | Text, string literal, config key | `grep-block` — `headers` first on a broad search |
 | Does this symbol exist at all? | `lsp-proj-symbols`, `xref-apropos` |

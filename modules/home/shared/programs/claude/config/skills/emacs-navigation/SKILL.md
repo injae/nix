@@ -5,12 +5,15 @@ user-invocable: false
 ---
 # Navigation Tool Selection
 
-Multi-file or open-ended explore (find X, what call Y, map dir): use `Explore` agent — Emacs MCP-aware override of builtin. Table below only for one targeted lookup.
+Dispatch `Explore` only for a table whose every row need a judgement, across ten file or more, that go into the plan as a table. Single-answer question — "who call X", "what is in this file", "where is this string" — is inline, one call from table below.
 
 ## Quick reference
 
 | Task | Tool | Fallback |
 |------|------|----------|
+| Who call this · what break if I rename it | `graft_trace_calls(symbol, depth)` — `depth: "all"` for blast radius | `symbol-graph` |
+| Orientation in unfamiliar repo | `graft_repo_map` (~758 tokens: directory cluster, hub, hotspot) | `structure-tree` |
+| How does X work | `grep-block(pattern, path, cap, headers)` — **not `graft_find_code`** | `trace` |
 | File symbols + treesit (one or more comma-separated files) | `file-outline(file_path)` | — |
 | Declaration source | `symbol-source(file_path, line)` | Read |
 | Definition + source in one call | `def-source(identifier, file_path)` | `xref-apropos` |
@@ -18,7 +21,7 @@ Multi-file or open-ended explore (find X, what call Y, map dir): use `Explore` a
 | Find definition | `lsp-def(identifier, file_path)` | `xref-apropos` |
 | Find implementations (from position) | `lsp-impl(file_path, line, col)` | `lsp-proj-symbols` (noisy) |
 | Find usages (from position) | `lsp-refs(file_path, line, col)` | `lsp-ws-symbols` |
-| Find usages (by name) | `lsp-refs-by-name(identifier, file_path)` | `lsp-refs` with position |
+| Find usages (by name) — second opinion only | `lsp-refs-by-name(identifier, file_path)` | `graft_trace_calls`, `lsp-refs` with position |
 | Find type | `lsp-type-def(file_path, line, col)` | `lsp-def` |
 | Project-only symbol search | `lsp-proj-symbols(query, file_path)` | `lsp-ws-symbols` |
 | Content search + enclosing block | `grep-block(pattern, path, cap, headers)` | Bash grep |
@@ -30,6 +33,26 @@ Multi-file or open-ended explore (find X, what call Y, map dir): use `Explore` a
 | Diagnostics | `getDiagnostics` | Bash |
 
 **Before reaching for `Bash grep/find`** — stop, check table. Most search task have MCP twin that give structured LSP-aware result. Bash grep last resort, not default.
+
+**`lsp-refs-by-name` under-report — second opinion, never the count.** Measured 2026-09-20: asked for caller of `cancel_blueprint` it answered 4 refs — declaration, re-export, 2 call site — and missed `src/build/assign.rs` entirely; truth was 3 call site. Earlier session: 1 ref where text pass found 6. It count declaration and re-export as reference, and it can drop a call site with no warning. `graft_trace_calls` answered the same question with exactly three caller, 61 tokens, `$0`, no LLM key.
+
+**`graft_find_code` is not "how does X work".** Without the LLM tier it rank lexically and put test above implementation — measured three time on one question, ranking unchanged even after summary was injected. Use `grep-block`.
+
+**graft index can be silently short.** `SKIP_DIRS` excluded all 44 file of `src/build/` while every query still reported "searched 544 indexed files". A total from graft is not usable until one row is cross-checked with `grep-block`.
+
+**graft need an index, and it do not parse every language.** Measured 2026-09-21:
+
+| What you see | What it mean | What to do |
+|---|---|---|
+| ``no graph found — run `graft build` first`` | no index in this repo; graft never build one on its own | run `graft build`, or answer this one question with LSP / `grep-block` |
+| `no symbol "X" in the graph` | wrong spelling, **or that language never got parsed** | check spelling once, then drop to LSP / `grep-block` |
+| `graft_repo_map` answer `N files · 0 symbols · 0 edges` | file card only, no symbol tier — not "this repo has no structure" | use LSP / `grep-block`; report it as index shape, never as a finding |
+
+Full parse: go, java, kotlin, php, python, r, swift, typescript. Generic tier: rust get symbol and
+edge, nix get a file card only. **`.el` is skipped entirely, with no warning.** In a repo outside
+graft's language set the `graft_*` row above do not apply — go straight to LSP family and
+`grep-block`. Cheap precheck: `graft_check_freshness`, which answer `graft check: NO GRAPH` instead
+of erroring.
 
 ## External files (module cache, non-project paths)
 
@@ -153,10 +176,11 @@ Definition location known:
 2. lsp-refs(file, line, col)     → position-based, zero name collision
 
 Name only known:
-lsp-refs-by-name(identifier, any_project_file)  → more precise than proj-symbols
+graft_trace_calls(identifier)                   → caller set, no position needed
+lsp-refs-by-name(identifier, any_project_file)  → second opinion; it miss call site
 ```
 
-**Re-export detection:** `lsp-refs-by-name` results all inside definition file → unused externally. Conclude "no external usage" immediately.
+**Re-export detection:** `lsp-refs-by-name` results all inside definition file → candidate for unused externally. It is the case it get wrong, so confirm with `graft_trace_calls` or `grep-block` before concluding "no external usage".
 
 **`[textual fallback]` in output** mean server resolve nothing or
 give no reference, so tool search text instead. Those hit are
@@ -193,9 +217,27 @@ with no language server and no file opened. Use them when question outlive
 one call: same area explored again next session, or answer that reviewer must
 re-check.
 
+**Structure is not their job any more.** Caller, file API and directory map come
+from the graft index, complete and refreshed per query. Three thing stay here,
+because graft cannot rebuild them:
+
+1. **A judgement already made** — the `ask` text carry the predicate and the
+   count, not just the code (e.g. "hand-written effect: 10, predicate = outside
+   `DomainEffect::apply` and outside `impl Handles`, 27 excluded")
+2. **What a previous exploration left unfollowed** — `unread` / `frontier`, and
+   "traced, no such edge" ≠ "never traced"
+3. **How many copies exist** — `trace` clone bundle group block with the same
+   normalized text; `graft_find_all` rank by coupling and never group near-duplicate
+
+Made a new judgement? Record it with `trace(pattern, path, ask)` so next session
+inherit it.
+
 ```
-graph()                      no args = what has this project already answered?
-                             ← ALWAYS check first. Cheapest call in the table.
+graph()                      no args = what judgement does this project hold?
+                             ← ask it "did I already judge this", not "how is
+                               this structured". A store answer of "unmeasured"
+                               is a fact about the search, not the code —
+                               it send you to the index, not into a wide sweep.
 trace(pattern, path, ask)    seed a question, record blocks + relations
 graph(from=<node id>)        read one node's relations back
 ```
