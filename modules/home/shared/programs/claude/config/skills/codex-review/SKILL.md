@@ -21,7 +21,7 @@ that.
 - **Review target** — a git range (`main..HEAD`), a commit SHA, or "uncommitted".
 - **Review name** — used in the filenames.
 - **Check command** — the repo's build/lint command (e.g. `just check`). **Required.** Without it
-  Codex rediscovers one and runs the suite itself (observed: `RUSTC_WRAPPER= cargo test
+  Codex rediscovers one and runs the suite itself (observed: `cargo test
   jobs::designate::deconstruct --lib`), and under `--approve-for-me` every exec costs an extra
   approval pass. Ask for it rather than guessing.
 - **Conventions path** — `AGENTS.md` / `CLAUDE.md`, if the repo has one.
@@ -32,7 +32,12 @@ The repo needs only `.claude/tmp/`, a gitignored work folder.
 
 ## Step 1 — Write the prompt
 
-Write `.claude/tmp/codex-prompt-<name>.md`. **Target 2 KB or less.**
+Write `.claude/tmp/codex-prompt-<name>-r<n>.md`. **Target 2 KB or less.**
+
+**Every file of a round carries its round number** — prompt, review, log. Never rename a previous
+round's file to make room: measured 2026-09-23, round 1's review was moved after round 2's prompt
+already named its old path, which was round 2's own `-o` target, so the reviewer could not open the
+round it was asked to judge.
 
 **Paths, never contents.** Codex runs with `-C <repo>` and workspace-write; it opens every file
 itself with `cat`. That includes anything under `.claude/tmp/`: it is gitignored, so `git show`
@@ -57,15 +62,21 @@ Open these yourself — they are paths, not quoted here:
   stated there — do not file "no approval evidence")
 - structure map: <path>
 - self-report: <path>   (judge whether the rebuttals in it are correct)
+- previous review: .claude/tmp/codex-review-<name>-r<n-1>.md   (round 2 and later)
 Anything under `.claude/tmp/` is gitignored: `git show` cannot open it, `cat` can.
 
 Run before judging: <check command>
 
-Call `graph` with this repository's path yourself, and say in one line what the store already
-holds for the area under review — and whether an empty answer is `never traced` or `traced, no
-such edge`. Name the repository path in every call: an unnamed `graph` can answer for a different
-project, and "never explored" then means nothing. MCP tools read the working tree, not the
-reviewed commit — use them only for background, and a finding resting on one must say it is
+Structure — callers, a file's API, the directory map — comes from the graft index:
+`graft_trace_calls` (`depth: "all"` for a rename), `graft_file_api`, `graft_repo_map`. On `no
+graph found` or `no symbol "X" in the graph` this repo has no index or that language is not
+parsed: use the LSP tools and `grep-block`, and say so. Empty graft output is a fact about the
+index, not "there are none".
+
+`graph` answers only "was this already judged, what was left unfollowed". Pass this repository's
+path — an unnamed `graph` answers for another project — and report an empty answer as `never
+traced` or `traced, no such edge`, never as a reason to sweep wide. MCP tools read the working
+tree, not the reviewed commit: background only, and a finding resting on one must say it is
 working-tree state that may differ from the commit. `trace` writes to that store: call it only
 when a relation this review turns on is missing from it, scope it with `path`, and pass `ask`
 with this review's name in it.
@@ -74,7 +85,8 @@ Do not write, create or modify any file. Your reply is the review; it is capture
 you.
 
 The structure map has three jobs:
-1. Orient from it instead of re-deriving the structure.
+1. Read its invariants — the rules and the test guarding each. Structure itself is not here:
+   ask the graft index.
 2. Judge whether the diff left it stale — a new type, seam or invariant the map lacks is a
    finding, same as a missing test.
 3. Close every `?` row — confirmed, wrong, or still unreachable. A `?` surviving a round
@@ -111,9 +123,9 @@ Step 3 only after the completion notification.
 
 ```bash
 codex exec --approve-for-me -C <repo> --color never \
-  -o .claude/tmp/codex-review-<name>.md \
-  "$(cat .claude/tmp/codex-prompt-<name>.md)" < /dev/null \
-  > .claude/tmp/codex-run-<name>.log 2>&1
+  -o .claude/tmp/codex-review-<name>-r<n>.md \
+  "$(cat .claude/tmp/codex-prompt-<name>-r<n>.md)" < /dev/null \
+  > .claude/tmp/codex-run-<name>-r<n>.log 2>&1
 ```
 
 **`< /dev/null` is mandatory.** codex reads extra input from stdin when stdin is not a TTY, and a
@@ -137,7 +149,7 @@ ran.
 
 ## Step 3 — Read the result
 
-Read `.claude/tmp/codex-review-<name>.md`. A round's review runs about 2 KB.
+Read `.claude/tmp/codex-review-<name>-r<n>.md`. A round's review runs about 2 KB.
 
 **A spent usage limit exits 0 with no `-o` file.** The log's last line reads `ERROR: You've hit
 your usage limit … try again at <date>`, yet the command exits 0, so an exit-code check calls it
@@ -154,7 +166,7 @@ Exit nonzero or an empty output file: report the failure as it is. Do not retry 
 ```
 Verdict: <pass | needs changes | unresolved>
 Counts: P1 n · P2 n · P3 n
-Full text: .claude/tmp/codex-review-<name>.md
+Full text: .claude/tmp/codex-review-<name>-r<n>.md
 
 [P2] <one-line gist> — <file:line>
 [P3] <one-line gist> — <file:line>
