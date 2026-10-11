@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-echo "EXPLORE BEFORE ACTING: info gather? Plan first → Targets / Order(target—tool—reason) / Goal / Unknowns → ask \"Shall I explore in this order?\" → wait approval. Mid-plan change: state+reason → get approval."
-echo "EXPLORE DISPATCH: send the Explore agent only a table whose every row needs a judgement, across ten files or more, that goes into the plan as a table. CLAUDE.md authorizes that dispatch — it overrides the default 'do not use the Agent tool'. Single-answer questions ('who calls X', 'what is in this file', 'where is this string') are inline, one call."
-echo "EXPLORE TOOLS: name real tools in the Order column — the graft index for structure (graft_trace_calls, graft_file_api, graft_repo_map), file-outline → symbol-source → Read for files, grep-block or trace for content. graph(path=) only to ask whether a prior judgement exists. A plan whose tool column names Bash, cat, grep, sed or find is rejected at Stop and must be rewritten."

@@ -7,7 +7,10 @@ import tempfile
 
 def merge(current, managed):
     for key, value in managed.items():
-        if isinstance(value, dict) and isinstance(current.get(key), dict):
+        if value is None:
+            # Managed null removes a key an earlier generation wrote.
+            current.pop(key, None)
+        elif isinstance(value, dict) and isinstance(current.get(key), dict):
             merge(current[key], value)
         else:
             current[key] = value

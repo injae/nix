@@ -49,6 +49,15 @@ in
   home.file.".claude/skills/caveman".source = pkgs.caveman-plugin;
   home.file.".claude/skills/codex".source = pkgs.codex-plugin;
 
+  # Hook mods, linked one directory each rather than through the recursive
+  # `.claude` tree: the engine refuses a plugin's types contract whose file
+  # resolves outside the plugin folder, which per-file links do.
+  home.file.".claude/skills/session-context".source = ./mods/session-context;
+  home.file.".claude/skills/emacs-sync".source = ./mods/emacs-sync;
+  home.file.".claude/skills/direnv-sync".source = ./mods/direnv-sync;
+  home.file.".claude/skills/compact-guard".source = ./mods/compact-guard;
+  home.file.".claude/skills/work-units".source = ./mods/work-units;
+
   home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     ${pkgs.python3}/bin/python3 ${./merge-json.py} ~/.claude.json ${mcpServers}
   '';

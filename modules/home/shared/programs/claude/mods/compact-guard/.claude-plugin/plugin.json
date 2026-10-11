@@ -1,0 +1,6 @@
+{
+  "name": "compact-guard",
+  "version": "0.3.0",
+  "description": "Shows the context fill, warns above the prompt from 70%, and compacts between turns once context passes 75%.",
+  "types": "./types/index.d.ts"
+}

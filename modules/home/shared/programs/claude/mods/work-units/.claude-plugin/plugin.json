@@ -1,0 +1,6 @@
+{
+  "name": "work-units",
+  "version": "0.1.0",
+  "description": "Lets the model mark units of work, and compacts finished units into a per-unit summary while keeping the current unit verbatim.",
+  "types": "./types/index.d.ts"
+}
