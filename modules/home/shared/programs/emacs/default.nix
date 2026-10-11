@@ -39,6 +39,11 @@ in
     [
       (
         (emacsBase.overrideAttrs (old: {
+          # On macOS Emacs clamps RLIMIT_NOFILE to FD_SETSIZE during startup.
+          # Keep the select bitmap and Darwin's select(2) behavior in sync.
+          NIX_CFLAGS_COMPILE =
+            (old.NIX_CFLAGS_COMPILE or "")
+            + lib.optionalString pkgs.stdenv.isDarwin " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";
           patches =
             (old.patches or [ ])
             ++ (

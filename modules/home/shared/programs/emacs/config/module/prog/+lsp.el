@@ -59,9 +59,8 @@
                          (mapconcat #'buffer-name gone ", ")))))
     (add-hook 'eglot-connect-hook #'my/eglot-exclude-deleted-file-buffers)
 
-    ;; macOS pins Emacs at 1024 open file descriptors: `init_process_emacs'
-    ;; clamps RLIMIT_NOFILE down to FD_SETSIZE and `inrange_fd' closes
-    ;; anything above it, so raising the system limit cannot lift this.  The
+    ;; `init_process_emacs' clamps RLIMIT_NOFILE to FD_SETSIZE.  The Darwin
+    ;; build sets FD_SETSIZE to 10000; Linux keeps the default.  The
     ;; kqueue file-notify backend spends one descriptor per watched
     ;; directory, and for a `baseUri' outside the project root
     ;; `eglot--watch-globs' enumerates subdirectories with plain `find',
@@ -84,10 +83,9 @@ SERVER, ID, GLOBS and REST are passed through to FN unchanged."
             (apply fn server id globs dir rest)))
     (advice-add 'eglot--watch-globs :around #'my/eglot-skip-unwatchable-dir)
 
-    ;; Second line of defence: eglot's cap must sit inside the 1024
-    ;; descriptor budget, or the default 10000 lets `file-notify-add-watch'
-    ;; fail with EMFILE before eglot ever warns.
-    (setq eglot-max-file-watches 600)
+    ;; Leave room for processes, sockets, and other watches inside Emacs's
+    ;; descriptor budget.  Linux retains the conservative existing cap.
+    (setq eglot-max-file-watches (if (eq system-type 'darwin) 6000 600))
     )
 
 (use-package eglot-x :ensure (:host github :repo "nemethf/eglot-x")
