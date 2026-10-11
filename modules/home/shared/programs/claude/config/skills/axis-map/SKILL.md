@@ -76,6 +76,7 @@ python3 ~/.claude/skills/axis-map/check.py [repo_root]
 
 With no argument it looks at the current directory. It asks one question of every row: is
 `guarded-by` a real test name (`fn <name>`) somewhere under `src/` or `tests/`. A mismatch exits 1.
+In a Cargo workspace it also searches each member's `src/` and `tests/` (from `cargo metadata`).
 Both roots are searched because a rule about production wiring — schedule order, plugin
 registration — can only be guarded from `tests/`.
 

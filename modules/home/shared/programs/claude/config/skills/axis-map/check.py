@@ -13,16 +13,32 @@ be, and are gone.
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
+
+def cargo_package_dirs(root: Path) -> list[Path]:
+    manifest = root / "Cargo.toml"
+    if not manifest.is_file():
+        return []
+    metadata = subprocess.run(
+        ["cargo", "metadata", "--no-deps", "--format-version", "1", "--manifest-path", str(manifest)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [Path(package["manifest_path"]).parent for package in json.loads(metadata.stdout)["packages"]]
+
+
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
+if not ROOT.is_dir():
+    sys.exit(f"-- no such directory: {ROOT}")
 MAPS = ROOT / "docs" / "map"
-TEST_ROOTS = [ROOT / "src", ROOT / "tests"] + [
-    member / "src" for member in sorted(ROOT.iterdir()) if (member / "Cargo.toml").is_file() and (member / "src").is_dir()
-]
+PACKAGE_DIRS = list(dict.fromkeys([ROOT, *cargo_package_dirs(ROOT)]))
+TEST_ROOTS = [package / sub for package in PACKAGE_DIRS for sub in ("src", "tests")]
 
 TICKED = re.compile(r"`([^`]+)`")
 
