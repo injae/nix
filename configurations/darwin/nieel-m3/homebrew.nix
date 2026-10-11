@@ -5,7 +5,10 @@
     brews = [
       "andyyyy64/whichllm/whichllm"
     ];
-    casks = [ ];
+    casks = [
+      # ComfyUI Desktop
+      "comfy"
+    ];
 
     # $ nix shell nixpkgs#mas
     # $ mas search <app name>
