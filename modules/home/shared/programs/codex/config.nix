@@ -1,7 +1,7 @@
 { lib, pkgs }:
 {
-  model = "gpt-6-sol";
-  model_reasoning_effort = "high";
+  model = "gpt-6.1-sol";
+  model_reasoning_effort = "medium";
   sandbox_workspace_write.network_access = true;
   mcp_servers = {
     "emacs-tools" = {
