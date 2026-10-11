@@ -20,7 +20,9 @@ from pathlib import Path
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 MAPS = ROOT / "docs" / "map"
-TEST_ROOTS = [ROOT / "src", ROOT / "tests"]
+TEST_ROOTS = [ROOT / "src", ROOT / "tests"] + [
+    member / "src" for member in sorted(ROOT.iterdir()) if (member / "Cargo.toml").is_file() and (member / "src").is_dir()
+]
 
 TICKED = re.compile(r"`([^`]+)`")
 
