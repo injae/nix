@@ -95,6 +95,7 @@
 
 ;; External function declarations for ghostel
 (declare-function ghostel-exec "ghostel" (buffer program &optional args))
+(declare-function ghostel-mode "ghostel" ())
 (declare-function ghostel-send-string "ghostel" (string))
 (declare-function ghostel--window-adjust-process-window-size "ghostel" (process windows))
 
@@ -1363,10 +1364,13 @@ Signals an error if terminal fails to initialize."
           ;; first, firing `kill-buffer-hook' → cleanup-on-exit, and then our
           ;; wrapping sentinel runs cleanup-on-exit a second time.
           (setq-local ghostel-kill-buffer-on-exit nil)
-          (let* ((process-environment (append env-vars process-environment))
-                 (process (ghostel-exec buffer program args)))
-            ;; `ghostel-exec' switches the buffer into `ghostel-mode', which
-            ;; resets buffer-local variables.
+          ;; Enter the mode before `ghostel-exec' would: mode hooks such as
+          ;; envrc `setq-local' `process-environment', and doing that inside
+          ;; a let-binding of it logs "buffer-local while let-bound".
+          (ghostel-mode)
+          (setq-local process-environment (append env-vars process-environment))
+          (let ((process (ghostel-exec buffer program args)))
+            ;; `ghostel-mode' resets buffer-local variables.
             (claude-code-ide--disable-ghostel-title-tracking)
             (setq-local ghostel-kill-buffer-on-exit nil)
             ;; `ghostel-mode-hook' has run by now, so if `evil-ghostel-mode'

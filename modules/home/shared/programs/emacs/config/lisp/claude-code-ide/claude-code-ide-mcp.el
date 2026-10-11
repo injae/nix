@@ -747,6 +747,15 @@ the CLI's SelectionChangedSchema."
                         (end . ((line . ,cursor-line)
                                 (character . ,cursor-col))))))))))
 
+(defconst claude-code-ide-mcp--cleared-selection
+  '((text . "")
+    (filePath . "")
+    (selection . ((start . ((line . 1) (character . 1)))
+                  (end . ((line . 1) (character . 1))))))
+  "Payload that clears the CLI's selection indicator.
+Since 2.1.268 the CLI shows any non-empty `filePath' as a chip inside the
+prompt input, so a cursor move alone must not name the file.")
+
 (defun claude-code-ide-mcp--send-selection-for-project (project-dir)
   "Send current selection to Claude for PROJECT-DIR."
   (when-let ((session (claude-code-ide-mcp--get-session-for-project project-dir)))
@@ -760,24 +769,18 @@ the CLI's SelectionChangedSchema."
         ;; Check if file is within project
         (let ((file-in-project (string-prefix-p (expand-file-name project-dir)
                                                 (expand-file-name file-path))))
-          (if file-in-project
-              ;; File is in project - check cursor/selection changes
-              (let* ((cursor-pos (point))
-                     (current-state (if (use-region-p)
-                                        (list cursor-pos (region-beginning) (region-end))
-                                      (list cursor-pos cursor-pos cursor-pos)))
-                     (last-state (claude-code-ide-mcp-session-last-selection session))
-                     (state-changed (not (equal current-state last-state))))
-                ;; Send notification if cursor or selection changed
-                (when state-changed
-                  (setf (claude-code-ide-mcp-session-last-selection session) current-state)
-                  (let ((selection (claude-code-ide-mcp--get-current-selection)))
-                    (claude-code-ide-mcp--send-notification "selection_changed" selection))))
-            ;; File outside project - reset selection state
-            (setf (claude-code-ide-mcp-session-last-selection session) nil))))
-      ;; Reset selection state for non-file buffers
-      (unless file-path
-        (setf (claude-code-ide-mcp-session-last-selection session) nil)))))
+          (when file-in-project
+            ;; Send an active region, and one clear once it is gone
+            (let ((current-state (and (use-region-p)
+                                      (list (region-beginning) (region-end)))))
+              (unless (equal current-state
+                             (claude-code-ide-mcp-session-last-selection session))
+                (setf (claude-code-ide-mcp-session-last-selection session) current-state)
+                (claude-code-ide-mcp--send-notification
+                 "selection_changed"
+                 (if current-state
+                     (claude-code-ide-mcp--get-current-selection)
+                   claude-code-ide-mcp--cleared-selection))))))))))
 
 (defun claude-code-ide-mcp--send-selection ()
   "Send current selection to Claude."

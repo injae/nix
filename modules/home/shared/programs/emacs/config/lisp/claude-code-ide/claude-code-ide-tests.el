@@ -169,6 +169,9 @@
   "Mock ghostel resize handler for testing."
   '(80 . 24))
 
+(define-derived-mode ghostel-mode fundamental-mode "Ghostel"
+  "Mock ghostel-mode for testing.")
+
 (provide (quote ghostel))
 
 ;; === Mock evil-ghostel module ===
@@ -628,6 +631,45 @@ have completed before cleanup.  Waits up to 5 seconds."
             (should (member "CLAUDE_CODE_SSE_PORT=12345" mock-ghostel-env))
             (should (member "TERM_PROGRAM=emacs" mock-ghostel-env))
             (should (member "FORCE_CODE_TERMINAL=true" mock-ghostel-env))))))))
+
+(ert-deftest claude-code-ide-test-ghostel-mode-hook-env-outside-let ()
+  "A `ghostel-mode-hook' that sets `process-environment' buffer-locally,
+as envrc does, must not run while the session let-binds it."
+  (let ((hook-env "DIRENV_TEST=1")
+        (mock-ghostel-env nil)
+        (mock-process (start-process "mock" nil "true"))
+        (messages-start (with-current-buffer (messages-buffer) (point-max))))
+    ;; Emacs only warns once the variable is buffer-local in some buffer,
+    ;; as envrc leaves it in a live session.
+    (with-temp-buffer
+      (setq-local process-environment process-environment))
+    (cl-letf (((symbol-function 'claude-code-ide--terminal-ensure-backend) #'ignore)
+              ((symbol-function 'claude-code-ide--build-claude-command)
+               (lambda (&rest _) "claude"))
+              ((symbol-function 'executable-find)
+               (lambda (_name) "/opt/bin/claude"))
+              ((symbol-function 'ghostel-exec)
+               (lambda (buffer _program &optional _args)
+                 (with-current-buffer buffer
+                   (unless (derived-mode-p 'ghostel-mode)
+                     (ghostel-mode))
+                   (setq mock-ghostel-env process-environment))
+                 mock-process)))
+      (let ((claude-code-ide-terminal-backend 'ghostel)
+            (ghostel-mode-hook
+             (list (lambda ()
+                     (setq-local process-environment
+                                 (cons hook-env (default-value 'process-environment)))))))
+        (unwind-protect
+            (progn
+              (claude-code-ide--create-terminal-session
+               "*test-ghostel-env*" "/tmp" 12345 nil nil "test-session")
+              (should-not (with-current-buffer (messages-buffer)
+                            (string-match-p "while locally let-bound"
+                                            (buffer-substring messages-start (point-max)))))
+              (should (member hook-env mock-ghostel-env))
+              (should (member "CLAUDE_CODE_SSE_PORT=12345" mock-ghostel-env)))
+          (kill-buffer "*test-ghostel-env*"))))))
 
 (ert-deftest claude-code-ide-test-resolve-program ()
   "Test CLI program resolution for terminal exec APIs."
@@ -1437,6 +1479,45 @@ Do not add --tools allowlist for pi; keep default tool set."
                                                    ;; Should not contain isEmpty or fileUrl
                                                    (should-not (assq 'isEmpty selection))
                                                    (should-not (assq 'fileUrl result))))))
+
+(ert-deftest claude-code-ide-test-mcp-send-selection-only-with-region ()
+  "Test that selection_changed goes out only for an active region."
+  (let* ((project-dir (file-name-as-directory (make-temp-file "claude-mcp-project-" t)))
+         (claude-code-ide-mcp--sessions (make-hash-table :test 'equal))
+         (sent '()))
+    (puthash project-dir
+             (make-claude-code-ide-mcp-session :client 'client :project-dir project-dir)
+             claude-code-ide-mcp--sessions)
+    (cl-letf (((symbol-function 'claude-code-ide-mcp--send-notification)
+               (lambda (method params) (push (cons method params) sent))))
+      (unwind-protect
+          (with-temp-buffer
+            (insert "Line 1\nLine 2\n")
+            (set-buffer-modified-p nil)
+            (setq buffer-file-name (expand-file-name "a.txt" project-dir))
+            (let ((transient-mark-mode t))
+              ;; Cursor moves alone send nothing
+              (goto-char (point-min))
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (forward-line 1)
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (should-not sent)
+              ;; An active region is sent once
+              (set-mark (point-min))
+              (activate-mark)
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (should (= (length sent) 1))
+              (should (equal (caar sent) "selection_changed"))
+              (should (equal (alist-get 'text (cdar sent)) "Line 1\n"))
+              ;; Deactivating it sends one clear with an empty path
+              (deactivate-mark)
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (claude-code-ide-mcp--send-selection-for-project project-dir)
+              (should (= (length sent) 2))
+              (should (equal (alist-get 'text (cdar sent)) ""))
+              (should (equal (alist-get 'filePath (cdar sent)) ""))))
+        (delete-directory project-dir t)))))
 
 (ert-deftest claude-code-ide-test-mcp-close-tab ()
   "Test the close_tab tool implementation."
