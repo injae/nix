@@ -971,6 +971,70 @@ with an explanatory error rather than operating on the dead buffer."
              (should (null (claude-code-ide--get-process)))))))
     (claude-code-ide-tests--clear-processes)))
 
+(defun claude-code-ide-tests--with-two-sessions (test-body)
+  "Call TEST-BODY with two fake sessions in different directories.
+TEST-BODY receives the two directories.  Each session has a live
+process and a buffer named after its directory."
+  (claude-code-ide-tests--clear-processes)
+  (let ((dir-a (file-name-as-directory (make-temp-file "claude-code-ide-a-" t)))
+        (dir-b (file-name-as-directory (make-temp-file "claude-code-ide-b-" t)))
+        (procs nil))
+    (unwind-protect
+        (progn
+          (dolist (dir (list dir-a dir-b))
+            (let ((proc (start-process "claude-code-ide-test" nil "sleep" "60")))
+              (push proc procs)
+              (puthash dir proc claude-code-ide--processes)
+              (get-buffer-create (claude-code-ide--get-buffer-name dir))))
+          (funcall test-body dir-a dir-b))
+      (dolist (proc procs) (delete-process proc))
+      (dolist (dir (list dir-a dir-b))
+        (when-let ((buf (get-buffer (claude-code-ide--get-buffer-name dir))))
+          (let ((kill-buffer-hook nil)) (kill-buffer buf)))
+        (delete-directory dir t))
+      (claude-code-ide-tests--clear-processes))))
+
+(ert-deftest claude-code-ide-test-stop-from-session-buffer ()
+  "Stopping from a session buffer stops that session, not the current project's."
+  (claude-code-ide-tests--with-two-sessions
+   (lambda (dir-a dir-b)
+     (with-current-buffer (get-buffer (claude-code-ide--get-buffer-name dir-a))
+       ;; default-directory points at the other project
+       (let ((default-directory dir-b))
+         (cl-letf (((symbol-function 'completing-read)
+                    (lambda (&rest _) (error "Should not prompt"))))
+           (claude-code-ide-stop))))
+     (should-not (get-buffer (claude-code-ide--get-buffer-name dir-a)))
+     (should (get-buffer (claude-code-ide--get-buffer-name dir-b))))))
+
+(ert-deftest claude-code-ide-test-stop-prompts-with-several-sessions ()
+  "Stopping outside a session buffer asks which session, defaulting to the current one."
+  (claude-code-ide-tests--with-two-sessions
+   (lambda (dir-a dir-b)
+     (with-temp-buffer
+       (setq default-directory dir-b)
+       (let (prompt-default)
+         (cl-letf (((symbol-function 'completing-read)
+                    (lambda (_prompt _coll &optional _pred _req _init _hist def &rest _)
+                      (setq prompt-default def)
+                      (abbreviate-file-name dir-a))))
+           (claude-code-ide-stop))
+         (should (equal prompt-default (abbreviate-file-name dir-b)))))
+     (should-not (get-buffer (claude-code-ide--get-buffer-name dir-a)))
+     (should (get-buffer (claude-code-ide--get-buffer-name dir-b))))))
+
+(ert-deftest claude-code-ide-test-cleanup-twice-decrements-once ()
+  "Running session cleanup twice decrements the tools server session count once."
+  (let ((claude-code-ide--session-ids (make-hash-table :test 'equal))
+        (claude-code-ide-mcp-server--session-count 2)
+        (dir "/tmp/claude-code-ide-cleanup-test/"))
+    (puthash dir "session-1" claude-code-ide--session-ids)
+    (cl-letf (((symbol-function 'claude-code-ide-mcp-server-unregister-session) #'ignore)
+              ((symbol-function 'claude-code-ide-mcp-stop-session) #'ignore))
+      (claude-code-ide--cleanup-on-exit dir)
+      (claude-code-ide--cleanup-on-exit dir))
+    (should (= claude-code-ide-mcp-server--session-count 1))))
+
 (ert-deftest claude-code-ide-test-switch-to-buffer-no-session ()
   "Test `switch-to-buffer' command when no session exists."
   (claude-code-ide-tests--clear-processes)

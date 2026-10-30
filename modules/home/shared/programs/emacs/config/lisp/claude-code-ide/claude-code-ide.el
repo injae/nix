@@ -1004,12 +1004,14 @@ If `claude-code-ide-focus-on-open' is non-nil, the window is selected."
           ;; Stop WebSocket MCP server (claude only)
           (unless (claude-code-ide--opencode-p)
             (claude-code-ide-mcp-stop-session directory))
-          ;; Notify MCP tools server about session end with session ID
-          (let ((session-id (gethash directory claude-code-ide--session-ids)))
+          ;; Notify MCP tools server about session end with session ID.
+          ;; The kill-buffer hook and the process sentinel can both run
+          ;; this cleanup; only the first run may decrement the session
+          ;; count, or the shared tools server stops under other sessions.
+          (when-let ((session-id (gethash directory claude-code-ide--session-ids)))
             (claude-code-ide-mcp-server-session-ended session-id)
             ;; Clean up session ID mapping
-            (when session-id
-              (remhash directory claude-code-ide--session-ids)))
+            (remhash directory claude-code-ide--session-ids))
           ;; Kill the vterm buffer if it exists
           (let ((buffer-name (claude-code-ide--get-buffer-name directory)))
             (when-let ((buffer (get-buffer buffer-name)))
@@ -1559,10 +1561,31 @@ For claude/pi/opencode: starts with -c (continue) flag."
 
 ;;;###autoload
 (defun claude-code-ide-stop ()
-  "Stop the AI CLI session for the current project or directory."
+  "Stop an AI CLI session.
+When the current buffer is a session buffer, stop that session.
+Otherwise, when several sessions are running, ask which one to stop,
+defaulting to the session for the current project or directory."
   (interactive)
-  (let* ((working-dir (claude-code-ide--get-working-directory))
-         (buffer-name (claude-code-ide--get-buffer-name)))
+  (claude-code-ide--cleanup-dead-processes)
+  (let* ((directories (cl-loop for dir being the hash-keys of claude-code-ide--processes
+                               collect dir))
+         (working-dir
+          (or (cl-find-if (lambda (dir)
+                            (string= (claude-code-ide--get-buffer-name dir) (buffer-name)))
+                          directories)
+              (if (cdr directories)
+                  (let* ((current (claude-code-ide--get-working-directory))
+                         (choices (mapcar (lambda (dir) (cons (abbreviate-file-name dir) dir))
+                                          directories))
+                         (default (and (member current directories)
+                                       (abbreviate-file-name current))))
+                    (alist-get (completing-read
+                                (format-prompt "Stop %s session" default
+                                               (claude-code-ide--backend-name))
+                                choices nil t nil nil default)
+                               choices nil nil #'string=))
+                (claude-code-ide--get-working-directory))))
+         (buffer-name (claude-code-ide--get-buffer-name working-dir)))
     (if-let ((buffer (get-buffer buffer-name)))
         (progn
           ;; Kill the buffer (cleanup will be handled by hooks)
