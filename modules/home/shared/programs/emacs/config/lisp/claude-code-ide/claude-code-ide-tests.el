@@ -1035,6 +1035,25 @@ process and a buffer named after its directory."
       (claude-code-ide--cleanup-on-exit dir))
     (should (= claude-code-ide-mcp-server--session-count 1))))
 
+(ert-deftest claude-code-ide-test-buffer-kill-cleanup-keeps-later-hooks-local ()
+  "Cleanup from `kill-buffer-hook' leaves later hooks running in the killed buffer.
+A nested `kill-buffer' would finish the buffer early, and the terminal's
+own hook would then read another session buffer's local state."
+  (claude-code-ide-tests--with-two-sessions
+   (lambda (dir-a _dir-b)
+     (let ((buf-a (get-buffer (claude-code-ide--get-buffer-name dir-a)))
+           (seen nil))
+       (cl-letf (((symbol-function 'claude-code-ide-mcp-stop-session) #'ignore))
+         (with-current-buffer buf-a
+           (add-hook 'kill-buffer-hook
+                     (lambda () (claude-code-ide--cleanup-on-buffer-kill dir-a))
+                     nil t)
+           (add-hook 'kill-buffer-hook
+                     (lambda () (setq seen (current-buffer)))
+                     t t))
+         (kill-buffer buf-a))
+       (should (eq seen buf-a))))))
+
 (ert-deftest claude-code-ide-test-switch-to-buffer-no-session ()
   "Test `switch-to-buffer' command when no session exists."
   (claude-code-ide-tests--clear-processes)

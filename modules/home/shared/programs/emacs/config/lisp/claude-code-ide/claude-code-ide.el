@@ -970,6 +970,17 @@ If `claude-code-ide-focus-on-open' is non-nil, the window is selected."
 (defvar claude-code-ide--cleanup-in-progress nil
   "Flag to prevent recursive cleanup calls.")
 
+(defvar claude-code-ide--buffer-being-killed nil
+  "Session buffer whose `kill-buffer-hook' is running cleanup.
+Cleanup must not kill this buffer again: a nested `kill-buffer' finishes
+it early, and the remaining hooks, such as ghostel's, then run in
+another buffer and stop that buffer's terminal.")
+
+(defun claude-code-ide--cleanup-on-buffer-kill (directory)
+  "Clean up the session for DIRECTORY from its buffer's `kill-buffer-hook'."
+  (let ((claude-code-ide--buffer-being-killed (current-buffer)))
+    (claude-code-ide--cleanup-on-exit directory)))
+
 (defun claude-code-ide--cleanup-on-exit (directory)
   "Clean up MCP server and process tracking when session exits for DIRECTORY."
   (unless claude-code-ide--cleanup-in-progress
@@ -1015,7 +1026,8 @@ If `claude-code-ide-focus-on-open' is non-nil, the window is selected."
           ;; Kill the vterm buffer if it exists
           (let ((buffer-name (claude-code-ide--get-buffer-name directory)))
             (when-let ((buffer (get-buffer buffer-name)))
-              (when (buffer-live-p buffer)
+              (when (and (buffer-live-p buffer)
+                         (not (eq buffer claude-code-ide--buffer-being-killed)))
                 (let ((kill-buffer-hook nil) ; Disable hooks to prevent recursion
                       (kill-buffer-query-functions nil)) ; Don't ask for confirmation
                   (kill-buffer buffer)))))
@@ -1475,7 +1487,7 @@ This function handles:
                 (with-current-buffer buffer
                   (add-hook 'kill-buffer-hook
                             (lambda ()
-                              (claude-code-ide--cleanup-on-exit working-dir))
+                              (claude-code-ide--cleanup-on-buffer-kill working-dir))
                             nil t)
                   ;; Set up terminal keybindings
                   (claude-code-ide--setup-terminal-keybindings)
