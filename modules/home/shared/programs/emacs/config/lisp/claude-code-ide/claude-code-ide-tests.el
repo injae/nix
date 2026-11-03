@@ -1023,6 +1023,21 @@ process and a buffer named after its directory."
      (should-not (get-buffer (claude-code-ide--get-buffer-name dir-a)))
      (should (get-buffer (claude-code-ide--get-buffer-name dir-b))))))
 
+(ert-deftest claude-code-ide-test-stop-session-prompts-in-session-buffer ()
+  "Stop-session asks which session even from a session buffer, defaulting to it."
+  (claude-code-ide-tests--with-two-sessions
+   (lambda (dir-a dir-b)
+     (with-current-buffer (get-buffer (claude-code-ide--get-buffer-name dir-a))
+       (let (prompt-default)
+         (cl-letf (((symbol-function 'completing-read)
+                    (lambda (_prompt _coll &optional _pred _req _init _hist def &rest _)
+                      (setq prompt-default def)
+                      (abbreviate-file-name dir-b))))
+           (claude-code-ide-stop-session))
+         (should (equal prompt-default (abbreviate-file-name dir-a)))))
+     (should (get-buffer (claude-code-ide--get-buffer-name dir-a)))
+     (should-not (get-buffer (claude-code-ide--get-buffer-name dir-b))))))
+
 (ert-deftest claude-code-ide-test-cleanup-twice-decrements-once ()
   "Running session cleanup twice decrements the tools server session count once."
   (let ((claude-code-ide--session-ids (make-hash-table :test 'equal))

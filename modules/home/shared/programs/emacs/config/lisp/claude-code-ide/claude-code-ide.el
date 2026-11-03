@@ -1571,6 +1571,36 @@ For claude/pi/opencode: starts with -c (continue) flag."
           (claude-code-ide-log "%s CLI version: %s" backend-name (string-trim version-output)))
       (claude-code-ide-log "%s is not installed." backend-name))))
 
+(defun claude-code-ide--session-directory-for-buffer (directories)
+  "Return the directory in DIRECTORIES whose session buffer is current."
+  (cl-find-if (lambda (dir)
+                (string= (claude-code-ide--get-buffer-name dir) (buffer-name)))
+              directories))
+
+(defun claude-code-ide--read-session-directory (directories default)
+  "Ask which of DIRECTORIES to stop, defaulting to DEFAULT."
+  (let ((choices (mapcar (lambda (dir) (cons (abbreviate-file-name dir) dir))
+                         directories))
+        (default (and default (abbreviate-file-name default))))
+    (alist-get (completing-read
+                (format-prompt "Stop %s session" default
+                               (claude-code-ide--backend-name))
+                choices nil t nil nil default)
+               choices nil nil #'string=)))
+
+(defun claude-code-ide--stop-directory (working-dir)
+  "Stop the session for WORKING-DIR by killing its buffer."
+  (if-let ((buffer (get-buffer (claude-code-ide--get-buffer-name working-dir))))
+      (progn
+        ;; Kill the buffer (cleanup will be handled by hooks)
+        ;; The process sentinel will handle cleanup when the process dies
+        (kill-buffer buffer)
+        (claude-code-ide-log "Stopping %s in %s..."
+                             (claude-code-ide--backend-name)
+                             (file-name-nondirectory (directory-file-name working-dir))))
+    (claude-code-ide-log "No %s session is running in this directory"
+                         (claude-code-ide--backend-name))))
+
 ;;;###autoload
 (defun claude-code-ide-stop ()
   "Stop an AI CLI session.
@@ -1579,35 +1609,32 @@ Otherwise, when several sessions are running, ask which one to stop,
 defaulting to the session for the current project or directory."
   (interactive)
   (claude-code-ide--cleanup-dead-processes)
-  (let* ((directories (cl-loop for dir being the hash-keys of claude-code-ide--processes
-                               collect dir))
-         (working-dir
-          (or (cl-find-if (lambda (dir)
-                            (string= (claude-code-ide--get-buffer-name dir) (buffer-name)))
-                          directories)
-              (if (cdr directories)
-                  (let* ((current (claude-code-ide--get-working-directory))
-                         (choices (mapcar (lambda (dir) (cons (abbreviate-file-name dir) dir))
-                                          directories))
-                         (default (and (member current directories)
-                                       (abbreviate-file-name current))))
-                    (alist-get (completing-read
-                                (format-prompt "Stop %s session" default
-                                               (claude-code-ide--backend-name))
-                                choices nil t nil nil default)
-                               choices nil nil #'string=))
-                (claude-code-ide--get-working-directory))))
-         (buffer-name (claude-code-ide--get-buffer-name working-dir)))
-    (if-let ((buffer (get-buffer buffer-name)))
-        (progn
-          ;; Kill the buffer (cleanup will be handled by hooks)
-          ;; The process sentinel will handle cleanup when the process dies
-          (kill-buffer buffer)
-          (claude-code-ide-log "Stopping %s in %s..."
-                               (claude-code-ide--backend-name)
-                               (file-name-nondirectory (directory-file-name working-dir))))
-      (claude-code-ide-log "No %s session is running in this directory"
-                           (claude-code-ide--backend-name)))))
+  (let ((directories (cl-loop for dir being the hash-keys of claude-code-ide--processes
+                              collect dir)))
+    (claude-code-ide--stop-directory
+     (or (claude-code-ide--session-directory-for-buffer directories)
+         (if (cdr directories)
+             (let ((current (claude-code-ide--get-working-directory)))
+               (claude-code-ide--read-session-directory
+                directories (car (member current directories))))
+           (claude-code-ide--get-working-directory))))))
+
+;;;###autoload
+(defun claude-code-ide-stop-session ()
+  "Ask which AI CLI session to stop, then stop it.
+The default is the session of the current buffer, else the session
+for the current project or directory."
+  (interactive)
+  (claude-code-ide--cleanup-dead-processes)
+  (let ((directories (cl-loop for dir being the hash-keys of claude-code-ide--processes
+                              collect dir)))
+    (unless directories
+      (user-error "No active %s sessions" (claude-code-ide--backend-name)))
+    (claude-code-ide--stop-directory
+     (claude-code-ide--read-session-directory
+      directories
+      (or (claude-code-ide--session-directory-for-buffer directories)
+          (car (member (claude-code-ide--get-working-directory) directories)))))))
 
 
 ;;;###autoload

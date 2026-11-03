@@ -35,6 +35,7 @@
 (declare-function claude-code-ide-resume "claude-code-ide" ())
 (declare-function claude-code-ide-continue "claude-code-ide" ())
 (declare-function claude-code-ide-stop "claude-code-ide" ())
+(declare-function claude-code-ide-stop-session "claude-code-ide" ())
 (declare-function claude-code-ide-list-sessions "claude-code-ide" ())
 (declare-function claude-code-ide-switch-to-buffer "claude-code-ide" ())
 (declare-function claude-code-ide-insert-at-mentioned "claude-code-ide" ())
@@ -371,6 +372,7 @@ Otherwise, if multiple sessions exist, prompt for selection."
     ("c" claude-code-ide--continue-if-no-session :description claude-code-ide--continue-description)
     ("r" claude-code-ide--resume-if-no-session :description claude-code-ide--resume-description)
     ("q" "Stop current session" claude-code-ide-stop)
+    ("Q" "Stop a session..." claude-code-ide-stop-session)
     ("l" "List all sessions" claude-code-ide-list-sessions)]
    ["Navigation"
     ("b" "Switch to Claude buffer" claude-code-ide-switch-to-buffer)
