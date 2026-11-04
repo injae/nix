@@ -1,6 +1,6 @@
-import { describe, expect, mock, test } from 'claude-code/testing'
+import { describe, expect, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { activeBufferContext, fileChangedExpr, inlineEditDenial } from '../hooks/emacs'
+import { fileChangedExpr, inlineEditDenial } from '../hooks/emacs'
 
 const recordEmacsclient = (on: On, stdout: string): (readonly string[])[] => {
   const calls: (readonly string[])[] = []
@@ -10,30 +10,6 @@ const recordEmacsclient = (on: On, stdout: string): (readonly string[])[] => {
   })
   return calls
 }
-
-describe('UserPromptSubmit', () => {
-  test('adds the active buffer inside Emacs', async ($, on) => {
-    mock.env(on, { INSIDE_EMACS: 'ghostel' })
-    const calls = recordEmacsclient(on, '"upkeep.rs\\t/game/upkeep.rs"\n')
-    on('classic.UserPromptSubmit', () => ({}))
-
-    const result = await $.classic.UserPromptSubmit({ prompt: 'hi' })
-
-    expect(calls[0]?.slice(0, 2)).toEqual(['emacsclient', '--eval'])
-    expect(result.additionalContext).toEqual(['Active Emacs buffer: upkeep.rs\nFile path: /game/upkeep.rs'])
-  })
-
-  test('asks nothing outside Emacs', async ($, on) => {
-    mock.env(on, {})
-    const calls = recordEmacsclient(on, '')
-    on('classic.UserPromptSubmit', () => ({}))
-
-    const result = await $.classic.UserPromptSubmit({ prompt: 'hi' })
-
-    expect(calls).toHaveLength(0)
-    expect(result.additionalContext).toBeUndefined()
-  })
-})
 
 describe('tool.call', () => {
   test('refuses an in-place sed edit', async ($, on) => {
@@ -60,18 +36,6 @@ describe('tool.call', () => {
     await $.tool.call({ tool: 'Edit', file_path: '/p/a.ts', old_string: 'a', new_string: 'b' })
 
     expect(calls).toHaveLength(0)
-  })
-})
-
-describe('activeBufferContext', () => {
-  test('reads a raw tab and a buffer without a file path', () => {
-    expect(activeBufferContext('"a.rs\t/x/a.rs"')).toBe('Active Emacs buffer: a.rs\nFile path: /x/a.rs')
-    expect(activeBufferContext('"scratch"')).toBe('Active Emacs buffer: scratch')
-  })
-
-  test('ignores nil and unquoted output', () => {
-    expect(activeBufferContext('nil')).toBeUndefined()
-    expect(activeBufferContext('""')).toBeUndefined()
   })
 })
 

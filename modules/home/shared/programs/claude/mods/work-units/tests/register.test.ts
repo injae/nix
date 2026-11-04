@@ -164,23 +164,20 @@ describe('checkpoint', () => {
   test('restores the working directory after a compaction', async ($, on) => {
     on('session.cwd', () => ({ value: '/proj' }))
     recordSummarized(on)
-    on('classic.SessionStart', () => ({}))
+    on('prompt.context', () => ({ blocks: [] }))
 
     await $.session.compact({ trigger: 'manual', messages: CONVERSATION })
-    const result = await $.classic.SessionStart({ source: 'compact' })
+    const result = await $.prompt.context({ blocks: [] })
 
-    expect(result.additionalContext).toEqual([restoredContext('/proj')])
+    expect(result.blocks).toEqual([{ name: 'checkpoint', text: restoredContext('/proj') }])
   })
 
-  test('restores nothing on a normal start', async ($, on) => {
-    on('session.cwd', () => ({ value: '/proj' }))
-    recordSummarized(on)
-    on('classic.SessionStart', () => ({}))
+  test('restores nothing before any compaction', async ($, on) => {
+    on('prompt.context', () => ({ blocks: [] }))
 
-    await $.session.compact({ trigger: 'manual', messages: CONVERSATION })
-    const result = await $.classic.SessionStart({ source: 'startup' })
+    const result = await $.prompt.context({ blocks: [] })
 
-    expect(result.additionalContext).toBeUndefined()
+    expect(result.blocks).toEqual([])
   })
 })
 

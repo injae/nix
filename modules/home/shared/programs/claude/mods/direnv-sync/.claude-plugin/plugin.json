@@ -1,5 +1,0 @@
-{
-  "name": "direnv-sync",
-  "version": "0.1.0",
-  "description": "Reloads direnv when a session starts in, moves into, or edits a directory with an .envrc."
-}

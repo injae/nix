@@ -1,6 +1,82 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "hooks": null,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/context/session-start.py"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skills/skill-eval.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/context/plan-tool-guard.py"
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "**/.envrc",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/reload.sh"
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/direnv/reload.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/emacs/emacs-buffer-context.py"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skills/skill-remind.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/context/explore-remind.sh"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Read(~/.claude/**)",

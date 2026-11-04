@@ -1,5 +1,0 @@
-{
-  "name": "session-context",
-  "version": "0.1.0",
-  "description": "Injects session-start skill directives and per-prompt reminders, and sends back exploration plans that route through the shell."
-}

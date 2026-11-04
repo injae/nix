@@ -95,11 +95,11 @@ export const register: Register = on => {
     return { ...result, messages: [...result.messages, ...kept] }
   })
 
-  on('classic.SessionStart', { source: 'compact' }, async ($, e, next) => {
+  on('prompt.context', async ($, e, next) => {
     const result = await next(e)
     const { value } = await $.state.get(CHECKPOINT)
     if (value === undefined) return result
-    return { ...result, additionalContext: [...(result.additionalContext ?? []), restoredContext(value.cwd)] }
+    return { ...result, blocks: [...result.blocks, { name: 'checkpoint', text: restoredContext(value.cwd) }] }
   })
 
   on('ui.render', { component: 'Pane', requestId: UNITS_PANE }, async ($, e) => {

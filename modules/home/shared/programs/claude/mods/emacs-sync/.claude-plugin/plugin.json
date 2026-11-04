@@ -1,5 +1,5 @@
 {
   "name": "emacs-sync",
   "version": "0.1.0",
-  "description": "Keeps Claude and Emacs in step: shares the active buffer, tells Emacs about edited files, and refuses shell commands that edit files invisibly."
+  "description": "Keeps Claude and Emacs in step: tells Emacs about edited files, and refuses shell commands that edit files invisibly."
 }

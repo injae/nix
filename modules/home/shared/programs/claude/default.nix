@@ -52,9 +52,7 @@ in
   # Hook mods, linked one directory each rather than through the recursive
   # `.claude` tree: the engine refuses a plugin's types contract whose file
   # resolves outside the plugin folder, which per-file links do.
-  home.file.".claude/skills/session-context".source = ./mods/session-context;
   home.file.".claude/skills/emacs-sync".source = ./mods/emacs-sync;
-  home.file.".claude/skills/direnv-sync".source = ./mods/direnv-sync;
   home.file.".claude/skills/compact-guard".source = ./mods/compact-guard;
   home.file.".claude/skills/work-units".source = ./mods/work-units;
 
