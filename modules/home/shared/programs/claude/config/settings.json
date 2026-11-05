@@ -29,6 +29,28 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|Grep|Bash|mcp__emacs-tools__symbol-source|mcp__emacs-tools__def-source|mcp__emacs-tools__grep-block",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/context/plan-read-guard.py record"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/context/plan-read-guard.py check"
+          }
+        ]
+      }
+    ],
     "FileChanged": [
       {
         "matcher": "**/.envrc",

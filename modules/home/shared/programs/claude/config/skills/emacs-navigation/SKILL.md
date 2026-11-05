@@ -158,6 +158,14 @@ Use as **first pass on broad search** — survey all location cheap,
 then re-run without `headers` (narrow pattern/path or aim at block
 you want) to pull source. Two-phase = minimal context on wide search.
 
+**Header line = location, not content.** Signature tell where, never
+what body do. Before stating what hit do or citing its line, run second
+pass: `grep-block` without `headers` (names as `A|B|C`, `cap: 0`) or
+`symbol-source`. Skip it and claim come from signature — measured
+2026-11-05, 66 of 140 exploration citations. Hook `plan-read-guard`
+deny plan and subagent `.claude/tmp/*.md` write that cite line no
+call showed.
+
 ## Symbol search precision
 
 `lsp-proj-symbols` = partial substring match → noisy on short/common name:
