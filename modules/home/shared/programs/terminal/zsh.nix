@@ -16,7 +16,8 @@
         lib.mkMerge [ initNormal ];
 
       envExtra = ''
-        export PATH=$PATH:/run/current-system/sw/bin/:$HOME/.local/bin
+        # Prefer the Nix version managed by the system over the installer profile.
+        export PATH="/run/current-system/sw/bin:$PATH:$HOME/.local/bin"
 
         # disable usage report
         export SCOUT_DISABLE=1
