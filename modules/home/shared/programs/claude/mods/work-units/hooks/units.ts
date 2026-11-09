@@ -23,9 +23,6 @@ const EXCERPT_CHARS = 200
 export const compactInstructions = (instructions: string | undefined): string =>
   [instructions, GROUPING_DIRECTIVE, PRESERVE_DIRECTIVE].filter(Boolean).join('\n\n')
 
-export const restoredContext = (cwd: string): string =>
-  `## Restored from compact checkpoint\n- Working directory: ${cwd}`
-
 const isPrompt = (message: SessionMessage): boolean =>
   message.role === 'user' && !message.toolResults?.length
 

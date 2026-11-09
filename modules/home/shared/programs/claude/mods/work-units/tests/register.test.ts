@@ -8,7 +8,6 @@ import {
   keptStart,
   markedUnitStart,
   parseBoundary,
-  restoredContext,
 } from '../hooks/units'
 
 const prompt = (text: string): SessionMessage => ({ role: 'user', text, toolUses: [] })
@@ -157,27 +156,6 @@ describe('session.compact', () => {
     await $.session.compact({ trigger: 'auto', agentId: 'a1', messages: CONVERSATION })
 
     expect(summarized).toEqual([CONVERSATION])
-  })
-})
-
-describe('checkpoint', () => {
-  test('restores the working directory after a compaction', async ($, on) => {
-    on('session.cwd', () => ({ value: '/proj' }))
-    recordSummarized(on)
-    on('prompt.context', () => ({ blocks: [] }))
-
-    await $.session.compact({ trigger: 'manual', messages: CONVERSATION })
-    const result = await $.prompt.context({ blocks: [] })
-
-    expect(result.blocks).toEqual([{ name: 'checkpoint', text: restoredContext('/proj') }])
-  })
-
-  test('restores nothing before any compaction', async ($, on) => {
-    on('prompt.context', () => ({ blocks: [] }))
-
-    const result = await $.prompt.context({ blocks: [] })
-
-    expect(result.blocks).toEqual([])
   })
 })
 

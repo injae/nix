@@ -13,11 +13,9 @@ import {
   markedUnitStart,
   parseBoundary,
   promptIndexes,
-  restoredContext,
   unitRows,
 } from './units'
 
-const CHECKPOINT = { plugin: 'work-units', key: 'checkpoint' } as const
 const unitsAtom = atom({ plugin: 'work-units', key: 'units' } as const, [])
 const BOUNDARY_MODEL = 'haiku'
 const BOUNDARY_MAX_TOKENS = 16
@@ -84,7 +82,6 @@ export const register: Register = on => {
   on('session.compact', async ($, e, next) => {
     if (e.agentId !== undefined) return next(e)
     if (e.trigger === 'precompute') return { skip: 'work-units compacts when the compaction runs' }
-    await $.state.set(CHECKPOINT, { cwd: await $.session.cwd() })
     const instructions = compactInstructions(e.instructions)
     const start = await currentUnitStart($, e.messages)
     const summarized = start === undefined ? e.messages : e.messages.slice(0, start)
@@ -93,13 +90,6 @@ export const register: Register = on => {
     const kept = start === undefined ? [] : e.messages.slice(start)
     await update($, unitsAtom, units => afterCompaction(units, kept.some(isUnitMarker)))
     return { ...result, messages: [...result.messages, ...kept] }
-  })
-
-  on('prompt.context', async ($, e, next) => {
-    const result = await next(e)
-    const { value } = await $.state.get(CHECKPOINT)
-    if (value === undefined) return result
-    return { ...result, blocks: [...result.blocks, { name: 'checkpoint', text: restoredContext(value.cwd) }] }
   })
 
   on('ui.render', { component: 'Pane', requestId: UNITS_PANE }, async ($, e) => {
