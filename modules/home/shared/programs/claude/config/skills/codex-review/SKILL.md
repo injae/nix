@@ -1,125 +1,108 @@
 ---
 name: codex-review
-description: Send a commit, range, or uncommitted tree to the Codex CLI for review and report only the verdict plus one line per finding. Use whenever code review of a commit, range, or working tree is wanted. Replaces the former codex-review subagent — Codex does the reviewing, this procedure only forwards.
+description: Obtain an independent review of a commit, range, uncommitted tree, or implementation plan and report the verdict plus findings. Codex uses an in-session reviewer agent; other executors use the Codex CLI workflow below.
 ---
 
 # Codex review
 
-Four tool calls. Nothing else belongs in a round.
+## Entry by executor
 
-This used to be a subagent. It is a skill because an agent decides for itself what preparation to
-do, and it kept deciding to transcribe. Measured 2026-09-12, one round: the agent wrote a 24 KB
-prompt of which 281 of ~360 lines were transcription — `graph` output expanded into prose, two PR
-bodies pasted, the comment ledger pasted, the convention files summarized, eight commit subjects
-copied out of `git log`. In the same round it reached a tool that had been removed from its
-`tools:` line by calling it through Bash instead, and it returned `Cross-check: not done` while
-the same reply reported having verified test counts and read source. A procedure has no room for
-that.
+**Executor is Codex: run as independent reviewer agent in current session.** CLI path only when user explicitly asks for CLI. No workaround of having another agent run CLI command.
+
+Codex path: hand reviewer agent (not implementer, not plan author) paths to review target, rule/structure docs, plan, evidence, existing check results, previous reviews and rebuttals. Keep scope pinning, direct code evidence, per-round files, report contract below. Reviewer agent edits no file, reruns no existing check; reads real code + existing check evidence, returns verdict + findings by severity + exact `file:line`, in Korean. Caller saves returned review to round file, reports in Step 4 shape. No agent or agent fails: report limit, no auto switch to CLI. **Codex path ends here — no CLI or fallback steps below.**
+
+Claude and other executors: CLI path below.
+
+## CLI path
+
+Four tool calls. Nothing else in a round.
+
+Was a subagent. Now skill: agent picks own prep and kept transcribing. Measured 2026-09-12, one round: 24 KB prompt, 281 of ~360 lines transcription — `graph` output turned into prose, two PR bodies, comment ledger pasted, convention files summarized, eight commit subjects copied from `git log`. Same round reached tool removed from its `tools:` line through Bash, and returned `Cross-check: not done` while reporting verified test counts and read source. Procedure leaves no room for that.
 
 ## Inputs
 
-- **Review target** — a git range (`main..HEAD`), a commit SHA, or "uncommitted".
-- **Review name** — used in the filenames.
-- **Check command** — the repo's build/lint command (e.g. `just check`). **Required.** Without it
-  Codex rediscovers one and runs the suite itself (observed: `cargo test
-  jobs::designate::deconstruct --lib`), and under `--approve-for-me` every exec costs an extra
-  approval pass. Ask for it rather than guessing.
-- **Conventions path** — `AGENTS.md` / `CLAUDE.md`, if the repo has one.
-- **Structure doc path** — `docs/map/<axis>.md`, if the repo has one.
+- **Review target** — git range (`main..HEAD`), commit SHA, or "uncommitted".
+- **Review name** — used in filenames.
+- **Check command** — repo build/lint command (e.g. `just check`). **Required.** Without it Codex rediscovers one and runs suite itself (observed: `cargo test jobs::designate::deconstruct --lib`), and under `--approve-for-me` every exec costs extra approval pass. Ask, never guess.
+- **Conventions path** — `AGENTS.md` / `CLAUDE.md`, if any.
+- **Structure doc path** — `docs/map/<axis>.md`, if any.
 - **Self-report path** — `.claude/tmp/*.md` (optional).
 
-The repo needs only `.claude/tmp/`, a gitignored work folder.
+Repo needs only `.claude/tmp/`, gitignored work folder.
 
-## Step 1 — Write the prompt
+## Step 1 — Write prompt
 
 Write `.claude/tmp/codex-prompt-<name>-r<n>.md`. **Target 2 KB or less.**
 
-**Every file of a round carries its round number** — prompt, review, log. Never rename a previous
-round's file to make room: measured 2026-09-23, round 1's review was moved after round 2's prompt
-already named its old path, which was round 2's own `-o` target, so the reviewer could not open the
-round it was asked to judge.
+**Every round file carries round number** — prompt, review, log. Never rename previous round's file: measured 2026-09-23, round 1 review moved after round 2 prompt named old path (round 2's own `-o` target); reviewer could not open round it had to judge.
 
-**Paths, never contents.** Codex runs with `-C <repo>` and workspace-write; it opens every file
-itself with `cat`. That includes anything under `.claude/tmp/`: it is gitignored, so `git show`
-cannot reach it, but `cat` can — the old "paste, do not link" rule was wrong about this.
+**Paths, never contents.** Codex runs with `-C <repo>` + workspace-write, opens every file with `cat`. Includes `.claude/tmp/`: gitignored so `git show` can't reach it, `cat` can — old "paste, do not link" rule was wrong.
 
-Do not run `graph`, `git log`, or `git diff` to build the prompt. Name the range and let Codex run
-them.
+No `graph`, `git log`, `git diff` to build prompt. Name range, Codex runs them.
 
-Fill the slots; leave the rest verbatim.
+Fill slots; rest verbatim.
 
 ```markdown
 Review <target>. Round <n>. Previous round asked for: <one line, or "first round">.
 
-Read the target yourself with git:
+Read target yourself with git:
   git log <range>
   git diff <range>
 (commit: `git show <sha>`, files with `git show <sha>:<path>` · uncommitted: `git diff HEAD`
 plus `git status --short`)
 
-Open these yourself — they are paths, not quoted here:
-- conventions: <path>   (if the repo batches comment approval at the end of a workstream, that is
-  stated there — do not file "no approval evidence")
+Open these yourself — paths, not quoted here:
+- conventions: <path>   (if repo batches comment approval at end of workstream, stated there —
+  do not file "no approval evidence")
 - structure map: <path>
-- self-report: <path>   (judge whether the rebuttals in it are correct)
-- previous review: .claude/tmp/codex-review-<name>-r<n-1>.md   (round 2 and later)
-Anything under `.claude/tmp/` is gitignored: `git show` cannot open it, `cat` can.
+- self-report: <path>   (judge whether its rebuttals are correct)
+- previous review: .claude/tmp/codex-review-<name>-r<n-1>.md   (round 2+)
+`.claude/tmp/` is gitignored: `git show` can't open it, `cat` can.
 
 Run before judging: <check command>
 
-Structure — callers, a file's API, the directory map — comes from the graft index:
-`graft_trace_calls` (`depth: "all"` for a rename), `graft_file_api`, `graft_repo_map`. On `no
-graph found` or `no symbol "X" in the graph` this repo has no index or that language is not
-parsed: use the LSP tools and `grep-block`, and say so. Empty graft output is a fact about the
-index, not "there are none".
+Structure — callers, file API, directory map — from graft index: `graft_trace_calls`
+(`depth: "all"` for rename), `graft_file_api`, `graft_repo_map`. `no graph found` or
+`no symbol "X" in the graph` = no index or language not parsed: use LSP tools + `grep-block`,
+say so. Empty graft output = fact about index, not "there are none".
 
-`graph` answers only "was this already judged, what was left unfollowed". Pass this repository's
-path — an unnamed `graph` answers for another project — and report an empty answer as `never
-traced` or `traced, no such edge`, never as a reason to sweep wide. MCP tools read the working
-tree, not the reviewed commit: background only, and a finding resting on one must say it is
-working-tree state that may differ from the commit. `trace` writes to that store: call it only
-when a relation this review turns on is missing from it, scope it with `path`, and pass `ask`
-with this review's name in it.
+`graph` answers only "already judged? what left unfollowed?". Pass this repo's path — unnamed
+`graph` answers for other project. Report empty answer as `never traced` or `traced, no such
+edge`, never as reason to sweep wide. MCP tools read working tree, not reviewed commit:
+background only; finding resting on one must say working-tree state may differ from commit.
+`trace` writes to that store: call only when relation this review turns on is missing, scope
+with `path`, pass `ask` containing this review's name.
 
-Do not write, create or modify any file. Your reply is the review; it is captured to a file for
-you.
+Write, create, modify no file. Reply is the review; captured to file for you.
 
-The structure map has three jobs:
-1. Read its invariants — the rules and the test guarding each. Structure itself is not here:
-   ask the graft index.
-2. Judge whether the diff left it stale — a new type, seam or invariant the map lacks is a
-   finding, same as a missing test.
-3. Close every `?` row — confirmed, wrong, or still unreachable. A `?` surviving a round
-   unexamined is itself a finding.
+Structure map, three jobs:
+1. Read invariants — rules + guarding test. Structure itself not here: ask graft index.
+2. Judge whether diff left it stale — new type, seam, invariant missing from map = finding,
+   same as missing test.
+3. Close every `?` row — confirmed, wrong, or still unreachable. `?` surviving round
+   unexamined = finding.
 
-Do not limit the kinds of things to look for — defects, design deviations, convention violations,
-missed spots, dead code, fake safeguards; anything with code evidence. Lists claimed "exhaustive":
-count and verify yourself.
+No limit on finding kinds — defects, design deviations, convention violations, missed spots,
+dead code, fake safeguards; anything with code evidence. Lists claimed "exhaustive": count and
+verify yourself.
 
-Write in **English**, **caveman style**. Drop articles, qualifiers, hedges; state facts only.
-Fragments fine. One finding = one-line gist + `file:line` + one or two lines of evidence. Do not
-restate. Quote code and `file:line` exactly. End with `Verdict: pass | needs changes | unresolved`
+Write in **English**, **caveman style**. Drop articles, qualifiers, hedges; facts only.
+Fragments fine. One finding = one-line gist + `file:line` + one or two lines evidence. No
+restating. Quote code and `file:line` exactly. End with `Verdict: pass | needs changes | unresolved`
 and counts `P1 n · P2 n · P3 n`.
 ```
 
-The English instruction is **unreliable** — Codex has answered in Korean with that line present
-(2026-09-12). Keep the line; do not treat English output as guaranteed.
+English line **unreliable** — Codex answered in Korean with it present (2026-09-12). Keep line; English output not guaranteed.
 
-### Field of view — two different things
+### Field of view — two things
 
-**The kinds of findings stay open.** No "look only at these" list: the reviewer's view shrinks to
-the caller's suspicion range and the round returns nothing.
+**Finding kinds stay open.** No "look only at these" list: reviewer view shrinks to caller's suspicion, round returns nothing.
 
-**The reading target stays pinned to the review range.** Never write a scope sentence that widens
-it. Observed 2026-09-12: "Scope: the whole of src/ and tests/. Do not restrict the review to the
-changed files" turned a one-commit review into a whole-tree audit.
+**Reading target stays pinned to review range.** Never write scope sentence widening it. Observed 2026-09-12: "Scope: the whole of src/ and tests/. Do not restrict the review to the changed files" turned one-commit review into whole-tree audit.
 
 ## Step 2 — Run Codex
 
-**Background job** (`run_in_background: true`), no separate `sleep`. A round takes 2–10 minutes,
-and a foreground run blocks the conversation for all of it. The harness re-invokes you when the
-command exits; do not poll for it. Keep working or answer the user in the meantime, and go to
-Step 3 only after the completion notification.
+**Background job** (`run_in_background: true`), no separate `sleep`. Round takes 2–10 min; foreground blocks conversation whole time. Harness re-invokes you on exit; no polling. Keep working or answer user meanwhile; Step 3 only after completion notification.
 
 ```bash
 codex exec --approve-for-me -C <repo> --color never \
@@ -128,38 +111,21 @@ codex exec --approve-for-me -C <repo> --color never \
   > .claude/tmp/codex-run-<name>-r<n>.log 2>&1
 ```
 
-**`< /dev/null` is mandatory.** codex reads extra input from stdin when stdin is not a TTY, and a
-multi-line Bash command is fed through stdin by the harness; without the redirect it blocks on
-"Reading additional input from stdin..." until timeout (observed: 600 s, zero output).
+**`< /dev/null` mandatory.** codex reads extra stdin input when stdin not TTY; harness feeds multi-line Bash through stdin. Without redirect it blocks on "Reading additional input from stdin..." until timeout (observed: 600 s, zero output).
 
-**`--approve-for-me`, not `--sandbox read-only`.** `codex exec` is non-interactive, so it pins the
-approval policy to `never` and every MCP call dies on `MCP tool call requires approval, but
-approval policy is never`; `-c approval_policy=...` does not override it (codex-cli 0.154.0).
-`--approve-for-me` routes approvals through an automatic review and raises the sandbox to
-`workspace-write [workdir, /tmp, $TMPDIR]` — so the sandbox no longer stops the reviewer writing,
-only the prompt does, and each approved call costs an extra model pass.
+**`--approve-for-me`, not `--sandbox read-only`.** `codex exec` non-interactive, pins approval policy to `never`; every MCP call dies on `MCP tool call requires approval, but approval policy is never`; `-c approval_policy=...` doesn't override (codex-cli 0.154.0). `--approve-for-me` routes approvals through automatic review, raises sandbox to `workspace-write [workdir, /tmp, $TMPDIR]` — sandbox no longer stops reviewer writing, only prompt does; each approved call costs extra model pass.
 
-**If the permission classifier refuses it** — in an auto-mode session this environment can deny
-`--approve-for-me` as "Create Unsafe Agents" (observed 2026-09-12) — fall back to `--sandbox
-workspace-write`. That loses the MCP approval elevation but still produces findings. Say which one
-ran.
+**Permission classifier refuses it** — auto-mode session can deny `--approve-for-me` as "Create Unsafe Agents" (observed 2026-09-12): fall back to `--sandbox workspace-write`. Loses MCP approval elevation, still produces findings. Say which ran.
 
-**Not `codex exec review`**: its `--commit` cannot be combined with a custom prompt and it has no
-`--color` (codex-cli 0.153.2).
+**Not `codex exec review`**: its `--commit` can't combine with custom prompt, no `--color` (codex-cli 0.153.2).
 
-## Step 3 — Read the result
+## Step 3 — Read result
 
-Read `.claude/tmp/codex-review-<name>-r<n>.md`. A round's review runs about 2 KB.
+Read `.claude/tmp/codex-review-<name>-r<n>.md`. Round review ~2 KB.
 
-**A spent usage limit exits 0 with no `-o` file.** The log's last line reads `ERROR: You've hit
-your usage limit … try again at <date>`, yet the command exits 0, so an exit-code check calls it
-success. When the `-o` file is missing, `grep -i "usage limit"` the run log before anything else.
-Report the retry date; do not retry. Such a run can also sit for over an hour (observed
-2026-09-05: 73 minutes, killed by hand) — treat more than 15 minutes with no `-o` file as failed.
-A trivial probe (`codex exec --sandbox read-only --color never "say OK"`) still answers on a spent
-quota, so trust the log line, not the probe.
+**Spent usage limit exits 0 with no `-o` file.** Log's last line: `ERROR: You've hit your usage limit … try again at <date>`, exit 0, so exit-code check calls it success. `-o` file missing: `grep -i "usage limit"` run log first. Report retry date; no retry. Such run can sit over an hour (observed 2026-09-05: 73 min, killed by hand) — over 15 min with no `-o` file = failed. Trivial probe (`codex exec --sandbox read-only --color never "say OK"`) still answers on spent quota: trust log line, not probe.
 
-Exit nonzero or an empty output file: report the failure as it is. Do not retry more than once.
+Nonzero exit or empty output file: report failure as is. Retry at most once.
 
 ## Step 4 — Report
 
@@ -172,23 +138,17 @@ Full text: .claude/tmp/codex-review-<name>-r<n>.md
 [P3] <one-line gist> — <file:line>
 ```
 
-No findings → omit the findings lines and report `Verdict: pass`.
+No findings: omit findings lines, report `Verdict: pass`.
 
-**Do not verify the findings here.** Report what Codex said, with its own `file:line` citations,
-compressed to the gist and not re-derived. Confirming a finding against the source is the next
-step of the work cycle; doing it inside the review pays for the same read twice. Measured
-2026-09-12: a round cost 105k tokens over 45 tool calls, most of them re-opening files Codex had
-already read and the caller then read again.
+**No verifying findings here.** Report what Codex said, its own `file:line`, gist only, not re-derived. Confirming against source = next step of work cycle; doing it inside review pays same read twice. Measured 2026-09-12: round cost 105k tokens over 45 tool calls, mostly re-opening files Codex already read.
 
-Relay the verdict as it stands. It looks like a false positive: **append** that, do not erase the
-reviewer's words.
+Relay verdict as is. Looks false positive: **append** that, never erase reviewer's words.
 
 ## Not this
 
-- Do not modify source here. Applying findings is the caller's next step.
-- Never `git restore`, `checkout`, `reset`, `stash` — the tree may be staged for the next task.
+- No source edits here. Applying findings = caller's next step.
+- Never `git restore`, `checkout`, `reset`, `stash` — tree may be staged for next task.
 
-## When Codex is unavailable
+## When Codex unavailable
 
-Usage limit hit, CLI missing, run failed → use the `fable-review` agent, same review contract on
-Fable. Say which one produced the result.
+Usage limit hit, CLI missing, run failed: use `fable-review` agent, same review contract on Fable. Say which produced result.
